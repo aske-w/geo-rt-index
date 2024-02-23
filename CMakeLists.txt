@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22.1)
 
 set(NAME geo-rt-index)
 project(${NAME} CXX CUDA)
+find_package(OptiX REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CUDA_STANDARD 20)
