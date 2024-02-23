@@ -1,4 +1,5 @@
-set(SOURCES ${SOURCES}
-	${CMAKE_CURRENT_SOURCE_DIR}/cuda_VecAdd.cu
-	PARENT_SCOPE
-)
+file(GLOB FILES "*.cu")
+foreach (PATH ${FILES})
+	get_filename_component(FILENAME ${PATH} NAME_WE)
+	add_executable("plg_${FILENAME}" ${PATH})
+endforeach ()
