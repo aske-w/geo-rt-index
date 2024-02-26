@@ -1,4 +1,5 @@
-#include "optix_pipeline.hpp"
+#include "helpers/optix_pipeline.hpp"
+
 #include <iostream>
 #include <optix_stubs.h>
 
