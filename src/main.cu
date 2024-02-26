@@ -1,8 +1,8 @@
+#include "helpers/optix_pipeline.hpp"
+#include "helpers/optix_wrapper.hpp"
+#include "launch_parameters.hpp"
 #include "optix_function_table_definition.h"
 #include "optix_stubs.h"
-#include "optix_wrapper.hpp"
-#include "optix_pipeline.hpp"
-#include "launch_parameters.hpp"
 #include "types.hpp"
 
 using std::vector;

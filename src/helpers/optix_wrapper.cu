@@ -1,6 +1,7 @@
-#include <optix_stubs.h>
-#include "optix_wrapper.hpp"
+#include "helpers/optix_wrapper.hpp"
 #include "optix_stubs.h"
+
+#include <optix_stubs.h>
 
 extern "C" char embedded_ptx_code[];
 
