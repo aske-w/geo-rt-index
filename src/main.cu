@@ -1,32 +1,21 @@
+#include "factories/curve_factory.hpp"
+#include "factories/factory.hpp"
+#include "factories/triangle_input_factory.hpp"
 #include "helpers/optix_pipeline.hpp"
 #include "helpers/optix_wrapper.hpp"
 #include "launch_parameters.hpp"
 #include "optix_function_table_definition.h"
 #include "optix_stubs.h"
 #include "types.hpp"
-#include "factories/factory.hpp"
-#include "factories/triangle_input_factory.hpp"
+//#include "device_code.cu" // included for intellisense purposes
 
-using std::vector;
+using std::unique_ptr;
 using std::unique_ptr;
 
-OptixTraversableHandle foo(optix_wrapper& optix,
-                           Factory<OptixBuildInput>& inputFactory) {
+OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& inputFactory) {
 	OptixTraversableHandle handle{0};
 	unique_ptr<OptixBuildInput> bi = inputFactory.Build();
-//	memset(&bi, 0, sizeof(OptixBuildInput));
-//	bi.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
-//	bi.triangleArray.numVertices         = triangle::vertex_count();
-//	bi.triangleArray.vertexBuffers       = (CUdeviceptr*) &triangles_d.raw_ptr;
-//	bi.triangleArray.vertexFormat        = OPTIX_VERTEX_FORMAT_FLOAT3;
-//	bi.triangleArray.vertexStrideInBytes = sizeof(float3);
-//	bi.triangleArray.numIndexTriplets    = 0;
-//	bi.triangleArray.indexFormat         = OPTIX_INDICES_FORMAT_NONE;
-//	bi.triangleArray.preTransform        = 0;
-//	bi.triangleArray.flags               = flags;
-//	bi.triangleArray.numSbtRecords       = 1;
 
-//	unique_ptr<OptixAccelBuildOptions> bo = optionsFactory.Build();
 	OptixAccelBuildOptions bo {};
 	memset(&bo, 0, sizeof(OptixAccelBuildOptions));
 	bo.buildFlags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION;
@@ -69,23 +58,14 @@ int main() {
     optix_wrapper optix(debug);
     optix_pipeline pipeline(&optix);
 
-//    vector<triangle> triangles {
-//		{
-//	        {1, 1, 1},
-//	        {2, 1, 1},
-//	        {1, 2, 1},
-//        }
-//    };
-
-    cuda_buffer /*triangles_d,*/ as, result_d;
-//    triangles_d.alloc_and_upload(triangles);
+    cuda_buffer /*curve_points_d,*/ as, result_d;
 	result_d.alloc(sizeof(uint32_t));
     cudaDeviceSynchronize(); CUERR
-	TriangleFactory f{};
+//	TriangleFactory f{};
+	CurveFactory f{};
 	auto handle = foo(optix, f);
     launch_parameters launch_params{};
 	launch_params.traversable = handle;
-//	launch_params.triangles_d = triangles_d.ptr<triangle>();
 	launch_params.result_d = result_d.ptr<uint32_t>();
 
 	cuda_buffer launch_params_d;
@@ -103,7 +83,6 @@ int main() {
 	    1,
 	    1
 	))
-
 
 	cudaDeviceSynchronize(); CUERR
 

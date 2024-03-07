@@ -14,9 +14,7 @@ using std::unique_ptr;
 using std::make_unique;
 using std::vector;
 
-TriangleFactory::TriangleFactory() : triangles_d(std::make_unique<cuda_buffer>()) {
-
-}
+TriangleFactory::TriangleFactory() : triangles_d(std::move(std::make_unique<cuda_buffer>())) { }
 
 unique_ptr<OptixBuildInput> TriangleFactory::Build() {
 	static const constexpr uint32_t flags[] = {
