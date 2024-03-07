@@ -11,11 +11,13 @@ extern "C" __constant__ launch_parameters params;
 
 
 extern "C" __global__ void __closesthit__test() {
+	printf("__closesthit__test\n");
     // do nothing
 }
 
 
 extern "C" __global__ void __miss__test() {
+	printf("__miss__test\n");
     // do nothing
 }
 
@@ -23,13 +25,14 @@ extern "C" __global__ void __miss__test() {
 // this function is called for every potential ray-aabb intersection
 extern "C" __global__ void __intersection__test() {
 	const uint32_t primitive_id = optixGetPrimitiveIndex();
+	printf("__intersection__test\n");
 	set_payload_32(primitive_id);
 }
 
 
 // this function is called for every reported (i.e. confirmed) ray-primitive intersection
 extern "C" __global__ void __anyhit__test() {
-
+	printf("__anyhit_test\n");
 	const uint32_t primitive_id = optixGetPrimitiveIndex();
 	set_payload_32(primitive_id);
 }
@@ -37,9 +40,10 @@ extern "C" __global__ void __anyhit__test() {
 
 // this is the entry point
 extern "C" __global__ void __raygen__test() {
+	printf("__raygen_test\n");
 	constexpr const uint32_t ray_flags = OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT | OPTIX_RAY_FLAG_DISABLE_CLOSESTHIT;
-	float3 origin {0, 0, 0};
-	float3 direction {1.2, 1.2, 1};
+	float3 origin {1, 1, 1};
+	float3 direction {2, 1, 1};
 	uint32_t i0 = -1;
 	optixTrace(params.traversable,
 		origin,
