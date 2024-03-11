@@ -1,8 +1,9 @@
-#include <bits/unique_ptr.h>
+#include "helpers/cuda_helpers.cuh"
+#include "helpers/optix_helpers.cuh"
 #include "optix_function_table_definition.h"
 #include "optix_stubs.h"
-#include "cuda_helpers.cuh"
-#include "optix_helpers.cuh"
+
+#include <bits/unique_ptr.h>
 
 using std::cout;
 

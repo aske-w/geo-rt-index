@@ -6,7 +6,7 @@
 #define GEO_RT_INDEX_AABB_FACTORY_HPP
 
 #include "factories/factory.hpp"
-#include "cuda_buffer.hpp"
+#include "helpers/cuda_buffer.hpp"
 
 #include <bits/unique_ptr.h>
 #include <optix_types.h>

@@ -5,9 +5,8 @@
 #ifndef GEO_RT_INDEX_POINT_FACTORY_HPP
 #define GEO_RT_INDEX_POINT_FACTORY_HPP
 
-#include "types.hpp"
-#include "cuda_buffer.hpp"
 #include "factory.hpp"
+#include "helpers/cuda_buffer.hpp"
 #include "types.hpp"
 
 namespace geo_rt_index

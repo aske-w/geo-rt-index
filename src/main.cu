@@ -76,7 +76,7 @@ int main() {
 	std::mt19937_64 gen {rd()};
 	std::uniform_real_distribution<float> rng {0, 25};
 	std::vector<Point> points;
-	for (int i = 0; i < 2'000'000; i++)
+	for (int i = 0; i < 20'000; i++)
 	{
 		points.push_back(Point(rng(gen),rng(gen)));
 	}

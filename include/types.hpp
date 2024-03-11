@@ -1,13 +1,12 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
+#include "helpers/cuda_buffer.hpp"
+#include "helpers/debug_helpers.hpp"
+
 #include <cstdint>
-#include <optix_types.h>
 #include <cstdio>
 #include <optix_types.h>
-
-#include "cuda_buffer.hpp"
-#include "helpers/debug_helpers.hpp"
 
 struct Triangle
 {

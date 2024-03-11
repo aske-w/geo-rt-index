@@ -1,6 +1,7 @@
-#include <optix_types.h>
+#include "helpers/cuda_buffer.hpp"
+
 #include <cstring>
-#include "cuda_buffer.hpp"
+#include <optix_types.h>
 
 /**
  * NVIDIA OptiX provides acceleration structures to optimize the search for the intersection of rays with the geometric

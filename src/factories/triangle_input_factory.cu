@@ -3,11 +3,11 @@
 //
 
 #include "factories/triangle_input_factory.hpp"
-
-#include "cuda_buffer.hpp"
+#include "helpers/cuda_buffer.hpp"
 #include "types.hpp"
-#include <optix_types.h>
+
 #include <cstring>
+#include <optix_types.h>
 #include <vector>
 
 using std::unique_ptr;
