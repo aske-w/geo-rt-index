@@ -20,18 +20,19 @@ unique_ptr<OptixBuildInput> TriangleFactory::Build() {
 	static const constexpr uint32_t flags[] = {
 	    OPTIX_GEOMETRY_FLAG_REQUIRE_SINGLE_ANYHIT_CALL
 	};
-	vector<triangle> triangles {
+
+	vector<Triangle> triangles {
 	    {
-	        {1, 1, 1},
-	        {2, 1, 1},
-	        {1, 2, 1},
+	        {0, 0, 1},
+	        {0, 1, 0},
+	        {1, 0, 0},
 	    }
 	};
 	triangles_d->alloc_and_upload(triangles);
 	auto bi = make_unique<OptixBuildInput>();
 	memset(&*bi, 0, sizeof(OptixBuildInput));
 	bi->type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
-	bi->triangleArray.numVertices         = triangle::vertex_count();
+	bi->triangleArray.numVertices         = Triangle::vertex_count();
 	bi->triangleArray.vertexBuffers       = (CUdeviceptr*) &(triangles_d->raw_ptr);
 	bi->triangleArray.vertexFormat        = OPTIX_VERTEX_FORMAT_FLOAT3;
 	bi->triangleArray.vertexStrideInBytes = sizeof(float3);

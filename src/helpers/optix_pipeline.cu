@@ -110,12 +110,12 @@ void optix_pipeline::create_hitgroup_programs() {
     pg_desc.hitgroup.entryFunctionNameCH = "__closesthit__test";
     pg_desc.hitgroup.moduleAH            = optix->module;
     pg_desc.hitgroup.entryFunctionNameAH = "__anyhit__test";
+    pg_desc.hitgroup.moduleIS            = optix->module;
+    pg_desc.hitgroup.entryFunctionNameIS = "__intersection__test";
 #if PRIMITIVE == 1
     pg_desc.hitgroup.moduleIS            = optix->sphere_module;
     pg_desc.hitgroup.entryFunctionNameIS = nullptr;
 #elif PRIMITIVE == 2
-    pg_desc.hitgroup.moduleIS            = optix->module;
-    pg_desc.hitgroup.entryFunctionNameIS = "__intersection__test";
 #endif
 
     char log[2048];

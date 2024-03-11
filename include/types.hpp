@@ -3,12 +3,41 @@
 
 #include <cstdint>
 #include <optix_types.h>
+#include <cstdio>
 
-struct triangle {
+struct Triangle
+{
 	float3 v1, v2, v3; // TODO const?
-	constexpr inline static const uint32_t vertex_count() {
+	Triangle(float3 _v1, float3 _v2, float3 _v3): v1(_v1), v2(_v2), v3(_v3)
+	{
+	}
+
+	constexpr inline static uint32_t vertex_count()
+	{
 		return 3;
 	};
+
+	constexpr inline static uint32_t vertex_bytes()
+	{
+		return sizeof(float3);
+	}
+};
+
+struct Point {
+	float x, y;
+	Triangle ToTriangle() const {
+		const constexpr float f = 3.f;
+		auto t = Triangle{
+		    {x, 0 - (0.5f * f), -1},
+		    {x, 0 + (0.5f * f), -1},
+		    {x, 0, 1}
+		};
+		printf("((%f,%f,%f),(%f,%f,%f),(%f,%f,%f))",
+		       t.v1.x, t.v1.y, t.v1.z,
+		       t.v2.x, t.v2.y, t.v2.z,
+		       t.v3.x, t.v3.y, t.v3.z);
+		return t;
+	}
 };
 
 #endif // TYPES_HPP

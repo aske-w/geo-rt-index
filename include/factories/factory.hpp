@@ -7,10 +7,10 @@
 
 #include <bits/unique_ptr.h>
 
-template<typename T>
+template<typename BUILD_TYPE>
 class Factory {
 public:
-	virtual std::unique_ptr<T> Build() = 0;
+	virtual std::unique_ptr<BUILD_TYPE> Build() = 0;
 	virtual ~Factory() = default;
 };
 
