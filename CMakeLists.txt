@@ -10,6 +10,9 @@ if (USE_DEBUG OR (${CMAKE_BUILD_TYPE} STREQUAL "Debug"))
 	add_compile_definitions(DEBUG)
 endif()
 
+option(INDEX_TYPE "Index type" 1)
+add_compile_definitions(INDEX_TYPE)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CUDA_STANDARD 20)
 set(CMAKE_CUDA_ARCHITECTURES 75) # RTX 2070 Super

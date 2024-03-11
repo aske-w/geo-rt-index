@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <optix_types.h>
 #include <cstdio>
+#include <optix_types.h>
+
+#include "cuda_buffer.hpp"
 
 struct Triangle
 {
@@ -38,6 +41,12 @@ struct Point {
 		       t.v3.x, t.v3.y, t.v3.z);
 		return t;
 	}
+};
+
+enum class IndexType : uint8_t
+{
+	RESERVED = 0,
+	PTA = 1
 };
 
 #endif // TYPES_HPP

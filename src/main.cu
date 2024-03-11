@@ -1,7 +1,9 @@
+//#include "configuration.hpp"
 #include "factories/aabb_factory.hpp"
 #include "factories/curve_factory.hpp"
 #include "factories/factory.hpp"
 #include "factories/point_factory.hpp"
+#include "factories/pta_factory.hpp"
 #include "factories/triangle_input_factory.hpp"
 #include "helpers/optix_pipeline.hpp"
 #include "helpers/optix_wrapper.hpp"
@@ -9,6 +11,7 @@
 #include "optix_function_table_definition.h"
 #include "optix_stubs.h"
 #include "types.hpp"
+#include <vector>
 
 using std::unique_ptr;
 using std::unique_ptr;
@@ -61,14 +64,31 @@ int main() {
 
     cuda_buffer /*curve_points_d,*/ as, result_d;
     cudaDeviceSynchronize(); CUERR
+#if INDEX_TYPE == 1
+	const std::vector<Point> points
+	{
+	    {10,0},
+//	    {20,0},
+//	    {30,0},
+	};
+	PointToAABBFactory f{points};
+	f.SetQuery({9, -1, 1, 11, 1, 2});
+#else
 //	TriangleFactory f{};
 	AabbFactory f{};
 //	PointFactory f{};
+#endif
 	auto handle = foo(optix, f);
 	result_d.alloc(sizeof(uint32_t) * 2);
-    launch_parameters launch_params{};
-	launch_params.traversable = handle;
-	launch_params.result_d = result_d.ptr<uint32_t>();
+	LaunchParameters launch_params
+	{
+		.traversable = handle,
+#if INDEX_TYPE == 1
+		.points = f.GetPointsDevicePointer(),
+		.num_points = points.size(),
+#endif
+		.result_d = result_d.ptr<uint32_t>(),
+	};
 
 	cuda_buffer launch_params_d;
 	launch_params_d.alloc(sizeof(launch_params));

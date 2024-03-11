@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <cuda_runtime.h>
 
-extern "C" __constant__ launch_parameters params;
+extern "C" __constant__ LaunchParameters params;
 
 
 extern "C" __global__ void __closesthit__test() {
@@ -48,11 +48,28 @@ extern "C" __global__ void __anyhit__test() {
 	optixIgnoreIntersection();
 }
 
-
 // this is the entry point
 extern "C" __global__ void __raygen__test() {
-	printf("__raygen_test\n");
 	constexpr const uint32_t ray_flags = 0;
+#if INDEX_TYPE == 1 // IndexType::PTA
+	const auto limit = params.num_points;
+	const auto points = params.points;
+	const auto t_max = 1e16f;
+	for (uint32_t i = 0; i < limit; i++)
+	{
+		const Point point = points[i];
+		printf("Point: (%f,%f)\n", point.x, point.y);
+		const float3 origin {point.x, point.y, 0};
+		printf("Origin: (%f,%f,0)\n", point.x, point.y);
+		const float3 direction {point.x, point.y, t_max};
+		printf("Direction: (%f,%f,5)\n", point.x, point.y);
+		uint32_t i0 = 0;
+		optixTrace(params.traversable, origin, direction, 0, t_max, 0.0f, OptixVisibilityMask(255), ray_flags, 0, 0,
+		           0, i0);
+		printf("__raygen_test %d: %d\n", i, i0);
+	}
+#else
+	printf("__raygen_test\n");
 	const constexpr float t_max= 100;
 	const float3 origin {0.5,1.5,0.5};
 	const float3 direction {t_max,1.5,0.5};
@@ -75,4 +92,6 @@ extern "C" __global__ void __raygen__test() {
 ////
 //////				params.result_d[count++] = i0;
 //			}
+#endif
 }
+
