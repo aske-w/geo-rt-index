@@ -7,7 +7,7 @@
 struct
     launch_parameters {
     OptixTraversableHandle traversable;
-//	triangle* curve_points_d;
+//	Triangle* curve_points_d;
 	uint32_t* result_d;
 };
 

@@ -1,5 +1,7 @@
+#include "factories/aabb_factory.hpp"
 #include "factories/curve_factory.hpp"
 #include "factories/factory.hpp"
+#include "factories/point_factory.hpp"
 #include "factories/triangle_input_factory.hpp"
 #include "helpers/optix_pipeline.hpp"
 #include "helpers/optix_wrapper.hpp"
@@ -7,7 +9,6 @@
 #include "optix_function_table_definition.h"
 #include "optix_stubs.h"
 #include "types.hpp"
-//#include "device_code.cu" // included for intellisense purposes
 
 using std::unique_ptr;
 using std::unique_ptr;
@@ -59,11 +60,12 @@ int main() {
     optix_pipeline pipeline(&optix);
 
     cuda_buffer /*curve_points_d,*/ as, result_d;
-	result_d.alloc(sizeof(uint32_t));
     cudaDeviceSynchronize(); CUERR
 //	TriangleFactory f{};
-	CurveFactory f{};
+	AabbFactory f{};
+//	PointFactory f{};
 	auto handle = foo(optix, f);
+	result_d.alloc(sizeof(uint32_t) * 2);
     launch_parameters launch_params{};
 	launch_params.traversable = handle;
 	launch_params.result_d = result_d.ptr<uint32_t>();
@@ -86,10 +88,12 @@ int main() {
 
 	cudaDeviceSynchronize(); CUERR
 
-	uint32_t res = 15;
-	result_d.download(&res, 1);
-
-	std::cout << std::to_string(res) << '\n';
+	uint32_t res[2];
+	result_d.download(res, 2);
+	for (auto re : res)
+	{
+		std::cout << std::to_string(re) << '\n';
+	}
 
 	return 0;
 }
