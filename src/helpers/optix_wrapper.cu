@@ -6,6 +6,7 @@
 
 extern "C" char embedded_ptx_code[];
 
+using namespace geo_rt_index::helpers;
 
 optix_wrapper::optix_wrapper(bool debug) : debug{debug} {
     init_optix();

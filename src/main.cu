@@ -17,6 +17,10 @@
 using std::unique_ptr;
 using std::unique_ptr;
 
+using namespace geo_rt_index;
+using helpers::optix_pipeline;
+using helpers::optix_wrapper;
+
 OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& inputFactory) {
 	OptixTraversableHandle handle{0};
 	unique_ptr<OptixBuildInput> bi = inputFactory.Build();

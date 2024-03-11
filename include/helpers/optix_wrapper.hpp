@@ -8,6 +8,11 @@
 #include "cuda_buffer.hpp"
 #include "optix_helpers.cuh"
 
+namespace geo_rt_index
+{
+namespace helpers
+{
+
 struct optix_wrapper {
 
     optix_wrapper(bool debug = false);
@@ -37,6 +42,10 @@ public:
 
     bool debug;
 };
+
+} // helpers
+} // geo_rt_index
+
 
 
 #endif // CUDA_WRAPPER_HPP

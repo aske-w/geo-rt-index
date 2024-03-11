@@ -7,13 +7,13 @@
 
 #include <cstdio>
 
-//template<typename... Args>
-//static void d_print(const char * fmt, Args... args)
-//{
-//#if DEBUG_PRINT
-//	printf(fmt, args...);
-//#endif
-//}
+namespace geo_rt_index
+{
+namespace helpers
+{
+
+} // helpers
+} // geo_rt_index
 
 #if DEBUG_PRINT
 #define D_PRINT(...) printf(__VA_ARGS__)
