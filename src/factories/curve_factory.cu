@@ -5,6 +5,8 @@
 #include "factories/curve_factory.hpp"
 #include <optix_types.h>
 
+using namespace geo_rt_index::factories;
+
 CurveFactory::CurveFactory() : curve_points_d(std::move(std::make_unique<cuda_buffer>())),
       curve_indices_d(std::move(std::make_unique<cuda_buffer>())),
       curve_widths_d(std::move(std::make_unique<cuda_buffer>()))

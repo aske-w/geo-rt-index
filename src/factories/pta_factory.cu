@@ -1,6 +1,8 @@
 #include "factories/pta_factory.hpp"
 
 using std::make_unique;
+using namespace geo_rt_index::factories;
+
 
 PointToAABBFactory::PointToAABBFactory(const std::vector<Point>& _points)
 	: points_d(std::move(make_unique<cuda_buffer>())),

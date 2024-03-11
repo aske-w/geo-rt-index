@@ -9,6 +9,11 @@
 #include "types.hpp"
 #include <vector>
 
+namespace geo_rt_index
+{
+namespace factories
+{
+
 class PointToAABBFactory : public Factory<OptixBuildInput>
 {
 private:
@@ -24,5 +29,9 @@ public:
 	Point* GetPointsDevicePointer() const;
 	size_t GetNumPoints() const;
 };
+
+} // factories
+} // geo_rt_index
+
 
 #endif // GEO_RT_INDEX_PTA_FACTORY_HPP

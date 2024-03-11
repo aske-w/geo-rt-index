@@ -9,6 +9,8 @@ using std::make_unique;
 using std::unique_ptr;
 using std::vector;
 
+using namespace geo_rt_index::factories;
+
 AabbFactory::AabbFactory() : aabbs_d(std::move(make_unique<cuda_buffer>()))
 {
 

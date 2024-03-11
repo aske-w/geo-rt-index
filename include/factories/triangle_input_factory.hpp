@@ -10,6 +10,11 @@
 
 #include <optix_types.h>
 
+namespace geo_rt_index
+{
+namespace factories
+{
+
 class TriangleFactory : public Factory<OptixBuildInput> {
 private:
 	std::unique_ptr<cuda_buffer> triangles_d;
@@ -17,5 +22,9 @@ public:
 	TriangleFactory();
 	std::unique_ptr<OptixBuildInput> Build() override;
 };
+
+} // factories
+} // geo_rt_index
+
 
 #endif // GEO_RT_INDEX_TRIANGLE_INPUT_FACTORY_HPP
