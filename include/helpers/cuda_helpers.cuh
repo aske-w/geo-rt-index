@@ -5,6 +5,11 @@
 #define CUDA_HELPERS_CUH
 #include <iostream>
 
+namespace geo_rt_index
+{
+namespace helpers
+{
+
 #ifdef __CUDACC__
 #ifdef DEBUG
     #define CUERR {                                                            \
@@ -17,4 +22,8 @@
     }
 #endif
 #endif
+
+} // helpers
+} // geo_rt_index
+
 #endif // CUDA_HELPERS_CUH

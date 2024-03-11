@@ -15,7 +15,7 @@ using std::make_unique;
 using std::vector;
 using namespace geo_rt_index::factories;
 
-TriangleFactory::TriangleFactory() : triangles_d(std::move(std::make_unique<cuda_buffer>())) { }
+TriangleFactory::TriangleFactory() : triangles_d(std::move(std::make_unique<helpers::cuda_buffer>())) { }
 
 unique_ptr<OptixBuildInput> TriangleFactory::Build() {
 	static const constexpr uint32_t flags[] = {

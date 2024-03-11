@@ -11,7 +11,7 @@ using std::vector;
 
 using namespace geo_rt_index::factories;
 
-AabbFactory::AabbFactory() : aabbs_d(std::move(make_unique<cuda_buffer>()))
+AabbFactory::AabbFactory() : aabbs_d(std::move(make_unique<helpers::cuda_buffer>()))
 {
 
 }

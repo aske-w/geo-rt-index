@@ -18,7 +18,7 @@ namespace factories
 
 class AabbFactory : public Factory<OptixBuildInput> {
 private:
-	std::unique_ptr<cuda_buffer> aabbs_d;
+	std::unique_ptr<helpers::cuda_buffer> aabbs_d;
 public:
 	AabbFactory();
 	std::unique_ptr<OptixBuildInput> Build() override;

@@ -17,7 +17,7 @@ namespace factories
 
 class TriangleFactory : public Factory<OptixBuildInput> {
 private:
-	std::unique_ptr<cuda_buffer> triangles_d;
+	std::unique_ptr<helpers::cuda_buffer> triangles_d;
 public:
 	TriangleFactory();
 	std::unique_ptr<OptixBuildInput> Build() override;

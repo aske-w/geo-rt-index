@@ -12,8 +12,6 @@ namespace geo_rt_index
 namespace helpers
 {
 
-} // helpers
-} // geo_rt_index
 
 #if DEBUG_PRINT
 #define D_PRINT(...) printf(__VA_ARGS__)
@@ -23,4 +21,6 @@ namespace helpers
 
 #endif
 
+} // helpers
+} // geo_rt_index
 #endif // GEO_RT_INDEX_DEBUG_HELPERS_HPP

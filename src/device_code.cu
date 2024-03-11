@@ -1,7 +1,7 @@
 #include <cuda_runtime.h>
 #include "types.hpp"
 #include "launch_parameters.hpp"
-#include "optix_helpers.cuh"
+#include "helpers/optix_helpers.cuh"
 #include <optix.h>
 
 #include <limits>
@@ -44,7 +44,6 @@ extern "C" __global__ void __intersection__test() {
 extern "C" __global__ void __anyhit__test() {
 	const uint32_t primitive_id = optixGetPrimitiveIndex();
 	D_PRINT("__anyhit_test %d\n", primitive_id);
-	set_payload_32(primitive_id);
 	optixIgnoreIntersection();
 }
 

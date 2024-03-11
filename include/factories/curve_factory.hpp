@@ -17,9 +17,9 @@ namespace factories
 
 class CurveFactory : public Factory<OptixBuildInput> {
 private:
-	std::unique_ptr<cuda_buffer> curve_points_d;
-	std::unique_ptr<cuda_buffer> curve_indices_d;
-	std::unique_ptr<cuda_buffer> curve_widths_d;
+	std::unique_ptr<helpers::cuda_buffer> curve_points_d;
+	std::unique_ptr<helpers::cuda_buffer> curve_indices_d;
+	std::unique_ptr<helpers::cuda_buffer> curve_widths_d;
 public:
 	CurveFactory();
 	std::unique_ptr<OptixBuildInput> Build() override;

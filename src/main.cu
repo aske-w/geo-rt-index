@@ -20,6 +20,7 @@ using std::unique_ptr;
 using namespace geo_rt_index;
 using helpers::optix_pipeline;
 using helpers::optix_wrapper;
+using helpers::cuda_buffer;
 using factories::Factory;
 using factories::PointToAABBFactory;
 

@@ -17,8 +17,8 @@ namespace factories
 class PointToAABBFactory : public Factory<OptixBuildInput>
 {
 private:
-	std::unique_ptr<cuda_buffer> points_d;
-	std::unique_ptr<cuda_buffer> aabb_d;
+	std::unique_ptr<helpers::cuda_buffer> points_d;
+	std::unique_ptr<helpers::cuda_buffer> aabb_d;
 	size_t num_points;
 //	const std::vector<Point>& points;
 //	OptixAabb query;

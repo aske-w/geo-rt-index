@@ -2,7 +2,7 @@
 
 using std::make_unique;
 using namespace geo_rt_index::factories;
-
+using geo_rt_index::helpers::cuda_buffer;
 
 PointToAABBFactory::PointToAABBFactory(const std::vector<Point>& _points)
 	: points_d(std::move(make_unique<cuda_buffer>())),
