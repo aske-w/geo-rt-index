@@ -12,6 +12,7 @@
 #include "optix_stubs.h"
 #include "types.hpp"
 #include <vector>
+#include <random>
 
 using std::unique_ptr;
 using std::unique_ptr;
@@ -65,14 +66,18 @@ int main() {
     cuda_buffer /*curve_points_d,*/ as, result_d;
     cudaDeviceSynchronize(); CUERR
 #if INDEX_TYPE == 1
-	const std::vector<Point> points
+	std::random_device rd;
+	std::mt19937_64 gen {rd()};
+	std::uniform_real_distribution<float> rng {0, 25};
+	std::vector<Point> points;
+	for (int i = 0; i < 2'000'000; i++)
 	{
-	    {10,0},
-//	    {20,0},
-//	    {30,0},
-	};
+		points.push_back(Point(rng(gen),rng(gen)));
+	}
 	PointToAABBFactory f{points};
-	f.SetQuery({9, -1, 1, 11, 1, 2});
+
+	f.SetQuery({9, -1, 1, 21, 1, 2});
+
 #else
 //	TriangleFactory f{};
 	AabbFactory f{};
@@ -108,12 +113,12 @@ int main() {
 
 	cudaDeviceSynchronize(); CUERR
 
-	uint32_t res[2];
-	result_d.download(res, 2);
-	for (auto re : res)
-	{
-		std::cout << std::to_string(re) << '\n';
-	}
+//	uint32_t res[2];
+//	result_d.download(res, 2);
+//	for (auto re : res)
+//	{
+//		std::cout << std::to_string(re) << '\n';
+//	}
 
 	return 0;
 }

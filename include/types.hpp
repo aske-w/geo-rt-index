@@ -7,6 +7,7 @@
 #include <optix_types.h>
 
 #include "cuda_buffer.hpp"
+#include "helpers/debug_helpers.hpp"
 
 struct Triangle
 {
@@ -35,7 +36,7 @@ struct Point {
 		    {x, 0 + (0.5f * f), -1},
 		    {x, 0, 1}
 		};
-		printf("((%f,%f,%f),(%f,%f,%f),(%f,%f,%f))",
+		D_PRINT("((%f,%f,%f),(%f,%f,%f),(%f,%f,%f))",
 		       t.v1.x, t.v1.y, t.v1.z,
 		       t.v2.x, t.v2.y, t.v2.z,
 		       t.v3.x, t.v3.y, t.v3.z);
