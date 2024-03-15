@@ -28,6 +28,14 @@ struct Triangle
 
 struct Point {
 	float x, y;
+
+	Point(int _x, int _y) : x(static_cast<float>(_x)), y(static_cast<float>(_y))
+	{
+	}
+	Point(float _x, float _y) : x(_x), y(_y)
+	{
+	}
+
 	Triangle ToTriangle() const {
 		const constexpr float f = 3.f;
 		auto t = Triangle{

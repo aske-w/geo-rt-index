@@ -77,12 +77,47 @@ int main() {
 	std::mt19937_64 gen {rd()};
 	std::uniform_real_distribution<float> rng {0, 25};
 	std::vector<Point> points;
-	for (int i = 0; i < 20'000; i++)
-	{
-		points.push_back(Point(rng(gen),rng(gen)));
-	}
-	PointToAABBFactory f{points};
+//	uint32_t num_in_range = 500;
+//	uint32_t num_points= 11;
+//	for (int i = 0; i < num_in_range; i++)
+//	{
+//		auto x = rng(gen);
+//		while(x < 9 || 21 < x)
+//			x = rng(gen);
+//		auto y = rng(gen);
+//		while(y < -1 || 1 < y)
+//			y = rng(gen);
+//
+//		points.push_back(Point(x, y));
+//	}
+//	for (int i = 0; i < num_points - num_in_range; i++)
+//	{
+//		auto x = rng(gen);
+//		while(x > 9 && 21 > x)
+//			x = rng(gen);
+//		auto y = rng(gen);
+//		while(y > -1 && 1 > y)
+//			y = rng(gen);
+//		points.push_back(Point(x, y));
+//	}
+	points.emplace_back(21.f, 1.f);
+	points.emplace_back(21.f, -1.f);
+	points.emplace_back(9.f, 1.f);
+	points.emplace_back(9.f, -1.f);
+//	points.emplace_back(10.f, 0.1f);
+//	points.emplace_back(10.f, 0.2f);
+//	points.emplace_back(11, 0);
+//	points.emplace_back(12.f, 0.1f);
+//	points.emplace_back(13.f, 0.2f);
+//
+//	points.emplace_back(310.f, 0.1f);
+//	points.emplace_back(310.f, 0.2f);
+//	points.emplace_back(311, 0);
+//	points.emplace_back(312.f, 0.1f);
+//	points.emplace_back(313.f, 0.2f);
 
+	uint32_t num_points = points.size();
+	PointToAABBFactory f{points};
 	f.SetQuery({9, -1, 1, 21, 1, 2});
 
 #else
@@ -91,7 +126,8 @@ int main() {
 //	PointFactory f{};
 #endif
 	auto handle = foo(optix, f);
-	result_d.alloc(sizeof(uint32_t) * 2);
+	result_d.alloc(sizeof(bool) * num_points);
+	cudaMemset(result_d.raw_ptr, 0, num_points);
 	LaunchParameters launch_params
 	{
 		.traversable = handle,
@@ -99,7 +135,7 @@ int main() {
 		.points = f.GetPointsDevicePointer(),
 		.num_points = points.size(),
 #endif
-		.result_d = result_d.ptr<uint32_t>(),
+		.result_d = result_d.ptr<bool>(),
 	};
 
 	cuda_buffer launch_params_d;
@@ -120,12 +156,20 @@ int main() {
 
 	cudaDeviceSynchronize(); CUERR
 
-//	uint32_t res[2];
-//	result_d.download(res, 2);
-//	for (auto re : res)
-//	{
-//		std::cout << std::to_string(re) << '\n';
-//	}
+	bool res[num_points];
+	result_d.download(res, num_points);
+	uint32_t hit_count = 0;
+	for(uint32_t i = 0; i < num_points; i++)
+	{
+		auto result = res[i];
+		if (result)
+		{
+			hit_count++;
+//			std::cout << std::to_string(i) << '\n';
+		}
+	}
+	std::cout << std::to_string(hit_count) << '\n';
+
 
 	return 0;
 }

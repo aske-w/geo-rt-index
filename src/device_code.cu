@@ -26,16 +26,16 @@ extern "C" __global__ void __miss__test() {
 // this function is called for every potential ray-aabb intersection
 extern "C" __global__ void __intersection__test() {
 	const uint32_t primitive_id = optixGetPrimitiveIndex();
-	D_PRINT("__intersection__test %u\n", primitive_id);
+//	D_PRINT("__intersection__test %u\n", primitive_id);
 //	D_PRINT("Is frontface hit: %x ", optixIsFrontFaceHit());
 //	D_PRINT("Is backface hit: %x ", optixIsBackFaceHit());
 //	D_PRINT("result_count %u\n", params.result_count);
 //	D_PRINT("result_d %llX\n", params.result_d);
 //	D_PRINT("access %u\n", params.result_d[x]);
-	auto x = optixGetPayload_0();
-	params.result_d[x] = primitive_id;
+	params.result_d[optixGetPayload_0()] = 1;
+//	D_PRINT("Hit %u\n", optixGetPayload_0());
 //	D_PRINT("write");
-	optixSetPayload_0(x + 1);
+//	optixSetPayload_0(1);
 //	set_payload_32(primitive_id);
 }
 
@@ -62,10 +62,9 @@ extern "C" __global__ void __raygen__test() {
 //		D_PRINT("Origin: (%f,%f,0)\n", point.x, point.y);
 		const float3 direction {point.x, point.y, t_max};
 //		D_PRINT("Direction: (%f,%f,5)\n", point.x, point.y);
-		uint32_t i0 = 0;
 		optixTrace(params.traversable, origin, direction, 0, t_max, 0.0f, OptixVisibilityMask(255), ray_flags, 0, 0,
-		           0, i0);
-		D_PRINT("__raygen_test %d: %d\n", i, i0);
+		           0, i);
+//		D_PRINT("__raygen_test hit %d\n", i, i0);
 	}
 #else
 	D_PRINT("__raygen_test\n");
