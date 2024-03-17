@@ -22,7 +22,7 @@ int main(){
     memset(inputs, 0, sizeof(OptixBuildInput) * numInputs);
 
 
-    cuda_buffer buf;
+    geo_rt_index::helpers::cuda_buffer buf;
     buf.alloc_and_upload(vector<float3>{
         {0, 0, 0},
         {0, 1, 0},
