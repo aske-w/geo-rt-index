@@ -5,6 +5,10 @@
 
 #include <cassert>
 #include <vector>
+namespace geo_rt_index
+{
+namespace helpers
+{
 
 struct cuda_buffer {
 
@@ -72,3 +76,6 @@ struct cuda_buffer {
     size_t size_in_bytes{0};
     void* raw_ptr{nullptr};
 };
+
+} // helpers
+} // geo_rt_index

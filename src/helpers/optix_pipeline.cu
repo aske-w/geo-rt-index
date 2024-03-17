@@ -3,6 +3,8 @@
 #include <iostream>
 #include <optix_stubs.h>
 
+using namespace geo_rt_index::helpers;
+
 static void print_log(const char *message) {
     std::cout << "log=" << message << std::endl;
 }

@@ -3,18 +3,19 @@
 //
 
 #include "factories/triangle_input_factory.hpp"
-
-#include "cuda_buffer.hpp"
+#include "helpers/cuda_buffer.hpp"
 #include "types.hpp"
-#include <optix_types.h>
+
 #include <cstring>
+#include <optix_types.h>
 #include <vector>
 
 using std::unique_ptr;
 using std::make_unique;
 using std::vector;
+using namespace geo_rt_index::factories;
 
-TriangleFactory::TriangleFactory() : triangles_d(std::move(std::make_unique<cuda_buffer>())) { }
+TriangleFactory::TriangleFactory() : triangles_d(std::move(std::make_unique<helpers::cuda_buffer>())) { }
 
 unique_ptr<OptixBuildInput> TriangleFactory::Build() {
 	static const constexpr uint32_t flags[] = {

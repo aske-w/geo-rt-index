@@ -3,6 +3,11 @@
 
 #include "optix_wrapper.hpp"
 
+namespace geo_rt_index
+{
+namespace helpers
+{
+
 struct optix_pipeline {
     optix_pipeline(optix_wrapper* optix, bool verbose = false);
     ~optix_pipeline();
@@ -32,5 +37,8 @@ public:
     cuda_buffer hitgroup_records_buffer;
     OptixShaderBindingTable sbt = {};
 };
+
+} // helpers
+} // geo_rt_index
 
 #endif // OPTIX_PIPELINE_HPP

@@ -4,11 +4,14 @@
 #include "types.hpp"
 #include <optix_types.h>
 
-struct
-    launch_parameters {
+struct LaunchParameters
+{
     OptixTraversableHandle traversable;
-//	Triangle* curve_points_d;
-	uint32_t* result_d;
+#if INDEX_TYPE == 1
+	Point* points;
+	const size_t num_points = 0;
+#endif
+	bool* result_d;
 };
 
 #endif //LAUNCH_PARAMETERS_HPP

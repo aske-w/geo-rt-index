@@ -1,3 +1,4 @@
+#include "helpers/debug_helpers.hpp"
 #include "helpers/optix_wrapper.hpp"
 #include "optix_stubs.h"
 
@@ -5,6 +6,7 @@
 
 extern "C" char embedded_ptx_code[];
 
+using namespace geo_rt_index::helpers;
 
 optix_wrapper::optix_wrapper(bool debug) : debug{debug} {
     init_optix();
@@ -41,7 +43,7 @@ static void context_log_cb(unsigned int level,
                            const char *message,
                            void *) {
     // ENABLE IF NEEDED
-     fprintf(stderr, "[%2d][%12s]: %s\n", (int)level, tag, message);
+     D_PRINT("[%2d][%12s]: %s\n", (int)level, tag, message);
 }
 
 

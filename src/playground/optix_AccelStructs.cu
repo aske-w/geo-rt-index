@@ -1,6 +1,7 @@
-#include <optix_types.h>
+#include "helpers/cuda_buffer.hpp"
+
 #include <cstring>
-#include "cuda_buffer.hpp"
+#include <optix_types.h>
 
 /**
  * NVIDIA OptiX provides acceleration structures to optimize the search for the intersection of rays with the geometric
@@ -21,7 +22,7 @@ int main(){
     memset(inputs, 0, sizeof(OptixBuildInput) * numInputs);
 
 
-    cuda_buffer buf;
+    geo_rt_index::helpers::cuda_buffer buf;
     buf.alloc_and_upload(vector<float3>{
         {0, 0, 0},
         {0, 1, 0},

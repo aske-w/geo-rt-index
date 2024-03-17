@@ -3,6 +3,11 @@
 
 #include <optix.h>
 
+namespace geo_rt_index
+{
+namespace helpers
+{
+
 #ifdef __CUDACC__
 #define DEVICEQUALIFIER  __device__
 #else
@@ -42,4 +47,8 @@ DEVICEQUALIFIER INLINEQUALIFIER
 	static_assert(sizeof(packed_type) == 4);
 	return (packed_type) optixGetPayload_0();
 }
+
+} // helpers
+} // geo_rt_index
+
 #endif // OPTIX_HELPERS_CUH

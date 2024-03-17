@@ -10,6 +10,16 @@ if (USE_DEBUG OR (${CMAKE_BUILD_TYPE} STREQUAL "Debug"))
 	add_compile_definitions(DEBUG)
 endif()
 
+option(INDEX_TYPE "Index type" 1)
+add_compile_definitions(INDEX_TYPE)
+
+option(DEBUG_PRINT "Enable debug print statements" 0)
+if((DEFINED DEBUG_PRINT) AND (DEBUG_PRINT STREQUAL "ON"))
+	add_compile_definitions(DEBUG_PRINT=1)
+else ()
+	add_compile_definitions(DEBUG_PRINT=0)
+endif ()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CUDA_STANDARD 20)
 set(CMAKE_CUDA_ARCHITECTURES 75) # RTX 2070 Super

@@ -5,18 +5,26 @@
 #ifndef GEO_RT_INDEX_POINT_FACTORY_HPP
 #define GEO_RT_INDEX_POINT_FACTORY_HPP
 
-#include "types.hpp"
-#include "cuda_buffer.hpp"
 #include "factory.hpp"
+#include "helpers/cuda_buffer.hpp"
 #include "types.hpp"
+
+namespace geo_rt_index
+{
+namespace factories
+{
 
 class PointFactory : public Factory<OptixBuildInput> {
 private:
-	std::unique_ptr<cuda_buffer> points_d;
+	std::unique_ptr<helpers::cuda_buffer> points_d;
 	std::unique_ptr<std::vector<Point>> points;
 public:
 	PointFactory();
 	std::unique_ptr<OptixBuildInput> Build() override;
 };
+
+} // factories
+} // geo_rt_index
+
 
 #endif // GEO_RT_INDEX_POINT_FACTORY_HPP
