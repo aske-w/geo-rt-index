@@ -49,6 +49,7 @@ extern "C" __global__ void __anyhit__test() {
 
 // this is the entry point
 extern "C" __global__ void __raygen__test() {
+	D_PRINT("running from thread ID %d\n", threadIdx.x + blockDim.x * blockIdx.x);
 	constexpr const uint32_t ray_flags = 0;
 #if INDEX_TYPE == 1 // IndexType::PTA
 	const auto limit = params.num_points;

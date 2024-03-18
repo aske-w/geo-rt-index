@@ -97,8 +97,8 @@ public:
 
    // Does a box contain a point.
    __host__ __device__ bool contains(const float2 &p) const {
-	   return p.x >= m_p_min.x && p.x < m_p_max.x && p.y >= m_p_min.y &&
-			  p.y < m_p_max.y;
+	   return p.x >= m_p_min.x && p.x <= m_p_max.x && p.y >= m_p_min.y &&
+			  p.y <= m_p_max.y;
    }
 
    // Define the bounding box.
@@ -589,6 +589,45 @@ bool check_quadtree(const Quadtree_node *nodes, int idx, int num_pts,
    return true;
 }
 
+bool fully_contained(const Quadtree_node& node, const Bounding_box& bbox)
+{
+	const auto node_bbox = node.bounding_box();
+	return bbox.contains(node_bbox.get_min()) && bbox.contains(node_bbox.get_max());
+//	return node_bbox.contains(bbox.get_min()) && node_bbox.contains(bbox.get_max());
+}
+
+bool partially_contained(const Quadtree_node& node, const Bounding_box& bbox)
+{
+	const auto node_bbox = node.bounding_box();
+	return bbox.contains(node_bbox.get_min()) || bbox.contains(node_bbox.get_max());
+}
+
+void range_search(const Quadtree_node *nodes, int idx, Bounding_box bbox_query, thrust::host_vector<int>& result,
+                  int nodes_at_this_level)
+{
+	const Quadtree_node& node = nodes[idx];
+
+	if(fully_contained(node, bbox_query))
+	{
+		for (int i = node.points_begin(); i < node.points_end(); i++)
+			result.push_back(i);
+
+	}
+	else if(partially_contained(node, bbox_query))
+	{
+		// check the four quads
+		range_search(&nodes[nodes_at_this_level], 4 * idx + 0, bbox_query, result, nodes_at_this_level * 4);
+		range_search(&nodes[nodes_at_this_level], 4 * idx + 1, bbox_query, result, nodes_at_this_level * 4);
+		range_search(&nodes[nodes_at_this_level], 4 * idx + 2, bbox_query, result, nodes_at_this_level * 4);
+		range_search(&nodes[nodes_at_this_level], 4 * idx + 3, bbox_query, result, nodes_at_this_level * 4);
+	}
+}
+
+__forceinline__ void range_search(const Quadtree_node *nodes, Bounding_box bbox_query, thrust::host_vector<int>& result)
+{
+	range_search(nodes, 0, bbox_query, result, 1);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Parallel random number generator.
 ////////////////////////////////////////////////////////////////////////////////
@@ -699,6 +738,35 @@ bool cdpQuadtree(int warp_size) {
    // Validate the results.
    bool ok = check_quadtree(host_nodes, 0, num_points, &host_points, params);
    std::cout << "Results: " << (ok ? "OK" : "FAILED") << std::endl;
+
+   Bounding_box query;
+   query.set(0,0,1.f,1.f);
+   thrust::host_vector<int> idxs;
+   idxs.reserve(num_points);
+   range_search(host_nodes, query, idxs);
+   std::cout << "Range size: " << std::to_string(idxs.size()) << '\n';
+   for(int i = 0; i < idxs.size(); i++)
+   {
+	   const auto a = idxs[i];
+	   for(int j = i + 1; j < idxs.size(); j++)
+	   {
+		   const auto b = idxs[j];
+		   if(a == b)
+			   std::cout << std::to_string(a) <<  " at index " << std::to_string(i)
+				         << " has duplicate at index " << std::to_string(j) << '\n';
+	   }
+   }
+//   for(auto&& id : idxs)
+//   {
+//	   std::cout << std::to_string(id);
+//	   idxs.
+//	   for(auto&& _id : idxs)
+//	   {
+//		   if(id == _id)
+//			   std::cout << " is duplicate";
+//	   }
+//	   std::cout << '\n';
+//   }
 
    // Free CPU memory.
    delete[] host_nodes;
