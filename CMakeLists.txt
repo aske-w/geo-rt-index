@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.22.1)
 
 set(NAME geo-rt-index)
-project(${NAME} C CXX CUDA) # C is needed for embedding the ptx file
+project(${NAME} LANGUAGES C CXX CUDA) # C is needed for embedding the ptx file
 find_package(OptiX REQUIRED)
 find_package(CUDA REQUIRED)
 
 option(USE_DEBUG "Enable debug statements. Always enabled for debug builds." OFF)
-if (USE_DEBUG OR (${CMAKE_BUILD_TYPE} STREQUAL "Debug"))
+if (USE_DEBUG OR ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug"))
 	add_compile_definitions(DEBUG)
 endif()
 
@@ -48,8 +48,8 @@ cuda_compile_and_embed(embedded_ptx_code src/device_code.cu)
 
 add_executable(${NAME} ${embedded_ptx_code} ${SOURCES})
 
-add_executable(quadtree ${QUADTREE_SOURCES})
-set_property(TARGET quadtree PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+#add_executable(quadtree ${QUADTREE_SOURCES})
+#set_property(TARGET quadtree PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
 target_link_libraries(${NAME}
 	${CUDA_CUDA_LIBRARY}

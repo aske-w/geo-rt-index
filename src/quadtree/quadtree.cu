@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <memory>
+#include <random>
 
 using std::vector;
 using std::unique_ptr;
@@ -84,6 +85,7 @@ template<const uint8_t NODE_CAPACITY = 4>
 class QuadTree
 {
 private:
+	uint32_t size;
 	unique_ptr<vector<Point>> points; // std::array?
 	unique_ptr<QuadTree> nw, ne, sw, se;
 
@@ -96,7 +98,7 @@ public:
 	      nw(nullptr),
 	      ne(nullptr),
 	      sw(nullptr),
-	      se(nullptr)
+	      se(nullptr), size(0)
 	{
 	}
 
@@ -105,7 +107,9 @@ public:
 		if(!boundary.contains(p))
 			return false;
 
-		if(points->size() < NODE_CAPACITY && !nw)
+		size++;
+
+		if(points && points->size() < NODE_CAPACITY && !nw)
 		{
 			points->push_back(std::move(p));
 			return true;
@@ -131,6 +135,35 @@ public:
 		ne = make_unique<QuadTree>(BBox {Point(my_x + quarter_dim, my_y + quarter_dim), quarter_dim});
 		se = make_unique<QuadTree>(BBox {Point(my_x + quarter_dim, my_y - quarter_dim), quarter_dim});
 		sw = make_unique<QuadTree>(BBox {Point(my_x - quarter_dim, my_y - quarter_dim), quarter_dim});
+
+		for (auto&& p : *points)
+		{
+			if (nw->boundary.contains(p))
+			{
+				nw->insert(p);
+				//continue;
+			}
+			else if (ne->boundary.contains(p))
+			{
+				ne->insert(p);
+				//continue;
+			}
+			else if (se->boundary.contains(p))
+			{
+				se->insert(p);
+				//continue;
+			}
+			else if (sw->boundary.contains(p))
+			{
+				sw->insert(p);
+				//continue;
+	}
+			else
+			{
+				std::exception();
+			}
+		}
+		this->points.reset();
 	}
 
 	void query_range() const
@@ -140,11 +173,23 @@ public:
 
 int main()
 {
-	QuadTree t{BBox(Point{0.5f, 0.5f}, 0.5f)};
-	t.insert(Point(0.25,0.25));
-	t.insert(Point(0.75,0.25));
+	QuadTree<4> t{BBox(Point{0.5f, 0.5f}, 0.5f)};
+	std::random_device rd;
+	std::mt19937_64 gen {rd()};
+	std::uniform_real_distribution<float> dis{0, 0.25};
+
+	//t.insert(Point(0.25,0.25));
+	/*t.insert(Point(0.75,0.25));
 	t.insert(Point(0.25,0.75));
 	t.insert(Point(0.75,0.75));
-	t.insert(Point(0.70,0.75));
+	t.insert(Point(0.70,0.75));*/
+
+
+	for (uint8_t i = 0; i < 10; i++)
+	{
+		auto x = dis(gen);
+		auto y = dis(gen);
+		t.insert(Point(x,y));
+	}
 	return 0;
 }
