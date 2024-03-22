@@ -26,16 +26,16 @@ extern "C" __global__ void __miss__test() {
 // this function is called for every potential ray-aabb intersection
 extern "C" __global__ void __intersection__test() {
 	const uint32_t primitive_id = optixGetPrimitiveIndex();
-//	D_PRINT("__intersection__test %u\n", primitive_id);
+	D_PRINT("__intersection__test %u\n", primitive_id);
 //	D_PRINT("Is frontface hit: %x ", optixIsFrontFaceHit());
 //	D_PRINT("Is backface hit: %x ", optixIsBackFaceHit());
 //	D_PRINT("result_count %u\n", params.result_count);
 //	D_PRINT("result_d %llX\n", params.result_d);
 //	D_PRINT("access %u\n", params.result_d[x]);
-	params.result_d[optixGetPayload_0()] = 1;
+	params.result_d[optixGetPayload_0()] = true;
 //	D_PRINT("Hit %u\n", optixGetPayload_0());
 //	D_PRINT("write");
-//	optixSetPayload_0(1);
+	optixSetPayload_1(optixGetPayload_1() + 1);
 //	set_payload_32(primitive_id);
 }
 
@@ -55,27 +55,33 @@ extern "C" __global__ void __raygen__test() {
 	const auto limit = params.num_points;
 	const auto points = params.points;
 	const auto t_max = 1e16f;
+	uint32_t count = 0;
 	for (uint32_t i = 0; i < limit; i++)
 	{
 		const Point point = points[i];
-//		D_PRINT("Point: (%f,%f)\n", point.x, point.y);
+		if(0 <= point.x && point.x <= 1 &&
+		        0 <= point.y && point.y <= 1)
+		{
+			D_PRINT("Point: (%f,%f)\n", point.x, point.y);
+		}
 		const float3 origin {point.x, point.y, 0};
 //		D_PRINT("Origin: (%f,%f,0)\n", point.x, point.y);
 		const float3 direction {point.x, point.y, t_max};
 //		D_PRINT("Direction: (%f,%f,5)\n", point.x, point.y);
 		optixTrace(params.traversable, origin, direction, 0, t_max, 0.0f, OptixVisibilityMask(255), ray_flags, 0, 0,
-		           0, i);
+		           0, i, count);
 //		D_PRINT("__raygen_test hit %d\n", i, i0);
 	}
+	D_PRINT("count: %d\n", count);
 #else
-	D_PRINT("__raygen_test\n");
-	const constexpr float t_max= 100;
-	const float3 origin {0.5,1.5,0.5};
-	const float3 direction {t_max,1.5,0.5};
-	uint32_t i0 = 0;
-	optixTrace(params.traversable, origin, direction, 0, t_max, 0.0f, OptixVisibilityMask(255), ray_flags, 0, 0,
-			   0, i0);
-	D_PRINT("__raygen_test:%d\n",i0);
+//	D_PRINT("__raygen_test\n");
+//	const constexpr float t_max= 100;
+//	const float3 origin {0.5,1.5,0.5};
+//	const float3 direction {t_max,1.5,0.5};
+//	uint32_t i0 = 0;
+//	optixTrace(params.traversable, origin, direction, 0, t_max, 0.0f, OptixVisibilityMask(255), ray_flags, 0, 0,
+//			   0, i0);
+//	D_PRINT("__raygen_test:%d\n",i0);
 //	for(uint i = 0; i < 1000; i++)
 //	{
 //	}

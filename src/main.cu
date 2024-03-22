@@ -13,7 +13,9 @@
 #include "types.hpp"
 #include <vector>
 #include <random>
-#include "device_code.cu"
+#include "helpers/input_generator.hpp"
+
+//#include "device_code.cu"
 
 
 using std::unique_ptr;
@@ -72,13 +74,13 @@ int main() {
     optix_wrapper optix(debug);
     optix_pipeline pipeline(&optix);
 
-    cuda_buffer /*curve_points_d,*/ as, result_d;
+    cuda_buffer /*curve_points_d,*/ as;
     cudaDeviceSynchronize(); CUERR
 #if INDEX_TYPE == 1
-	std::random_device rd;
-	std::mt19937_64 gen {rd()};
-	std::uniform_real_distribution<float> rng {0, 25};
-	std::vector<Point> points;
+//	std::random_device rd;
+//	std::mt19937_64 gen {rd()};
+//	std::uniform_real_distribution<float> rng {0, 25};
+//	std::vector<Point> points;
 //	uint32_t num_in_range = 500;
 //	uint32_t num_points= 11;
 //	for (int i = 0; i < num_in_range; i++)
@@ -102,34 +104,51 @@ int main() {
 //			y = rng(gen);
 //		points.push_back(Point(x, y));
 //	}
-	points.emplace_back(21.f, 1.f);
-	points.emplace_back(21.f, -1.f);
-	points.emplace_back(9.f, 1.f);
-	points.emplace_back(9.f, -1.f);
-//	points.emplace_back(10.f, 0.1f);
-//	points.emplace_back(10.f, 0.2f);
-//	points.emplace_back(11, 0);
-//	points.emplace_back(12.f, 0.1f);
-//	points.emplace_back(13.f, 0.2f);
+//	points.emplace_back(21.f, 1.f);
+//	points.emplace_back(21.f, -1.f);
+//	points.emplace_back(9.f, 1.f);
+//	points.emplace_back(9.f, -1.f);
+////	points.emplace_back(10.f, 0.1f);
+////	points.emplace_back(10.f, 0.2f);
+////	points.emplace_back(11, 0);
+////	points.emplace_back(12.f, 0.1f);
+////	points.emplace_back(13.f, 0.2f);
+////
+////	points.emplace_back(310.f, 0.1f);
+////	points.emplace_back(310.f, 0.2f);
+////	points.emplace_back(311, 0);
+////	points.emplace_back(312.f, 0.1f);
+////	points.emplace_back(313.f, 0.2f);
 //
-//	points.emplace_back(310.f, 0.1f);
-//	points.emplace_back(310.f, 0.2f);
-//	points.emplace_back(311, 0);
-//	points.emplace_back(312.f, 0.1f);
-//	points.emplace_back(313.f, 0.2f);
-
-	uint32_t num_points = points.size();
+	const uint32_t num_points = 9000;
+	const uint32_t num_in_range = 100;
+	const auto query = OptixAabb{0,0, 2, 1, 1, 4};
+	const auto space = OptixAabb{0, 0, 0, 2000, 20, 0};
+	auto points_p = InputGenerator::Generate(query, space, num_points, num_in_range);
+	auto points = *points_p;
+//	std::vector<Point> points{{0.958500f, 0.949023f}};
+//	for(int i=10; i < num_points + 10; i++)
+//	{
+//		points.emplace_back(i, i);
+//	}
+//	points.push_back({0.438500f, 0.229023f});
+//	assert(points.size() == num_points);
 	PointToAABBFactory f{points};
-	f.SetQuery({9, -1, 1, 21, 1, 2});
+	f.SetQuery(query);
 
 #else
 //	TriangleFactory f{};
 	AabbFactory f{};
 //	PointFactory f{};
 #endif
+
+	unique_ptr<cuda_buffer> result_d = std::make_unique<cuda_buffer>();
+	auto res = std::make_unique<bool*>(new bool[num_points]);
+	memset(*res, 0, num_points);
+	result_d->alloc(sizeof(bool) * num_points);
+	result_d->upload(*res, num_points);
+
 	auto handle = foo(optix, f);
-	result_d.alloc(sizeof(bool) * num_points);
-	cudaMemset(result_d.raw_ptr, 0, num_points);
 	LaunchParameters launch_params
 	{
 		.traversable = handle,
@@ -137,8 +156,10 @@ int main() {
 		.points = f.GetPointsDevicePointer(),
 		.num_points = points.size(),
 #endif
-		.result_d = result_d.ptr<bool>(),
+		.result_d = result_d->ptr<bool>(),
 	};
+
+	printf("launch parms num_points %u\n", launch_params.num_points);
 
 	cuda_buffer launch_params_d;
 	launch_params_d.alloc(sizeof(launch_params));
@@ -158,12 +179,12 @@ int main() {
 
 	cudaDeviceSynchronize(); CUERR
 
-	bool res[num_points];
-	result_d.download(res, num_points);
+//	bool res[num_points];
+	result_d->download(*res, num_points);
 	uint32_t hit_count = 0;
 	for(uint32_t i = 0; i < num_points; i++)
 	{
-		auto result = res[i];
+		auto result = (*res)[i];
 		if (result)
 		{
 			hit_count++;
@@ -171,6 +192,7 @@ int main() {
 		}
 	}
 	std::cout << std::to_string(hit_count) << '\n';
+	assert(hit_count == num_in_range);
 
 
 	return 0;

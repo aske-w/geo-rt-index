@@ -50,13 +50,8 @@ add_executable(${NAME} ${embedded_ptx_code} ${SOURCES})
 
 #add_executable(quadtree ${QUADTREE_SOURCES})
 #set_property(TARGET quadtree PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-
-
-#SET(QT_SOURCES
-#	src/helpers
-#)
-add_executable(qt_cpu ${QT_SOURCES} src/quadtree/quadtree_cpu.cpp)
-add_executable(qt_gpu ${QT_SOURCES} src/quadtree/quadtree_gpu.cu)
+#add_executable(qt_cpu ${QT_SOURCES} src/quadtree/quadtree_cpu.cpp)
+#add_executable(qt_gpu ${QT_SOURCES} src/quadtree/quadtree_gpu.cu)
 
 target_link_libraries(${NAME}
 	${CUDA_CUDA_LIBRARY}

@@ -4,14 +4,16 @@
 
 #include "helpers/input_generator.hpp"
 #include <random>
+#include "helpers/pretty_printers.hpp"
 
 using std::unique_ptr, std::make_unique;
 using std::vector;
+using std::uniform_real_distribution;
 
 inline static bool Contains(const OptixAabb& aabb, const Point& point)
 {
 	return aabb.minX <= point.x && point.x <= aabb.maxX &&
-        aabb.maxX <= point.y && point.y <= aabb.maxY;
+        aabb.minY <= point.y && point.y <= aabb.maxY;
 }
 
 unique_ptr<vector<Point>> InputGenerator::Generate(const OptixAabb& query_aabb, const OptixAabb& space_aabb,
@@ -23,10 +25,11 @@ unique_ptr<vector<Point>> InputGenerator::Generate(const OptixAabb& query_aabb, 
 	std::mt19937_64 gen {rd()};
 	auto points = make_unique<vector<Point>>();
 	points->reserve(num_total);
+	uniform_real_distribution<float> rng{0, 1};
 
 	{
-		std::uniform_real_distribution<float> inside_x_rng {query_aabb.minX, query_aabb.maxX};
-		std::uniform_real_distribution<float> inside_y_rng {query_aabb.minY, query_aabb.minY};
+		uniform_real_distribution<float> inside_x_rng {query_aabb.minX, query_aabb.maxX};
+		uniform_real_distribution<float> inside_y_rng {query_aabb.minY, query_aabb.maxY};
 		for (uint32_t i = 0; i < num_in_aabb; i++)
 		{
 			const float x = inside_x_rng(gen);
@@ -35,9 +38,11 @@ unique_ptr<vector<Point>> InputGenerator::Generate(const OptixAabb& query_aabb, 
 		}
 	}
 
+//	std::cout << *points << '\n';
+
 	{
-		std::uniform_real_distribution<float> outside_x_rng {space_aabb.minX, space_aabb.maxX};
-		std::uniform_real_distribution<float> outside_y_rng {space_aabb.minY, space_aabb.maxY};
+		uniform_real_distribution<float> outside_x_rng {space_aabb.minX, space_aabb.maxX};
+		uniform_real_distribution<float> outside_y_rng {space_aabb.minY, space_aabb.maxY};
 		const auto num_outside_aabb = num_total - num_in_aabb;
 		for (uint32_t i = 0; i < num_outside_aabb;)
 		{
