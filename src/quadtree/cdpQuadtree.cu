@@ -97,8 +97,8 @@ public:
 
    // Does a box contain a point.
    __host__ __device__ bool contains(const float2 &p) const {
-	   return p.x >= m_p_min.x && p.x <= m_p_max.x && p.y >= m_p_min.y &&
-			  p.y <= m_p_max.y;
+	   return p.x >= m_p_min.x && p.x < m_p_max.x && p.y >= m_p_min.y &&
+			  p.y < m_p_max.y;
    }
 
    // Define the bounding box.
@@ -287,11 +287,24 @@ __global__ void build_quadtree_kernel(Quadtree_node *nodes, Points *points,
 
    // Stop the recursion here. Make sure points[0] contains all the points.
    if (params.depth >= params.max_depth || num_points <= params.min_points_per_node) {
+//	   printf("params.depth >= params.max_depth: %d\n", params.depth >= params.max_depth);
+//	   printf("num_points <= params.min_points_per_node: %d\n", num_points <= params.min_points_per_node);
 	   if (params.point_selector == 1) {
 		   int it = node.points_begin(), end = node.points_end();
 
 		   for (it += threadIdx.x; it < end; it += NUM_THREADS_PER_BLOCK)
-			   if (it < end) points[0].set_point(it, points[1].get_point(it));
+		   {
+			   if (it < end)
+			   {
+				   auto p = points[1].get_point(it);
+//				   if(!node.bounding_box().contains(p))
+//				   if(p == float2())
+//					   printf("ayo wtf\n");
+
+			   		points[0].set_point(it, p);
+
+			   }
+		   }
 	   }
 
 	   return;
@@ -564,7 +577,8 @@ bool check_quadtree(const Quadtree_node *nodes, int idx, int num_pts,
 	   num_points_in_children +=
 		   nodes[params.num_nodes_at_this_level + 4 * idx + 3].num_points();
 
-	   if (num_points_in_children != node.num_points()) return false;
+	   if (num_points_in_children != node.num_points())
+		   return false;
 
 	   return check_quadtree(&nodes[params.num_nodes_at_this_level], 4 * idx + 0,
 							 num_pts, pts, Parameters(params, true)) &&
@@ -579,11 +593,13 @@ bool check_quadtree(const Quadtree_node *nodes, int idx, int num_pts,
    const Bounding_box &bbox = node.bounding_box();
 
    for (int it = node.points_begin(); it < node.points_end(); ++it) {
-	   if (it >= num_pts) return false;
+	   if (it >= num_pts)
+		   return false;
 
 	   float2 p = pts->get_point(it);
 
-	   if (!bbox.contains(p)) return false;
+	   if (!bbox.contains(p))
+		   return false;
    }
 
    return true;
@@ -665,9 +681,12 @@ struct Random_generator {
 ////////////////////////////////////////////////////////////////////////////////
 bool cdpQuadtree(int warp_size) {
    // Constants to control the algorithm.
-   const int num_points = 1024;
-   const int max_depth = 8;
-   const int min_points_per_node = 16;
+//   const int num_points = 1024;
+//   const int num_points = 1024 << 2;
+//   const int num_points = 1024 << 4;
+   const int num_points = 1024 << 6;
+   const int max_depth = 14;
+   const int min_points_per_node = 8;
 
    // Allocate memory for points.
    thrust::device_vector<float> x_d0(num_points);
@@ -740,32 +759,21 @@ bool cdpQuadtree(int warp_size) {
    std::cout << "Results: " << (ok ? "OK" : "FAILED") << std::endl;
 
    Bounding_box query;
-   query.set(0,0,1.f,1.f);
-   thrust::host_vector<int> idxs;
-   idxs.reserve(num_points);
-   range_search(host_nodes, query, idxs);
-   std::cout << "Range size: " << std::to_string(idxs.size()) << '\n';
-   for(int i = 0; i < idxs.size(); i++)
-   {
-	   const auto a = idxs[i];
-	   for(int j = i + 1; j < idxs.size(); j++)
-	   {
-		   const auto b = idxs[j];
-		   if(a == b)
-			   std::cout << std::to_string(a) <<  " at index " << std::to_string(i)
-				         << " has duplicate at index " << std::to_string(j) << '\n';
-	   }
-   }
-//   for(auto&& id : idxs)
+//   query.set(0,0,1.f,1.f);
+//   thrust::host_vector<int> idxs;
+//   idxs.reserve(num_points);
+//   range_search(host_nodes, query, idxs);
+//   std::cout << "Range size: " << std::to_string(idxs.size()) << '\n';
+//   for(int i = 0; i < idxs.size(); i++)
 //   {
-//	   std::cout << std::to_string(id);
-//	   idxs.
-//	   for(auto&& _id : idxs)
+//	   const auto a = idxs[i];
+//	   for(int j = i + 1; j < idxs.size(); j++)
 //	   {
-//		   if(id == _id)
-//			   std::cout << " is duplicate";
+//		   const auto b = idxs[j];
+//		   if(a == b)
+//			   std::cout << std::to_string(a) <<  " at index " << std::to_string(i)
+//				         << " has duplicate at index " << std::to_string(j) << '\n';
 //	   }
-//	   std::cout << '\n';
 //   }
 
    // Free CPU memory.

@@ -4,5 +4,3 @@ set(QUADTREE_SOURCES ${QUADTREE_SOURCES}
 	${CMAKE_CURRENT_SOURCE_DIR}/cdpQuadtree.cu
 	PARENT_SCOPE
 )
-
-add_executable(qt quadtree.cu)

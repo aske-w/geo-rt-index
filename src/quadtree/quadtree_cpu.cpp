@@ -11,6 +11,9 @@ using std::make_unique;
 using std::unique_ptr;
 using std::vector;
 
+namespace qt_cpu
+{
+
 class Point
 {
 private:
@@ -366,8 +369,31 @@ void tests_bbox_contains()
 			}
 		}
 	}
-	// outside
+
+	{ 	// outside
+		BBox b{Point(10,10), 3};
+		for(int32_t i = 0; i < 7; i++)
+		{
+			for(int32_t j = 0; j < 20; j++)
+			{
+				assert(!b.contains(Point{i, j}));
+				assert(!b.contains(Point{j, i}));
+			}
+		}
+		for(int32_t i = 14; i < 20; i++)
+		{
+			for(int32_t j = 0; j < 20; j++)
+			{
+				assert(!b.contains(Point{i, j}));
+				assert(!b.contains(Point{j, i}));
+			}
+		}
+	}
 }
+
+} // qt_cpu
+
+using namespace qt_cpu;
 
 int main()
 {
@@ -377,19 +403,6 @@ int main()
 	tests<4>();
 	tests_bbox_intersect();
 	tests_bbox_contains();
-//	QuadTree<1> t{BBox(Point{1, 1}, 1)};
 
-
-
-
-//	std::random_device rd;
-//	std::mt19937_64 gen {rd()};
-//	std::uniform_real_distribution<int32_t> dis{0, 0.25};
-//	for (uint8_t i = 0; i < 10; i++)
-//	{
-//		auto x = dis(gen);
-//		auto y = dis(gen);
-//		t.insert(Point(x,y));
-//	}
 	return 0;
 }

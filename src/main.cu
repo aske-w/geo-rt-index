@@ -13,6 +13,8 @@
 #include "types.hpp"
 #include <vector>
 #include <random>
+#include "device_code.cu"
+
 
 using std::unique_ptr;
 using std::unique_ptr;
