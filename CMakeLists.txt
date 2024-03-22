@@ -4,6 +4,7 @@ set(NAME geo-rt-index)
 project(${NAME} LANGUAGES C CXX CUDA) # C is needed for embedding the ptx file
 find_package(OptiX REQUIRED)
 find_package(CUDA REQUIRED)
+#find_package(OpenMP REQUIRED)
 
 option(USE_DEBUG "Enable debug statements. Always enabled for debug builds." OFF)
 if (USE_DEBUG OR ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug"))
@@ -47,6 +48,18 @@ endmacro()
 cuda_compile_and_embed(embedded_ptx_code src/device_code.cu)
 
 add_executable(${NAME} ${embedded_ptx_code} ${SOURCES})
+
+add_executable(kd_tree_CPU ${KD_TREE_CPU_SOURCES})
+set_target_properties(kd_tree_CPU PROPERTIES COMPILE_FLAGS "-O3" LINK_FLAGS "-fopenmp")
+target_compile_options(kd_tree_CPU PRIVATE "-O3")
+target_link_options(kd_tree_CPU PRIVATE "-fopenmp")
+
+add_executable(kd_tree_GPU ${KD_TREE_GPU_SOURCES})
+#set_target_properties(kd_tree_CPU PROPERTIES COMPILE_FLAGS "-O3 -I/home/aske/dev/cuda-samples/Common" LINK_FLAGS "-fopenmp")
+
+set(CUDA_SAMPLES_COMMON_DIR CACHE STRING "https://github.com/NVIDIA/cuda-samples/tree/master/Common directory on your machine")
+target_compile_options(kd_tree_GPU PRIVATE "-O3" "-I${CUDA_SAMPLES_COMMON_DIR}")
+target_link_options(kd_tree_GPU PRIVATE "-fopenmp")
 
 #add_executable(quadtree ${QUADTREE_SOURCES})
 #set_property(TARGET quadtree PROPERTY CUDA_SEPARABLE_COMPILATION ON)

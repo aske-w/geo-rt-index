@@ -73,66 +73,17 @@ int main() {
     const constexpr bool debug = true;
     optix_wrapper optix(debug);
     optix_pipeline pipeline(&optix);
+    cudaDeviceSynchronize(); CUERR
 
     cuda_buffer /*curve_points_d,*/ as;
-    cudaDeviceSynchronize(); CUERR
-#if INDEX_TYPE == 1
-//	std::random_device rd;
-//	std::mt19937_64 gen {rd()};
-//	std::uniform_real_distribution<float> rng {0, 25};
-//	std::vector<Point> points;
-//	uint32_t num_in_range = 500;
-//	uint32_t num_points= 11;
-//	for (int i = 0; i < num_in_range; i++)
-//	{
-//		auto x = rng(gen);
-//		while(x < 9 || 21 < x)
-//			x = rng(gen);
-//		auto y = rng(gen);
-//		while(y < -1 || 1 < y)
-//			y = rng(gen);
-//
-//		points.push_back(Point(x, y));
-//	}
-//	for (int i = 0; i < num_points - num_in_range; i++)
-//	{
-//		auto x = rng(gen);
-//		while(x > 9 && 21 > x)
-//			x = rng(gen);
-//		auto y = rng(gen);
-//		while(y > -1 && 1 > y)
-//			y = rng(gen);
-//		points.push_back(Point(x, y));
-//	}
-//	points.emplace_back(21.f, 1.f);
-//	points.emplace_back(21.f, -1.f);
-//	points.emplace_back(9.f, 1.f);
-//	points.emplace_back(9.f, -1.f);
-////	points.emplace_back(10.f, 0.1f);
-////	points.emplace_back(10.f, 0.2f);
-////	points.emplace_back(11, 0);
-////	points.emplace_back(12.f, 0.1f);
-////	points.emplace_back(13.f, 0.2f);
-////
-////	points.emplace_back(310.f, 0.1f);
-////	points.emplace_back(310.f, 0.2f);
-////	points.emplace_back(311, 0);
-////	points.emplace_back(312.f, 0.1f);
-////	points.emplace_back(313.f, 0.2f);
-//
 	const uint32_t num_points = 9000;
 	const uint32_t num_in_range = 100;
 	const auto query = OptixAabb{0,0, 2, 1, 1, 4};
 	const auto space = OptixAabb{0, 0, 0, 2000, 20, 0};
 	auto points_p = InputGenerator::Generate(query, space, num_points, num_in_range);
 	auto points = *points_p;
-//	std::vector<Point> points{{0.958500f, 0.949023f}};
-//	for(int i=10; i < num_points + 10; i++)
-//	{
-//		points.emplace_back(i, i);
-//	}
-//	points.push_back({0.438500f, 0.229023f});
-//	assert(points.size() == num_points);
+
+#if INDEX_TYPE == 1
 	PointToAABBFactory f{points};
 	f.SetQuery(query);
 
