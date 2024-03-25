@@ -25,9 +25,9 @@ extern "C" __global__ void __miss__test() {
 
 // this function is called for every potential ray-aabb intersection
 extern "C" __global__ void __intersection__test() {
-	const uint32_t primitive_id = optixGetPrimitiveIndex();
+//	const uint32_t primitive_id = optixGetPrimitiveIndex();
 	atomicAdd(params.hit_count, 1);
-//	D_PRINT("__intersection__test %u\n", primitive_id);
+	D_PRINT("__intersection__test %u\n", optixGetPayload_0());
 //	D_PRINT("Is frontface hit: %x ", optixIsFrontFaceHit());
 //	D_PRINT("Is backface hit: %x ", optixIsBackFaceHit());
 //	D_PRINT("result_count %u\n", params.result_count);

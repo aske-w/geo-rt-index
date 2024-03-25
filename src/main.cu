@@ -15,6 +15,7 @@
 #include <random>
 #include "helpers/input_generator.hpp"
 #include <chrono>
+#include "helpers/pretty_printers.hpp"
 
 //#include "device_code.cu"
 
@@ -78,10 +79,10 @@ int main() {
 
 
     cuda_buffer /*curve_points_d,*/ as;
-	const uint32_t num_points = 1 << 22; // 262.144
-	const uint32_t num_in_range = 1 << 11;
-	const auto query = OptixAabb{455, 333, 2, 1000, 444, 4};
-	const auto space = OptixAabb{0, 0, 0, 200000, 2000, 0};
+	const uint32_t num_points = 1 << 20; // 262.144
+	const uint32_t num_in_range = 1 << 0;
+	const auto query = Aabb{455, 333, 1000, 444};
+	const auto space = Aabb{0, 0, 200000, 2000};
 	auto points_p = InputGenerator::Generate(query, space, num_points, num_in_range);
 	auto points = *points_p;
 
@@ -140,6 +141,12 @@ int main() {
 	    1,
 	    1
 	))
+
+	std::cout << points.at(91276) << std::endl;
+	std::cout << points.at(169238) << std::endl;
+	std::cout << points.at(394710) << std::endl;
+	std::cout << points.at(500653) << std::endl;
+	std::cout << points.at(897427) << std::endl;
 
 	cudaDeviceSynchronize(); CUERR
 	auto total_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - begin);

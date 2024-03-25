@@ -4,25 +4,25 @@
 
 #include "helpers/input_generator.hpp"
 #include <random>
-#include "helpers/pretty_printers.hpp"
 
 using std::unique_ptr, std::make_unique;
 using std::vector;
 using std::uniform_real_distribution;
 
-inline static bool Contains(const OptixAabb& aabb, const Point& point)
+inline static bool Contains(const Aabb& aabb, const Point& point)
 {
 	return aabb.minX <= point.x && point.x <= aabb.maxX &&
         aabb.minY <= point.y && point.y <= aabb.maxY;
 }
 
-unique_ptr<vector<Point>> InputGenerator::Generate(const OptixAabb& query_aabb, const OptixAabb& space_aabb,
+unique_ptr<vector<Point>> InputGenerator::Generate(const Aabb& query_aabb, const Aabb& space_aabb,
                                                    const uint32_t num_total, const uint32_t num_in_aabb,
                                                    const bool shuffle)
 {
 	assert(num_total >= num_in_aabb);
 	std::random_device rd;
-	std::mt19937_64 gen {rd()};
+//	std::mt19937_64 gen {rd()};
+	std::mt19937_64 gen {1337};
 	auto points = make_unique<vector<Point>>();
 	points->reserve(num_total);
 	uniform_real_distribution<float> rng{0, 1};

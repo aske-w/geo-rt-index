@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include "types.hpp"
 
 template<typename T>
 std::ostream & operator<<(std::ostream & os, std::vector<T> vec)
