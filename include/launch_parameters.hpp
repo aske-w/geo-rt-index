@@ -12,6 +12,7 @@ struct LaunchParameters
 	const size_t num_points = 0;
 #endif
 	bool* result_d;
+	uint32_t* hit_count;
 };
 
 #endif //LAUNCH_PARAMETERS_HPP

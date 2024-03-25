@@ -14,6 +14,7 @@
 #include <vector>
 #include <random>
 #include "helpers/input_generator.hpp"
+#include <chrono>
 
 //#include "device_code.cu"
 
@@ -75,11 +76,14 @@ int main() {
     optix_pipeline pipeline(&optix);
     cudaDeviceSynchronize(); CUERR
 
+	constexpr const uint32_t threads_per_warp = 4;
+	constexpr const uint32_t warps_per_block = 2;
+
     cuda_buffer /*curve_points_d,*/ as;
-	const uint32_t num_points = 9000;
-	const uint32_t num_in_range = 100;
-	const auto query = OptixAabb{0,0, 2, 1, 1, 4};
-	const auto space = OptixAabb{0, 0, 0, 2000, 20, 0};
+	const uint32_t num_points = 1 << 22; // 262.144
+	const uint32_t num_in_range = 1 << 11;
+	const auto query = OptixAabb{455, 333, 2, 1000, 444, 4};
+	const auto space = OptixAabb{0, 0, 0, 200000, 2000, 0};
 	auto points_p = InputGenerator::Generate(query, space, num_points, num_in_range);
 	auto points = *points_p;
 
@@ -94,10 +98,14 @@ int main() {
 #endif
 
 	unique_ptr<cuda_buffer> result_d = std::make_unique<cuda_buffer>();
-	auto res = std::make_unique<bool*>(new bool[num_points]);
-	memset(*res, 0, num_points);
+	auto result = std::make_unique<bool*>(new bool[num_points]);
+	memset(*result, 0, num_points);
 	result_d->alloc(sizeof(bool) * num_points);
-	result_d->upload(*res, num_points);
+	result_d->upload(*result, num_points);
+	uint32_t device_hit_count = 0;
+	cuda_buffer hit_count_d;
+	hit_count_d.alloc(sizeof(uint32_t));
+	hit_count_d.upload(&device_hit_count, 1);
 
 	auto handle = foo(optix, f);
 	LaunchParameters launch_params
@@ -108,6 +116,7 @@ int main() {
 		.num_points = points.size(),
 #endif
 		.result_d = result_d->ptr<bool>(),
+		.hit_count = hit_count_d.ptr<uint32_t>()
 	};
 
 	printf("launch parms num_points %u\n", launch_params.num_points);
@@ -117,33 +126,42 @@ int main() {
 	launch_params_d.upload(&launch_params, 1);
 	cudaDeviceSynchronize(); CUERR
 
+
+	auto begin = std::chrono::steady_clock::now();
 	OPTIX_CHECK(optixLaunch(
 	    pipeline.pipeline,
 	    optix.stream,
 	    launch_params_d.cu_ptr(),
 	    launch_params_d.size_in_bytes,
 	    &pipeline.sbt,
-	    1,
+#if SINGLE_THREAD
+	    1
+#else
+	    num_points,
+#endif
 	    1,
 	    1
 	))
 
 	cudaDeviceSynchronize(); CUERR
-
+	auto total_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - begin);
+	printf("%ld.%04ld s.\n", total_time_ms / 1000, total_time_ms % 1000);
 //	bool res[num_points];
-	result_d->download(*res, num_points);
+	result_d->download(*result, num_points);
+	hit_count_d.download(&device_hit_count, 1);
 	uint32_t hit_count = 0;
 	for(uint32_t i = 0; i < num_points; i++)
 	{
-		auto result = (*res)[i];
-		if (result)
+		if ((*result)[i])
 		{
 			hit_count++;
 //			std::cout << std::to_string(i) << '\n';
 		}
 	}
 	std::cout << std::to_string(hit_count) << '\n';
+	std::cout << std::to_string(device_hit_count) << '\n';
 	assert(hit_count == num_in_range);
+	assert(device_hit_count == num_in_range);
 
 
 	return 0;
