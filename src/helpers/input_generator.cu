@@ -4,16 +4,13 @@
 
 #include "helpers/input_generator.hpp"
 #include <random>
+#include "helpers/spatial_helpers.cuh"
 
+using namespace geo_rt_index;
 using std::unique_ptr, std::make_unique;
 using std::vector;
 using std::uniform_real_distribution;
-
-inline static bool Contains(const Aabb& aabb, const Point& point)
-{
-	return aabb.minX <= point.x && point.x <= aabb.maxX &&
-        aabb.minY <= point.y && point.y <= aabb.maxY;
-}
+using helpers::SpatialHelpers;
 
 unique_ptr<vector<Point>> InputGenerator::Generate(const Aabb& query_aabb, const Aabb& space_aabb,
                                                    const uint32_t num_total, const uint32_t num_in_aabb,
@@ -49,7 +46,7 @@ unique_ptr<vector<Point>> InputGenerator::Generate(const Aabb& query_aabb, const
 			const float x = outside_x_rng(gen);
 			const float y = outside_y_rng(gen);
 			const Point p(x, y);
-			if (!Contains(query_aabb, p))
+			if (!SpatialHelpers::Contains(query_aabb, p))
 			{
 				points->push_back(std::move(p));
 				i++;
