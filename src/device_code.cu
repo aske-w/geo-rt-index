@@ -2,11 +2,18 @@
 #include "types.hpp"
 #include "launch_parameters.hpp"
 #include "helpers/optix_helpers.cuh"
+#include "../include/types.hpp"
+#include "../include/launch_parameters.hpp"
+#include "../include/helpers/optix_helpers.cuh"
 #include <optix.h>
 
 #include <limits>
 #include <cstdint>
 #include <cuda_runtime.h>
+#include "helpers/spatial_helpers.cuh"
+#include "../include/helpers/spatial_helpers.cuh"
+
+using namespace geo_rt_index;
 
 extern "C" __constant__ LaunchParameters params;
 
@@ -26,14 +33,22 @@ extern "C" __global__ void __miss__test() {
 // this function is called for every potential ray-aabb intersection
 extern "C" __global__ void __intersection__test() {
 //	const uint32_t primitive_id = optixGetPrimitiveIndex();
+	const uint32_t point_id = optixGetPayload_0();
+//	D_PRINT("__intersection__test %u\n", point_id);
+	auto contained = helpers::SpatialHelpers::Contains(params.query_aabb, params.points[point_id]);
+	if(!contained)
+	{
+		D_PRINT("False positive hit for %d\n", point_id);
+		return;
+	}
 	atomicAdd(params.hit_count, 1);
-	D_PRINT("__intersection__test %u\n", optixGetPayload_0());
+	D_PRINT("True positive hit for %d\n", point_id);
 //	D_PRINT("Is frontface hit: %x ", optixIsFrontFaceHit());
 //	D_PRINT("Is backface hit: %x ", optixIsBackFaceHit());
 //	D_PRINT("result_count %u\n", params.result_count);
 //	D_PRINT("result_d %llX\n", params.result_d);
 //	D_PRINT("access %u\n", params.result_d[x]);
-	params.result_d[optixGetPayload_0()] = true;
+	params.result_d[point_id] = true;
 //	D_PRINT("Hit %u\n", optixGetPayload_0());
 //	D_PRINT("write");
 	optixSetPayload_1(optixGetPayload_1() + 1);

@@ -115,7 +115,8 @@ int main() {
 		.num_points = points.size(),
 #endif
 		.result_d = result_d->ptr<bool>(),
-		.hit_count = hit_count_d.ptr<uint32_t>()
+		.hit_count = hit_count_d.ptr<uint32_t>(),
+		.query_aabb = query
 	};
 
 	printf("launch parms num_points %u\n", launch_params.num_points);
@@ -142,11 +143,11 @@ int main() {
 	    1
 	))
 
-	std::cout << points.at(91276) << std::endl;
-	std::cout << points.at(169238) << std::endl;
-	std::cout << points.at(394710) << std::endl;
-	std::cout << points.at(500653) << std::endl;
-	std::cout << points.at(897427) << std::endl;
+//	std::cout << points.at(91276) << std::endl;
+//	std::cout << points.at(169238) << std::endl;
+//	std::cout << points.at(394710) << std::endl;
+//	std::cout << points.at(500653) << std::endl;
+//	std::cout << points.at(897427) << std::endl;
 
 	cudaDeviceSynchronize(); CUERR
 	auto total_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - begin);
