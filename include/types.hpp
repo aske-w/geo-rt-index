@@ -61,7 +61,7 @@ public:
 	Aabb(int _minX, int _minY, int _maxX, int _maxY) : Aabb(static_cast<float>(_minX), static_cast<float>(_minY),
 	           static_cast<float>(_maxX), static_cast<float>(_maxY))
 	{ }
-	const OptixAabb ToOptixAabb(float _minZ = 0, float _maxZ = 0) const
+	inline constexpr const OptixAabb ToOptixAabb(float _minZ = 0, float _maxZ = 0) const
 	{
 		return std::move(OptixAabb
 		{
