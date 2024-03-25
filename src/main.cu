@@ -76,8 +76,6 @@ int main() {
     optix_pipeline pipeline(&optix);
     cudaDeviceSynchronize(); CUERR
 
-	constexpr const uint32_t threads_per_warp = 4;
-	constexpr const uint32_t warps_per_block = 2;
 
     cuda_buffer /*curve_points_d,*/ as;
 	const uint32_t num_points = 1 << 22; // 262.144
