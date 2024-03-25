@@ -72,18 +72,23 @@ OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& input
 }
 
 int main() {
-    const constexpr bool debug = true;
+    const constexpr bool debug = false;
     optix_wrapper optix(debug);
     optix_pipeline pipeline(&optix);
     cudaDeviceSynchronize(); CUERR
 
 
     cuda_buffer /*curve_points_d,*/ as;
-	const uint32_t num_points = 1 << 20; // 262.144
-	const uint32_t num_in_range = 1 << 0;
+	const uint32_t num_points = 1 << 29; // 21 == 2.1 mil.
+	const uint32_t num_in_range = 1 << 1;
 	const auto query = Aabb{455, 333, 1000, 444};
-	const auto space = Aabb{0, 0, 200000, 2000};
-	auto points_p = InputGenerator::Generate(query, space, num_points, num_in_range);
+	const auto space = Aabb{0, 0, 20000, 2000};
+	auto begin_generate = std::chrono::steady_clock::now();
+	const bool shuffle = !DEBUG;
+	auto points_p = InputGenerator::Generate(query, space, num_points, num_in_range, shuffle);
+	auto end_generate = std::chrono::steady_clock::now();
+	auto generate_total = std::chrono::duration_cast<std::chrono::milliseconds>(end_generate - begin_generate);
+	printf("generate_total: %ld.%03ld s.\n", generate_total / 1000, generate_total % 1000);
 	auto points = *points_p;
 
 #if INDEX_TYPE == 1
@@ -143,15 +148,16 @@ int main() {
 	    1
 	))
 
-//	std::cout << points.at(91276) << std::endl;
-//	std::cout << points.at(169238) << std::endl;
-//	std::cout << points.at(394710) << std::endl;
-//	std::cout << points.at(500653) << std::endl;
-//	std::cout << points.at(897427) << std::endl;
+	std::cout << points.at(912706) << std::endl;
+	std::cout << points.at(1692308) << std::endl;
+	std::cout << points.at(3947100) << std::endl;
+	std::cout << points.at(5000653) << std::endl;
+	std::cout << points.at(8974027) << std::endl;
+	std::cout << points.at(num_points-1) << std::endl;
 
 	cudaDeviceSynchronize(); CUERR
 	auto total_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - begin);
-	printf("%ld.%04ld s.\n", total_time_ms / 1000, total_time_ms % 1000);
+	printf("%ld.%03ld s.\n", total_time_ms / 1000, total_time_ms % 1000);
 //	bool res[num_points];
 	result_d->download(*result, num_points);
 	hit_count_d.download(&device_hit_count, 1);
