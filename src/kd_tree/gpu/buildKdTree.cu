@@ -233,8 +233,8 @@ __global__ void cuPartitionRemoveGaps(refIdx_t refoutx[], refIdx_t refinxLT[], r
 		segSize = segLengthsLT[warpIndex];
 	}
 	// Copy to the other threads in the warp.
-	segStartOut = __shfl_sync(segStartOut, 0,warpSize);
-	segSize = __shfl_sync(segSize, 0,warpSize);
+	segStartOut = __shfl(segStartOut, 0);
+	segSize = __shfl(segSize, 0);
 	// and do the copy.
 	cuWarpCopyRef(refoutx+segStartOut, refinxLT+segStart, segSize, partSize);
 	// Check to see that the partitioned data did not exceed it's half of the output array.
@@ -251,8 +251,8 @@ __global__ void cuPartitionRemoveGaps(refIdx_t refoutx[], refIdx_t refinxLT[], r
 		segSize = segLengthsGT[warpIndex];
 	}
 	// Copy to the other threads in the warp.
-	segStartOut = __shfl_sync(segStartOut, 0, warpSize);
-	segSize = __shfl_sync(segSize, 0, warpSize);
+	segStartOut = __shfl(segStartOut, 0);
+	segSize = __shfl(segSize, 0);
 	// and do the copy.+
 	cuWarpCopyRef(refoutx+segStartOut, refinxGT+segStart, segSize, partSize);
 
@@ -335,7 +335,7 @@ __device__ void cuSmallPartition( const __restrict__ KdCoord coords[],
 	}
 	refin += warpSize;
 	// Write out the less than indices
-	uint shflMask = __ballot_sync(cmp<0, warpSize) & subWarpMask;
+	uint shflMask = __ballot(cmp<0) & subWarpMask;
 	if (cmp < 0) {
 		// Calculate the address which is determined by the number of kept values less than this thread.
 		sint wrtIdx = __popc(shflMask & maskGEme);
@@ -344,7 +344,7 @@ __device__ void cuSmallPartition( const __restrict__ KdCoord coords[],
 	// Update the output counter
 	outCntLT += __popc(shflMask);
 	// Write out the greater than values
-	shflMask = __ballot_sync(cmp>0,warpSize) & subWarpMask;
+	shflMask = __ballot(cmp>0) & subWarpMask;
 	if (cmp > 0) {
 		// Calculate the address which is determined by the number of kept values less than this thread.
 		sint wrtIdx = __popc(shflMask & maskGEme);
@@ -480,7 +480,7 @@ __device__ void cuSinglePartition( const __restrict__ KdCoord coords[], refIdx_t
 		}
 		refin += warpSize;
 		// Write out the less than indices
-		uint shflMask = __ballot_sync(cmp<0,warpSize);
+		uint shflMask = __ballot(cmp<0);
 		if (cmp < 0) {
 			// Calculate the address which is determined by the number of kept values less than this thread.
 			sint wrtIdx = __popc(shflMask & maskGEme);
@@ -494,7 +494,7 @@ __device__ void cuSinglePartition( const __restrict__ KdCoord coords[], refIdx_t
 			refoutLT[(oldOutCntLT & ~(warpSize-1)) + thrdIdx] = s_refLT[sharedBase + (oldOutCntLT & warpSize) + thrdIdx];
 		}
 		// Write out the greater than values
-		shflMask = __ballot_sync(cmp>0,warpSize);
+		shflMask = __ballot(cmp>0);
 		if (cmp > 0) {
 			// Calculate the address which is determined by the number of kept values less than this thread.
 			sint wrtIdx = __popc(shflMask & maskGEme);

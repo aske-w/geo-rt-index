@@ -111,8 +111,8 @@ __global__ void cuRemoveGaps(refIdx_t refoutx[], KdCoord valoutx[], refIdx_t ref
 	}
 
 	// Copy to the other threads in the warp.
-	segStartOut = __shfl_sync(segStartOut, 0, warpSize);
-	segSize = __shfl_sync(segSize, 0, warpSize);
+	segStartOut = __shfl(segStartOut, 0);
+	segSize = __shfl(segSize, 0);
 	// and do the copy.
 	cuWarpCopyRefVal(refoutx+segStartOut, valoutx+segStartOut, refinx+segStartIn, valinx+segStartIn, segSize, numTuples);
 
@@ -211,7 +211,7 @@ __global__ void cuRemoveDups(KdCoord coords[], refIdx_t refoutx[], KdCoord valou
 		refin += warpSize;
 
 		// Check for duplicates,  a 1 in the shflMask indicates that this tread is not a dup so keep it.
-		shflMask = __ballot_sync(cmp>0, warpSize);
+		shflMask = __ballot(cmp>0);
 		if (cmp > 0) {
 			// Calculate the address which is determined by the number of non-dups less than this thread.
 			uint wrtIdx = __popc(shflMask & maskGEme);
@@ -251,7 +251,7 @@ __global__ void cuRemoveDups(KdCoord coords[], refIdx_t refoutx[], KdCoord valou
 		refin += warpSize;
 
 		// Check for duplicates,  a 1 in the shflMask indicates that this tread is not a dup so keep it.
-		shflMask = __ballot_sync(cmp>0, warpSize);
+		shflMask = __ballot(cmp>0);
 		if (cmp > 0) {
 			// Calculate the address which is determined by the number of non dups less than this thread.
 			uint wrtIdx = __popc(shflMask & maskGEme);

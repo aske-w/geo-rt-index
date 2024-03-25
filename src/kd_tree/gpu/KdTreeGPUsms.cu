@@ -473,7 +473,7 @@ sint main(sint argc, char **argv)
 	cout << endl << kdList.size() << " nodes within " << searchDistance << " units of ";
 	KdNode::printTuple(query, numDimensions);
 	cout << " in all dimensions." << endl << endl;
-	if (kdList.size() != 0) {
+	if (kdList.size() != 0 && maximumNumberOfNodesToPrint > 0) {
 		cout << "List of k-d nodes within " << searchDistance << "-unit search distance follows:" << endl << endl;
 		list<KdNode>::iterator it;
 		for (it = kdList.begin(); it != kdList.end(); it++) {
