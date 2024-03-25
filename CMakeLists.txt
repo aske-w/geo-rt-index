@@ -50,14 +50,13 @@ cuda_compile_and_embed(embedded_ptx_code src/device_code.cu)
 add_executable(${NAME} ${embedded_ptx_code} ${SOURCES})
 
 add_executable(kd_tree_CPU ${KD_TREE_CPU_SOURCES})
-set_target_properties(kd_tree_CPU PROPERTIES COMPILE_FLAGS "-O3" LINK_FLAGS "-fopenmp")
 target_compile_options(kd_tree_CPU PRIVATE "-O3")
 target_link_options(kd_tree_CPU PRIVATE "-fopenmp")
 
 add_executable(kd_tree_GPU ${KD_TREE_GPU_SOURCES})
-#set_target_properties(kd_tree_CPU PROPERTIES COMPILE_FLAGS "-O3 -I/home/aske/dev/cuda-samples/Common" LINK_FLAGS "-fopenmp")
-
 set(CUDA_SAMPLES_COMMON_DIR CACHE STRING "https://github.com/NVIDIA/cuda-samples/tree/master/Common directory on your machine")
+set_target_properties(kd_tree_GPU PROPERTIES CUDA_ARCHITECTURES OFF)
+target_compile_options(kd_tree_GPU PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-gencode arch=compute_60,code=sm_75>)
 target_compile_options(kd_tree_GPU PRIVATE "-O3" "-I${CUDA_SAMPLES_COMMON_DIR}")
 target_link_options(kd_tree_GPU PRIVATE "-fopenmp")
 
