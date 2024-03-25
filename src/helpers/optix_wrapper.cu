@@ -38,14 +38,27 @@ void optix_wrapper::init_optix() {
 }
 
 
+static void noop_context_log_cb(unsigned int, const char*, const char*, void*)
+{
+	return;
+}
+
 static void context_log_cb(unsigned int level,
                            const char *tag,
                            const char *message,
                            void *) {
     // ENABLE IF NEEDED
-     D_PRINT("[%2d][%12s]: %s\n", (int)level, tag, message);
+	D_PRINT("[%2d][%12s]: %s\n", (int)level, tag, message);
 }
 
+static OptixLogCallback get_context_log_cb(bool debug)
+{
+	if(debug)
+	{
+		return context_log_cb;
+	}
+	return noop_context_log_cb;
+}
 
 static void print_log(const char *message) {
     // ENABLE IF NEEDED
@@ -66,7 +79,7 @@ void optix_wrapper::create_context() {
     cudaStreamCreate(&stream); CUERR
     cuCtxGetCurrent(&cuda_context); CUERR
 	const OptixDeviceContextOptions options = {
-	    .logCallbackFunction = context_log_cb,
+	    .logCallbackFunction = get_context_log_cb(this->debug),
 	    .logCallbackLevel = log_level,
 	    .validationMode = validation_mode
 	};
