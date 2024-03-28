@@ -20,6 +20,9 @@ namespace helpers
             exit(1);                                                           \
         }                                                                      \
     }
+#else
+#define CUERR
+
 #endif
 #endif
 

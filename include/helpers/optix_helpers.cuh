@@ -31,6 +31,8 @@ namespace helpers
         exit( 2 );                                                      \
       }                                                                 \
   }
+#else
+#define OPTIX_CHECK(call) call;
 #endif
 
 
