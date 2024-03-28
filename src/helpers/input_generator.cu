@@ -36,7 +36,7 @@ static vector<Point> Worker(const Aabb& query_aabb, const Aabb& space_aabb, cons
 	return points;
 }
 
-unique_ptr<vector<Point>> InputGenerator::Generate(const Aabb& query_aabb, const Aabb& space_aabb,
+vector<Point> InputGenerator::Generate(const Aabb& query_aabb, const Aabb& space_aabb,
                                                    const uint32_t num_total, const uint32_t num_in_aabb,
                                                    const bool shuffle)
 {
@@ -45,8 +45,8 @@ unique_ptr<vector<Point>> InputGenerator::Generate(const Aabb& query_aabb, const
 	const auto seed = rd();
 	D_PRINT("InputGenerator seed: %d\n", seed);
 	std::mt19937_64 gen{seed};
-	auto points = make_unique<vector<Point>>();
-	points->reserve(num_total);
+	auto points = vector<Point>();
+	points.reserve(num_total);
 	uniform_real_distribution<float> rng{0, 1};
 
 	{
@@ -56,7 +56,7 @@ unique_ptr<vector<Point>> InputGenerator::Generate(const Aabb& query_aabb, const
 		{
 			const float x = inside_x_rng(gen);
 			const float y = inside_y_rng(gen);
-			points->emplace_back(x, y);
+			points.emplace_back(x, y);
 		}
 	}
 
@@ -76,12 +76,12 @@ unique_ptr<vector<Point>> InputGenerator::Generate(const Aabb& query_aabb, const
 	for(auto&& handle : futures)
 	{
 		auto v = handle.get();
-		points->insert(points->end(), v.begin(), v.end());
+		points.insert(points.end(), v.begin(), v.end());
 	}
 
 	if(shuffle)
 	{
-		std::shuffle(points->begin(), points->end(), gen);
+		std::shuffle(points.begin(), points.end(), gen);
 	}
 
 	return points;

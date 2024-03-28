@@ -1,4 +1,5 @@
 #include "factories/pta_factory.hpp"
+#include "helpers/time.hpp"
 
 using std::make_unique;
 using namespace geo_rt_index::factories;
@@ -9,7 +10,9 @@ PointToAABBFactory::PointToAABBFactory(const std::vector<Point>& _points)
       aabb_d(std::move(make_unique<cuda_buffer>()))
 
 {
-	points_d->alloc_and_upload(_points);
+	MEASURE_TIME("Uploading points to GPU",
+		points_d->alloc_and_upload(_points);
+	);
 	num_points = _points.size();
 }
 

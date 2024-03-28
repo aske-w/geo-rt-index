@@ -12,10 +12,9 @@
 #include "optix_stubs.h"
 #include "types.hpp"
 #include <vector>
-#include <random>
 #include "helpers/input_generator.hpp"
-#include <chrono>
 #include "helpers/pretty_printers.hpp"
+#include "helpers/time.hpp"
 
 //#include "device_code.cu"
 
@@ -79,17 +78,15 @@ int main() {
 
 
     cuda_buffer /*curve_points_d,*/ as;
-	const uint32_t num_points = 1 << 29; // 21 == 2.1 mil.
+	const uint32_t num_points = (1 << 29) + (1 << 28) + (1 << 26); // = 872,415,232 = 7.76 GB worth of points
 	const uint32_t num_in_range = 1 << 1;
 	const auto query = Aabb{455, 333, 1000, 444};
 	const auto space = Aabb{0, 0, 20000, 2000};
-	auto begin_generate = std::chrono::steady_clock::now();
 	const bool shuffle = !DEBUG;
-	auto points_p = InputGenerator::Generate(query, space, num_points, num_in_range, shuffle);
-	auto end_generate = std::chrono::steady_clock::now();
-	auto generate_total = std::chrono::duration_cast<std::chrono::milliseconds>(end_generate - begin_generate);
-	printf("generate_total: %ld.%03ld s.\n", generate_total / 1000, generate_total % 1000);
-	auto points = *points_p;
+	std::vector<Point> points;
+	MEASURE_TIME("Generating points",
+		points = InputGenerator::Generate(query, space, num_points, num_in_range, shuffle);
+	);
 
 #if INDEX_TYPE == 1
 	PointToAABBFactory f{points};
@@ -131,49 +128,50 @@ int main() {
 	launch_params_d.upload(&launch_params, 1);
 	cudaDeviceSynchronize(); CUERR
 
+	MEASURE_TIME("Optix launch",
+		OPTIX_CHECK(optixLaunch(
+			pipeline.pipeline,
+			optix.stream,
+			launch_params_d.cu_ptr(),
+			launch_params_d.size_in_bytes,
+			&pipeline.sbt,
+	#if SINGLE_THREAD
+			1
+	#else
+			num_points,
+	#endif
+			1,
+			1
+		))
+		cudaDeviceSynchronize();
+	);
+	CUERR
+//	std::cout << points.at(912706) << std::endl;
+//	std::cout << points.at(1692308) << std::endl;
+//	std::cout << points.at(3947100) << std::endl;
+//	std::cout << points.at(5000653) << std::endl;
+//	std::cout << points.at(8974027) << std::endl;
+//	std::cout << points.at(num_points-1) << std::endl;
 
-	auto begin = std::chrono::steady_clock::now();
-	OPTIX_CHECK(optixLaunch(
-	    pipeline.pipeline,
-	    optix.stream,
-	    launch_params_d.cu_ptr(),
-	    launch_params_d.size_in_bytes,
-	    &pipeline.sbt,
-#if SINGLE_THREAD
-	    1
-#else
-	    num_points,
-#endif
-	    1,
-	    1
-	))
 
-	std::cout << points.at(912706) << std::endl;
-	std::cout << points.at(1692308) << std::endl;
-	std::cout << points.at(3947100) << std::endl;
-	std::cout << points.at(5000653) << std::endl;
-	std::cout << points.at(8974027) << std::endl;
-	std::cout << points.at(num_points-1) << std::endl;
-
-	cudaDeviceSynchronize(); CUERR
-	auto total_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - begin);
-	printf("%ld.%03ld s.\n", total_time_ms / 1000, total_time_ms % 1000);
 //	bool res[num_points];
-	result_d->download(*result, num_points);
-	hit_count_d.download(&device_hit_count, 1);
-	uint32_t hit_count = 0;
-	for(uint32_t i = 0; i < num_points; i++)
-	{
-		if ((*result)[i])
+	MEASURE_TIME("result_d->download", result_d->download(*result, num_points););
+	MEASURE_TIME("hit_count_d.download", hit_count_d.download(&device_hit_count, 1););
+	MEASURE_TIME("Result check",
+		uint32_t hit_count = 0;
+		for(uint32_t i = 0; i < num_points; i++)
 		{
-			hit_count++;
-//			std::cout << std::to_string(i) << '\n';
+			if ((*result)[i])
+			{
+				hit_count++;
+	//			std::cout << std::to_string(i) << '\n';
+			}
 		}
-	}
-	std::cout << std::to_string(hit_count) << '\n';
-	std::cout << std::to_string(device_hit_count) << '\n';
-	assert(hit_count == num_in_range);
-	assert(device_hit_count == num_in_range);
+		std::cout << std::to_string(hit_count) << '\n';
+		std::cout << std::to_string(device_hit_count) << '\n';
+		assert(hit_count == num_in_range);
+		assert(device_hit_count == num_in_range);
+	);
 
 
 	return 0;

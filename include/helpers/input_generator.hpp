@@ -12,7 +12,7 @@
 class InputGenerator
 {
 public:
-	static std::unique_ptr<std::vector<Point>> Generate(const Aabb& query_aabb, const Aabb& space_aabb, uint32_t num_total, uint32_t num_in_aabb, const bool shuffle = true);
+	static std::vector<Point> Generate(const Aabb& query_aabb, const Aabb& space_aabb, uint32_t num_total, uint32_t num_in_aabb, const bool shuffle = true);
 };
 
 

@@ -6,9 +6,14 @@ find_package(OptiX REQUIRED)
 find_package(CUDA REQUIRED)
 #find_package(OpenMP REQUIRED)
 
+option(USE_MEASURE_TIME "Enable time measuring macro" OFF)
+add_compile_definitions(USE_MEASURE_TIME=${USE_MEASURE_TIME})
+
 option(USE_DEBUG "Enable debug statements. Always enabled for debug builds." OFF)
 if (USE_DEBUG OR ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug"))
-	add_compile_definitions(DEBUG)
+	add_compile_definitions(DEBUG=1)
+else ()
+	add_compile_definitions(DEBUG=0)
 endif()
 
 option(INDEX_TYPE "Index type" 1)
