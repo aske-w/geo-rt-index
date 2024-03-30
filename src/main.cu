@@ -12,7 +12,12 @@
 #include "optix_stubs.h"
 #include "types.hpp"
 #include <vector>
-#include <random>
+#include "helpers/input_generator.hpp"
+#include "helpers/pretty_printers.hpp"
+#include "helpers/time.hpp"
+
+//#include "device_code.cu"
+
 
 using std::unique_ptr;
 using std::unique_ptr;
@@ -66,68 +71,45 @@ OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& input
 }
 
 int main() {
-    const constexpr bool debug = true;
+    const constexpr bool debug = false;
     optix_wrapper optix(debug);
     optix_pipeline pipeline(&optix);
-
-    cuda_buffer /*curve_points_d,*/ as, result_d;
     cudaDeviceSynchronize(); CUERR
-#if INDEX_TYPE == 1
-	std::random_device rd;
-	std::mt19937_64 gen {rd()};
-	std::uniform_real_distribution<float> rng {0, 25};
-	std::vector<Point> points;
-//	uint32_t num_in_range = 500;
-//	uint32_t num_points= 11;
-//	for (int i = 0; i < num_in_range; i++)
-//	{
-//		auto x = rng(gen);
-//		while(x < 9 || 21 < x)
-//			x = rng(gen);
-//		auto y = rng(gen);
-//		while(y < -1 || 1 < y)
-//			y = rng(gen);
-//
-//		points.push_back(Point(x, y));
-//	}
-//	for (int i = 0; i < num_points - num_in_range; i++)
-//	{
-//		auto x = rng(gen);
-//		while(x > 9 && 21 > x)
-//			x = rng(gen);
-//		auto y = rng(gen);
-//		while(y > -1 && 1 > y)
-//			y = rng(gen);
-//		points.push_back(Point(x, y));
-//	}
-	points.emplace_back(21.f, 1.f);
-	points.emplace_back(21.f, -1.f);
-	points.emplace_back(9.f, 1.f);
-	points.emplace_back(9.f, -1.f);
-//	points.emplace_back(10.f, 0.1f);
-//	points.emplace_back(10.f, 0.2f);
-//	points.emplace_back(11, 0);
-//	points.emplace_back(12.f, 0.1f);
-//	points.emplace_back(13.f, 0.2f);
-//
-//	points.emplace_back(310.f, 0.1f);
-//	points.emplace_back(310.f, 0.2f);
-//	points.emplace_back(311, 0);
-//	points.emplace_back(312.f, 0.1f);
-//	points.emplace_back(313.f, 0.2f);
 
-	uint32_t num_points = points.size();
+
+    cuda_buffer /*curve_points_d,*/ as;
+//	const uint32_t num_points = (1 << 29) + (1 << 28) + (1 << 26); // = 872,415,232 = 7.76 GB worth of points
+	const uint32_t num_points = (1 << 25) + (3 * 1 << 23) + (1 << 22); // = 62,914,560
+	const uint32_t num_in_range = 1 << 23;
+	const auto query = Aabb{140, 50, 180, 60};
+	const auto space = Aabb{-180, -90, 180, 90};
+	const bool shuffle = !DEBUG;
+	std::vector<Point> points;
+	MEASURE_TIME("Generating points",
+		points = InputGenerator::Generate(query, space, num_points, num_in_range, shuffle);
+	);
+
+#if INDEX_TYPE == 1
 	PointToAABBFactory f{points};
-	f.SetQuery({9, -1, 1, 21, 1, 2});
+	f.SetQuery(query);
 
 #else
 //	TriangleFactory f{};
 	AabbFactory f{};
 //	PointFactory f{};
 #endif
+
+	unique_ptr<cuda_buffer> result_d = std::make_unique<cuda_buffer>();
+	auto result = std::make_unique<bool*>(new bool[num_points]);
+	memset(*result, 0, num_points);
+	result_d->alloc(sizeof(bool) * num_points);
+	result_d->upload(*result, num_points);
+	uint32_t device_hit_count = 0;
+	cuda_buffer hit_count_d;
+	hit_count_d.alloc(sizeof(uint32_t));
+	hit_count_d.upload(&device_hit_count, 1);
+
 	auto handle = foo(optix, f);
-	result_d.alloc(sizeof(bool) * num_points);
-	cudaMemset(result_d.raw_ptr, 0, num_points);
 	LaunchParameters launch_params
 	{
 		.traversable = handle,
@@ -135,40 +117,62 @@ int main() {
 		.points = f.GetPointsDevicePointer(),
 		.num_points = points.size(),
 #endif
-		.result_d = result_d.ptr<bool>(),
+		.result_d = result_d->ptr<bool>(),
+		.hit_count = hit_count_d.ptr<uint32_t>(),
+		.query_aabb = query
 	};
+
+	printf("launch parms num_points %u\n", launch_params.num_points);
 
 	cuda_buffer launch_params_d;
 	launch_params_d.alloc(sizeof(launch_params));
 	launch_params_d.upload(&launch_params, 1);
 	cudaDeviceSynchronize(); CUERR
 
-	OPTIX_CHECK(optixLaunch(
-	    pipeline.pipeline,
-	    optix.stream,
-	    launch_params_d.cu_ptr(),
-	    launch_params_d.size_in_bytes,
-	    &pipeline.sbt,
-	    1,
-	    1,
-	    1
-	))
+	MEASURE_TIME("Optix launch",
+		OPTIX_CHECK(optixLaunch(
+			pipeline.pipeline,
+			optix.stream,
+			launch_params_d.cu_ptr(),
+			launch_params_d.size_in_bytes,
+			&pipeline.sbt,
+	#if SINGLE_THREAD
+			1
+	#else
+			num_points,
+	#endif
+			1,
+			1
+		))
+		cudaDeviceSynchronize();
+	);
+	CUERR
+//	std::cout << points.at(912706) << std::endl;
+//	std::cout << points.at(1692308) << std::endl;
+//	std::cout << points.at(3947100) << std::endl;
+//	std::cout << points.at(5000653) << std::endl;
+//	std::cout << points.at(8974027) << std::endl;
+//	std::cout << points.at(num_points-1) << std::endl;
 
-	cudaDeviceSynchronize(); CUERR
 
-	bool res[num_points];
-	result_d.download(res, num_points);
-	uint32_t hit_count = 0;
-	for(uint32_t i = 0; i < num_points; i++)
-	{
-		auto result = res[i];
-		if (result)
+//	bool res[num_points];
+	MEASURE_TIME("result_d->download", result_d->download(*result, num_points););
+	MEASURE_TIME("hit_count_d.download", hit_count_d.download(&device_hit_count, 1););
+	MEASURE_TIME("Result check",
+		uint32_t hit_count = 0;
+		for(uint32_t i = 0; i < num_points; i++)
 		{
-			hit_count++;
-//			std::cout << std::to_string(i) << '\n';
+			if ((*result)[i])
+			{
+				hit_count++;
+	//			std::cout << std::to_string(i) << '\n';
+			}
 		}
-	}
-	std::cout << std::to_string(hit_count) << '\n';
+		std::cout << std::to_string(hit_count) << '\n';
+		std::cout << std::to_string(device_hit_count) << '\n';
+		assert(hit_count == num_in_range);
+		assert(device_hit_count == num_in_range);
+	);
 
 
 	return 0;

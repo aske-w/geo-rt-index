@@ -18,14 +18,14 @@ class PointToAABBFactory : public Factory<OptixBuildInput>
 {
 private:
 	std::unique_ptr<helpers::cuda_buffer> points_d;
-	std::unique_ptr<helpers::cuda_buffer> aabb_d;
 	size_t num_points;
 //	const std::vector<Point>& points;
 //	OptixAabb query;
 public:
+	std::unique_ptr<helpers::cuda_buffer> aabb_d;
 	explicit PointToAABBFactory(const std::vector<Point>& _points);
 	std::unique_ptr<OptixBuildInput> Build() override;
-	void SetQuery(OptixAabb _query);
+	void SetQuery(Aabb _query);
 	Point* GetPointsDevicePointer() const;
 	size_t GetNumPoints() const;
 };

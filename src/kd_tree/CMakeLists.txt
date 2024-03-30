@@ -1,0 +1,6 @@
+add_subdirectory(cpu)
+add_subdirectory(gpu)
+
+set(KD_TREE_CPU_SOURCES ${KD_TREE_CPU_SOURCES} PARENT_SCOPE)
+set(KD_TREE_GPU_SOURCES ${KD_TREE_GPU_SOURCES} PARENT_SCOPE)
+

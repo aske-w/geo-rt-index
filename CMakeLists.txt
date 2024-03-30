@@ -1,13 +1,19 @@
 cmake_minimum_required(VERSION 3.22.1)
 
 set(NAME geo-rt-index)
-project(${NAME} C CXX CUDA) # C is needed for embedding the ptx file
+project(${NAME} LANGUAGES C CXX CUDA) # C is needed for embedding the ptx file
 find_package(OptiX REQUIRED)
 find_package(CUDA REQUIRED)
+#find_package(OpenMP REQUIRED)
+
+option(USE_MEASURE_TIME "Enable time measuring macro" OFF)
+add_compile_definitions(USE_MEASURE_TIME=${USE_MEASURE_TIME})
 
 option(USE_DEBUG "Enable debug statements. Always enabled for debug builds." OFF)
-if (USE_DEBUG OR (${CMAKE_BUILD_TYPE} STREQUAL "Debug"))
-	add_compile_definitions(DEBUG)
+if (USE_DEBUG OR ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug"))
+	add_compile_definitions(DEBUG=1)
+else ()
+	add_compile_definitions(DEBUG=0)
 endif()
 
 option(INDEX_TYPE "Index type" 1)
@@ -47,6 +53,22 @@ endmacro()
 cuda_compile_and_embed(embedded_ptx_code src/device_code.cu)
 
 add_executable(${NAME} ${embedded_ptx_code} ${SOURCES})
+
+add_executable(kd_tree_CPU ${KD_TREE_CPU_SOURCES})
+target_compile_options(kd_tree_CPU PRIVATE "-O3")
+target_link_options(kd_tree_CPU PRIVATE "-fopenmp")
+
+add_executable(kd_tree_GPU ${KD_TREE_GPU_SOURCES})
+set(CUDA_SAMPLES_COMMON_DIR CACHE STRING "https://github.com/NVIDIA/cuda-samples/tree/master/Common directory on your machine")
+set_target_properties(kd_tree_GPU PROPERTIES CUDA_ARCHITECTURES OFF)
+target_compile_options(kd_tree_GPU PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-gencode arch=compute_60,code=sm_75>)
+target_compile_options(kd_tree_GPU PRIVATE "-O3" "-I${CUDA_SAMPLES_COMMON_DIR}")
+target_link_options(kd_tree_GPU PRIVATE "-fopenmp")
+
+#add_executable(quadtree ${QUADTREE_SOURCES})
+#set_property(TARGET quadtree PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+#add_executable(qt_cpu ${QT_SOURCES} src/quadtree/quadtree_cpu.cpp)
+#add_executable(qt_gpu ${QT_SOURCES} src/quadtree/quadtree_gpu.cu)
 
 target_link_libraries(${NAME}
 	${CUDA_CUDA_LIBRARY}

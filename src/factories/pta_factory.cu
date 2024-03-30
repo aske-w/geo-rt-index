@@ -1,4 +1,5 @@
 #include "factories/pta_factory.hpp"
+#include "helpers/time.hpp"
 
 using std::make_unique;
 using namespace geo_rt_index::factories;
@@ -9,16 +10,18 @@ PointToAABBFactory::PointToAABBFactory(const std::vector<Point>& _points)
       aabb_d(std::move(make_unique<cuda_buffer>()))
 
 {
-	points_d->alloc_and_upload(_points);
+	MEASURE_TIME("Uploading points to GPU",
+		points_d->alloc_and_upload(_points);
+	);
 	num_points = _points.size();
 }
 
-void PointToAABBFactory::SetQuery(OptixAabb query)
+void PointToAABBFactory::SetQuery(Aabb query)
 {
 	if (aabb_d->raw_ptr != nullptr)
 		aabb_d->free();
 
-	aabb_d->alloc_and_upload<OptixAabb>({query});
+	aabb_d->alloc_and_upload<OptixAabb>({query.ToOptixAabb(2, 4)});
 }
 
 std::unique_ptr<OptixBuildInput> PointToAABBFactory::Build()

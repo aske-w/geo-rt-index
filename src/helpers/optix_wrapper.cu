@@ -38,14 +38,27 @@ void optix_wrapper::init_optix() {
 }
 
 
+static void noop_context_log_cb(unsigned int, const char*, const char*, void*)
+{
+	return;
+}
+
 static void context_log_cb(unsigned int level,
                            const char *tag,
                            const char *message,
                            void *) {
     // ENABLE IF NEEDED
-     D_PRINT("[%2d][%12s]: %s\n", (int)level, tag, message);
+	D_PRINT("[%2d][%12s]: %s\n", (int)level, tag, message);
 }
 
+static OptixLogCallback get_context_log_cb(bool debug)
+{
+	if(debug)
+	{
+		return context_log_cb;
+	}
+	return noop_context_log_cb;
+}
 
 static void print_log(const char *message) {
     // ENABLE IF NEEDED
@@ -66,7 +79,7 @@ void optix_wrapper::create_context() {
     cudaStreamCreate(&stream); CUERR
     cuCtxGetCurrent(&cuda_context); CUERR
 	const OptixDeviceContextOptions options = {
-	    .logCallbackFunction = context_log_cb,
+	    .logCallbackFunction = get_context_log_cb(this->debug),
 	    .logCallbackLevel = log_level,
 	    .validationMode = validation_mode
 	};
@@ -89,7 +102,7 @@ void optix_wrapper::create_module() {
     pipeline_compile_options = {};
     pipeline_compile_options.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_GAS;
     pipeline_compile_options.usesMotionBlur        = false;
-    pipeline_compile_options.numPayloadValues      = 1;
+    pipeline_compile_options.numPayloadValues      = 2;
     pipeline_compile_options.numAttributeValues    = 0;
     pipeline_compile_options.exceptionFlags        = debug ? (OPTIX_EXCEPTION_FLAG_USER | OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW | OPTIX_EXCEPTION_FLAG_TRACE_DEPTH) : OPTIX_EXCEPTION_FLAG_NONE;
     pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
