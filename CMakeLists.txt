@@ -4,7 +4,6 @@ set(NAME geo-rt-index)
 project(${NAME} LANGUAGES C CXX CUDA) # C is needed for embedding the ptx file
 find_package(OptiX REQUIRED)
 find_package(CUDA REQUIRED)
-#find_package(OpenMP REQUIRED)
 
 option(USE_MEASURE_TIME "Enable time measuring macro" OFF)
 add_compile_definitions(USE_MEASURE_TIME=${USE_MEASURE_TIME})
@@ -32,6 +31,7 @@ set(CMAKE_CUDA_ARCHITECTURES 75) # RTX 2070 Super
 
 include_directories(include)
 include_directories(${OptiX_INCLUDE}) # Set during find_package(OptiX REQUIRED)
+add_subdirectory(tests)
 add_subdirectory(src)
 
 # from https://gitlab.rlp.net/juhenneb/rtindex/-/tree/main
@@ -53,6 +53,7 @@ endmacro()
 cuda_compile_and_embed(embedded_ptx_code src/device_code.cu)
 
 add_executable(${NAME} ${embedded_ptx_code} ${SOURCES})
+add_library(${NAME}_lib STATIC ${SOURCES})
 
 target_link_libraries(${NAME}
 	${CUDA_CUDA_LIBRARY}
