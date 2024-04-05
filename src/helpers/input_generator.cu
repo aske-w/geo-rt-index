@@ -12,6 +12,17 @@ using std::unique_ptr, std::make_unique;
 using std::vector;
 using std::uniform_real_distribution;
 using helpers::SpatialHelpers;
+using std::nextafterf, std::numeric_limits;
+
+static inline constexpr float NextAfter(const float f)
+{
+	return nextafterf(f, numeric_limits<float>::max());
+}
+
+static inline constexpr float PreviousBefore(const float f)
+{
+	return nextafterf(f, numeric_limits<float>::min());
+}
 
 static vector<Point> Worker(const Aabb& query_aabb, const Aabb& space_aabb, const uint32_t num, uint64_t seed)
 {
@@ -50,8 +61,8 @@ vector<Point> InputGenerator::Generate(const Aabb& query_aabb, const Aabb& space
 	uniform_real_distribution<float> rng{0, 1};
 
 	{
-		uniform_real_distribution<float> inside_x_rng {query_aabb.minX, query_aabb.maxX};
-		uniform_real_distribution<float> inside_y_rng {query_aabb.minY, query_aabb.maxY};
+		uniform_real_distribution<float> inside_x_rng {NextAfter(query_aabb.minX), PreviousBefore(query_aabb.maxX)};
+		uniform_real_distribution<float> inside_y_rng {NextAfter(query_aabb.minY), PreviousBefore(query_aabb.maxY)};
 		for (uint32_t i = 0; i < num_in_aabb; i++)
 		{
 			const float x = inside_x_rng(gen);
