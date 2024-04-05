@@ -1,6 +1,8 @@
 #ifndef GEO_RT_INDEX_SPATIAL_HELPERS_CUH
 #define GEO_RT_INDEX_SPATIAL_HELPERS_CUH
 
+#include "types.hpp"
+
 namespace geo_rt_index
 {
 namespace helpers

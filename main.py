@@ -11,8 +11,6 @@ import shapely
 from shapely.geometry import *
 from shapely import wkt
 
-
-
 print(cuda._version.get_versions())
 print(cupy.is_available())
 
