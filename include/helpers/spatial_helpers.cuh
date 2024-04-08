@@ -8,6 +8,9 @@ namespace geo_rt_index
 namespace helpers
 {
 
+using geo_rt_index::types::Point;
+using geo_rt_index::types::Aabb;
+
 class SpatialHelpers
 {
 public:

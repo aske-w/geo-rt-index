@@ -17,7 +17,7 @@ namespace factories
 class PointFactory : public Factory<OptixBuildInput> {
 private:
 	std::unique_ptr<helpers::cuda_buffer> points_d;
-	std::unique_ptr<std::vector<Point>> points;
+	std::unique_ptr<std::vector<geo_rt_index::types::Point>> points;
 public:
 	PointFactory();
 	std::unique_ptr<OptixBuildInput> Build() override;

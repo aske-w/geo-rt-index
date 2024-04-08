@@ -14,6 +14,9 @@ namespace geo_rt_index
 namespace factories
 {
 
+using geo_rt_index::types::Point;
+using geo_rt_index::types::Aabb;
+
 class PointToAABBFactory : public Factory<OptixBuildInput>
 {
 private:

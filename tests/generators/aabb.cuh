@@ -11,13 +11,13 @@
 
 #include <random>
 
-class RandomAabbGenerator : public Catch::Generators::IGenerator<Aabb>
+class RandomAabbGenerator : public Catch::Generators::IGenerator<geo_rt_index::types::Aabb>
 {
 private:
 	std::minstd_rand m_rand;
 	std::uniform_real_distribution<float> x_dist;
 	std::uniform_real_distribution<float> y_dist;
-	Aabb current;
+	geo_rt_index::types::Aabb current;
 public:
 	RandomAabbGenerator(float min_x, float min_y, float max_x, float max_y)
 	    : m_rand(Catch::getSeed()),
@@ -40,16 +40,16 @@ public:
 		auto y_min = std::min(y_1, y_2);
 		auto y_max = std::max(y_1, y_2);
 
-		current = Aabb{x_min, y_min, x_max, y_max};
+		current = geo_rt_index::types::Aabb{x_min, y_min, x_max, y_max};
 		return true;
 	}
-	const Aabb & get() const override
+	const geo_rt_index::types::Aabb & get() const override
 	{
 		return current;
 	}
 };
 
-Catch::Generators::GeneratorWrapper<Aabb> randomAabb(float min_x, float min_y, float max_x, float max_y)
+Catch::Generators::GeneratorWrapper<geo_rt_index::types::Aabb> randomAabb(float min_x, float min_y, float max_x, float max_y)
 {
 	return Catch::Generators::GeneratorWrapper(new RandomAabbGenerator{min_x, min_y, max_x, max_y});
 }

@@ -10,6 +10,8 @@
 #include "helpers/general.hpp"
 
 using namespace geo_rt_index;
+using namespace helpers;
+
 using std::unique_ptr, std::make_unique;
 using std::vector;
 using std::uniform_real_distribution;
@@ -17,6 +19,7 @@ using helpers::SpatialHelpers;
 using std::nextafterf, std::numeric_limits;
 using geo_rt_index::helpers::ArgumentException;
 using geo_rt_index::helpers::string_format;
+using geo_rt_index::types::Aabb, geo_rt_index::types::Point;
 
 static inline constexpr float NextAfter(const float f)
 {

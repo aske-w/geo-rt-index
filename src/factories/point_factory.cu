@@ -12,6 +12,8 @@ using std::vector;
 
 using namespace geo_rt_index::factories;
 using geo_rt_index::helpers::cuda_buffer;
+using geo_rt_index::types::Point;
+using geo_rt_index::types::Triangle;
 
 PointFactory::PointFactory() : points_d(move(make_unique<cuda_buffer>()))
 {

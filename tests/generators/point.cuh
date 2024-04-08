@@ -7,13 +7,13 @@
 
 #include <random>
 
-class RandomPointGenerator : public Catch::Generators::IGenerator<Point>
+class RandomPointGenerator : public Catch::Generators::IGenerator<geo_rt_index::types::Point>
 {
 private:
 	std::minstd_rand m_rand;
 	std::uniform_real_distribution<float> x_dist;
 	std::uniform_real_distribution<float> y_dist;
-	Point current;
+	geo_rt_index::types::Point current;
 public:
 	RandomPointGenerator(const float min_x, const float min_y, const float max_x, const float max_y)
 	    : m_rand(Catch::getSeed()),
@@ -26,17 +26,17 @@ public:
 
 	bool next() override
 	{
-		current = Point{x_dist(m_rand), y_dist(m_rand)};
+		current = geo_rt_index::types::Point{x_dist(m_rand), y_dist(m_rand)};
 		return true;
 	}
 
-	const Point & get() const override
+	const geo_rt_index::types::Point & get() const override
 	{
 		return current;
 	}
 };
 
-Catch::Generators::GeneratorWrapper<Point> randomPoint(const float min_x, const float min_y, const float max_x, const float max_y)
+Catch::Generators::GeneratorWrapper<geo_rt_index::types::Point> randomPoint(const float min_x, const float min_y, const float max_x, const float max_y)
 {
 	return Catch::Generators::GeneratorWrapper(new RandomPointGenerator{min_x, min_y, max_x, max_y});
 }

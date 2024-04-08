@@ -28,6 +28,7 @@ using helpers::optix_wrapper;
 using helpers::cuda_buffer;
 using factories::Factory;
 using factories::PointToAABBFactory;
+using helpers::InputGenerator;
 
 OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& inputFactory) {
 	OptixTraversableHandle handle{0};

@@ -9,11 +9,22 @@
 #include <memory>
 #include "types.hpp"
 
+namespace geo_rt_index
+{
+namespace helpers
+{
+
 class InputGenerator
 {
 public:
-	static std::vector<Point> Generate(const Aabb& query_aabb, const Aabb& space_aabb, uint32_t num_total, uint32_t num_in_aabb, const bool shuffle = true);
+	static std::vector<geo_rt_index::types::Point> Generate(const geo_rt_index::types::Aabb& query_aabb,
+	                                                        const geo_rt_index::types::Aabb& space_aabb,
+	                                                        uint32_t num_total,
+	                                                        uint32_t num_in_aabb,
+	                                                        const bool shuffle = true);
 };
 
+} // helpers
+} // geo_rt_index
 
 #endif // GEO_RT_INDEX_INPUT_GENERATOR_HPP

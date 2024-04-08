@@ -12,6 +12,8 @@
 
 using namespace geo_rt_index::helpers;
 using std::cout, std::to_string;
+using geo_rt_index::types::Point;
+using geo_rt_index::types::Aabb;
 
 enum class Location : uint8_t
 {
