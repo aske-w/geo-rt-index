@@ -58,6 +58,11 @@ vector<Point> InputGenerator::Generate(const Aabb& query_aabb, const Aabb& space
                                                    const uint32_t num_total, const uint32_t num_in_aabb,
                                                    const bool shuffle)
 {
+	if (query_aabb == space_aabb && num_total != num_in_aabb) {
+		throw ArgumentException{nameof(query_aabb),
+			string_format("If %s and %s bound the same area, then %s must be equal to",
+		    nameof(query_aabb), nameof(space_aabb), nameof(num_total), nameof(num_in_aabb))};
+	}
 	if (num_total == 0)
 	{
 		throw ArgumentException(nameof(num_total), string_format("%s must be greater than zero", nameof(num_total)));
@@ -68,7 +73,7 @@ vector<Point> InputGenerator::Generate(const Aabb& query_aabb, const Aabb& space
 	}
 	std::random_device rd;
 	const auto seed = rd();
-	D_PRINT("InputGenerator seed: %d\n", seed);
+//	D_PRINT("InputGenerator seed: %d\n", seed);
 	std::mt19937_64 gen{seed};
 	auto points = vector<Point>();
 	points.reserve(num_total);

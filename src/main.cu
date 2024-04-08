@@ -81,7 +81,7 @@ int main() {
     cuda_buffer /*curve_points_d,*/ as;
 //	const uint32_t num_points = (1 << 29) + (1 << 28) + (1 << 26); // = 872,415,232 = 7.76 GB worth of points
 	const uint32_t num_points = (1 << 25) + (3 * 1 << 23) + (1 << 22); // = 62,914,560
-	const uint32_t num_in_range = 1 << 23;
+	const uint32_t num_in_range = 1 << 27;
 	const auto query = Aabb{140, 50, 180, 60};
 	const auto space = Aabb{-180, -90, 180, 90};
 	const bool shuffle = !DEBUG;
