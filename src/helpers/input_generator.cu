@@ -6,6 +6,8 @@
 #include "helpers/input_generator.hpp"
 #include <random>
 #include "helpers/spatial_helpers.cuh"
+#include "helpers/exception.hpp"
+#include "helpers/general.hpp"
 
 using namespace geo_rt_index;
 using std::unique_ptr, std::make_unique;
@@ -13,6 +15,8 @@ using std::vector;
 using std::uniform_real_distribution;
 using helpers::SpatialHelpers;
 using std::nextafterf, std::numeric_limits;
+using geo_rt_index::helpers::ArgumentException;
+using geo_rt_index::helpers::string_format;
 
 static inline constexpr float NextAfter(const float f)
 {
@@ -51,7 +55,14 @@ vector<Point> InputGenerator::Generate(const Aabb& query_aabb, const Aabb& space
                                                    const uint32_t num_total, const uint32_t num_in_aabb,
                                                    const bool shuffle)
 {
-	assert(num_total >= num_in_aabb);
+	if (num_total == 0)
+	{
+		throw ArgumentException(nameof(num_total), string_format("%s must be greater than zero", nameof(num_total)));
+	}
+	if (num_total < num_in_aabb)
+	{
+		throw ArgumentException{nameof(num_in_aabb), string_format("%s may not be greater than %s", nameof(num_in_aabb), nameof(num_total))};
+	}
 	std::random_device rd;
 	const auto seed = rd();
 	D_PRINT("InputGenerator seed: %d\n", seed);
