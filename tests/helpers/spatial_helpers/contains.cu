@@ -74,13 +74,22 @@ TEST_CASE("Points outside AABB are not contained in AABB", "")
 }
 
 
-TEST_CASE("Inside test", "")
+TEST_CASE("Points inside AABB are contained in AABB", "")
 {
-	const constexpr float float_max = 1e8;
-	const constexpr float float_min = -1 * float_max;
-	const float min_next = std::nextafterf(float_min, 1.f);
-	const float max_before = std::nextafterf(float_max, -1.f);
+	const float float_max = GENERATE(
+	    1e10f,
+	    1.f,
+	    take(20, random(0.1f, 1.f)),
+	    take(10, random(1.f, 10.f)),
+	    take(5, random(10.f, 100.f)),
+	    take(2, random(100.f, 1000.f)),
+	    take(2, Catch::Generators::random(1000.f, 1e9f))
+	);
+	const float float_min = GENERATE_REF(std::nextafterf(0.f, 1.f), -float_max);
 	Aabb bbox{float_min, float_min, float_max, float_max};
-	auto point = GENERATE_REF(take(100, randomPoint(min_next, min_next, max_before, max_before)));
+
+	const float x = GENERATE_REF(take(50, random(std::nextafterf(float_min, std::numeric_limits<float>::max()), std::nextafterf(float_max, std::numeric_limits<float>::lowest()))));
+	const float y = GENERATE_REF(take(50, random(std::nextafterf(float_min, std::numeric_limits<float>::max()), std::nextafterf(float_max, std::numeric_limits<float>::lowest()))));
+	Point point{x, y};
 	REQUIRE(SpatialHelpers::Contains(bbox, point));
 }
