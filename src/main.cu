@@ -5,18 +5,20 @@
 #include "factories/point_factory.hpp"
 #include "factories/pta_factory.hpp"
 #include "factories/triangle_input_factory.hpp"
+#include "helpers/argparser.hpp"
+#include "helpers/input_generator.hpp"
 #include "helpers/optix_pipeline.hpp"
 #include "helpers/optix_wrapper.hpp"
+#include "helpers/pretty_printers.hpp"
+#include "helpers/time.hpp"
 #include "launch_parameters.hpp"
 #include "optix_function_table_definition.h"
 #include "optix_stubs.h"
 #include "types.hpp"
-#include <vector>
-#include "helpers/input_generator.hpp"
-#include "helpers/pretty_printers.hpp"
-#include "helpers/time.hpp"
 
-//#include "device_code.cu"
+#include <vector>
+
+// #include "device_code.cu"
 
 
 using std::unique_ptr;
@@ -70,8 +72,8 @@ OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& input
 	return handle;
 }
 
-int main(int argc, const char** argv) {
-
+int main(const int argc, const char** argv) {
+	geo_rt_index::helpers::ArgParser parser{argc, argv};
 	return 0;
     const constexpr bool debug = false;
     optix_wrapper optix(debug);
