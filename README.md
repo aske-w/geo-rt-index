@@ -8,3 +8,9 @@
    - `<optix install directory>/SDK/CMake` to CMAKE_MODULE_PATH
    - `<optix install directory>/include` to OptiX_INCLUDE
    - `<optix install directory>` to OptiX_INSTALL_DIR
+
+## GDAL SQL
+
+```bash
+ogrinfo -dialect sqlite -sql "select count(*) from duniform_n10 where (ST_X(geometry) <= 0.1)" duniform_n10.parquet
+```
