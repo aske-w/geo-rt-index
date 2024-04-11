@@ -33,7 +33,6 @@ public:
 	const uint8_t selectivity;
 	const Distribution point_distribution;
 	const ValueRange value_range;
-//	explicit Args(uint64_t, uint32_t, uint8_t, Distribution, float, float);
 };
 
 class ArgParser

@@ -5,6 +5,7 @@
 #include "helpers/argparser.hpp"
 #include <exception>
 #include <string>
+#include <vector>
 
 namespace geo_rt_index
 {
@@ -12,23 +13,28 @@ namespace helpers
 {
 
 using std::stoi, std::stoll, std::stof;
+using std::vector;
+using std::string, std::string_view;
 
 ValueRange::ValueRange(float _low, float _high) : low(_low), high(_high)
 {
 }
-//Args::Args() : value_range(0,0)
-//{
-//}
-//Args::Args(uint64_t _num_points, uint32_t _num_queries, uint8_t _selectivity, geo_rt_index::helpers::Distribution _dist,
-//           float _low, float _high)
-//	: num_points(_num_points), num_queries(_num_queries), selectivity(_selectivity), point_distribution(_dist),
-//      value_range(_low, _high)
-//{
-//}
 
 ArgParser::ArgParser(const int _argc, const char** _argv) : argc(_argc), argv(_argv)
 {
 }
+
+static const bool IsCandidateArgument(const string_view& in_arg, const vector<string_view>& candidates)
+{
+	return std::find(candidates.cbegin(), candidates.cend(), in_arg) != candidates.end();
+}
+
+static const vector<string_view> num_points_args		{"-p", "--num_points"};
+static const vector<string_view> num_queries_args		{"-q", "--num_queries"};
+static const vector<string_view> selectivity_args		{"-s", "--selectivity"};
+static const vector<string_view> point_distribution_args{"-d", "--dist"};
+static const vector<string_view> value_range_low_args	{"-l", "--low"};
+static const vector<string_view> value_range_high_args	{"-h", "--high"};
 
 const Args ArgParser::Parse()
 {
@@ -39,31 +45,24 @@ const Args ArgParser::Parse()
 	float low{0};
 	float high{0};
 
-	static const std::string num_points_arg{"num_points"};
-	static const std::string num_queries_arg{"num_queries"};
-	static const std::string selectivity_arg{"selectivity"};
-	static const std::string point_distribution_arg{"dist"};
-	static const std::string value_range_low_arg{"low"};
-	static const std::string value_range_high_arg{"high"};
-
 	for(int32_t i = 1; i < this->argc; i++)
 	{
-		std::string arg{this->argv[i]};
-		if(arg == num_points_arg)
+		string arg{this->argv[i]};
+		if(IsCandidateArgument(arg, num_points_args))
 		{
 			num_points = stoll(this->argv[++i]);
 		}
-		else if(arg == num_queries_arg)
+		else if(IsCandidateArgument(arg, num_queries_args))
 		{
 			num_queries = stoi(this->argv[++i]);
 		}
-		else if(arg == selectivity_arg)
+		else if(IsCandidateArgument(arg, selectivity_args))
 		{
 			selectivity = stoi(this->argv[++i]);
 		}
-		else if(arg == point_distribution_arg)
+		else if(IsCandidateArgument(arg, point_distribution_args))
 		{
-			std::string dist{this->argv[++i]};
+			string dist{this->argv[++i]};
 			if(dist == "uniform")
 			{
 				point_distribution = Distribution::UNIFORM;
@@ -77,11 +76,11 @@ const Args ArgParser::Parse()
 				throw std::runtime_error("Unknown distribution " + dist);
 			}
 		}
-		else if(arg == value_range_low_arg)
+		else if(IsCandidateArgument(arg, value_range_low_args))
 		{
 			low = stof(this->argv[++i]);
 		}
-		else if(arg == value_range_high_arg)
+		else if(IsCandidateArgument(arg, value_range_high_args))
 		{
 			high = stof(this->argv[++i]);
 		}
