@@ -28,7 +28,7 @@ static inline constexpr float NextAfter(const float f)
 
 static inline constexpr float PreviousBefore(const float f)
 {
-	return nextafterf(f, numeric_limits<float>::min());
+	return nextafterf(f, numeric_limits<float>::lowest());
 }
 
 static vector<Point> Worker(const Aabb& query_aabb, const Aabb& space_aabb, const uint32_t num, uint64_t seed)
