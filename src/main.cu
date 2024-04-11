@@ -17,8 +17,11 @@
 #include "types.hpp"
 
 #include <vector>
+#include "helpers/input_generator.hpp"
+#include "helpers/pretty_printers.hpp"
+#include "helpers/time.hpp"
 
-// #include "device_code.cu"
+//#include "device_code.cu"
 
 
 using std::unique_ptr;
@@ -73,8 +76,6 @@ OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& input
 }
 
 int main(const int argc, const char** argv) {
-	geo_rt_index::helpers::ArgParser parser{argc, argv};
-	return 0;
     const constexpr bool debug = false;
     optix_wrapper optix(debug);
     optix_pipeline pipeline(&optix);
