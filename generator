@@ -37,6 +37,6 @@ affinematrix=1,0,0,0,1,0 > "$gen_out"
 screen -Dm bash -c "ogr2ogr -f \"Parquet\" \"${parquet}\" \"$gen_out\"" &
 wait
 
-mv ${parquet} "${data_dir}/parquet"
+mv ${parquet} "${data_dir}/"
 rm ${gen_out}
 
