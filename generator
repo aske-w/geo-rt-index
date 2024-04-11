@@ -1,0 +1,42 @@
+#! /bin/bash
+
+if [[ -z $1 ]];
+then
+  echo "Provide distribution, i.e. gaussian or normal, as first positional"
+  exit 1
+fi
+
+if [[ -z $2 ]];
+then
+  echo "Provide power to raise number of points to as second positional"
+  exit 1
+fi
+
+d="$1"
+n="$2"
+POLYSIZE="0.05" # const
+
+outname="d${d}_n${n}"
+parquet="${outname}.parquet"
+gen_out="${outname}.geojson"
+
+data_dir="./data"
+mkdir -p "$data_dir"
+
+python3 generator.py \
+distribution="$d" \
+cardinality="$((2 ** $n))" \
+dimensions=2 \
+geometry="point" \
+polysize="$POLYSIZE" \
+maxseg="1" \
+seed="153571810181351" \
+format="geojson" \
+affinematrix=1,0,0,0,1,0 > "$gen_out"
+
+screen -Dm bash -c "ogr2ogr -f \"Parquet\" \"${parquet}\" \"$gen_out\"" &
+wait
+
+mv ${parquet} "${data_dir}/"
+rm ${gen_out}
+
