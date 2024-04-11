@@ -28,11 +28,12 @@ public:
 class Args
 {
 public:
-	const uint64_t num_points;
-	const uint32_t num_queries;
+	const uint8_t num_points_log;
+	const uint8_t num_queries_log;
 	const uint8_t selectivity;
 	const Distribution point_distribution;
 	const ValueRange value_range;
+	explicit Args(uint8_t, uint8_t, uint8_t, Distribution, ValueRange);
 };
 
 class ArgParser

@@ -24,6 +24,13 @@ ArgParser::ArgParser(const int _argc, const char** _argv) : argc(_argc), argv(_a
 {
 }
 
+Args::Args(uint8_t _num_points_log, uint8_t _num_queries_log, uint8_t _selectivity,
+           geo_rt_index::helpers::Distribution _dist, geo_rt_index::helpers::ValueRange _range)
+    : num_points_log(_num_points_log), num_queries_log(_num_queries_log), selectivity(_selectivity),
+      point_distribution(_dist), value_range(_range)
+{
+}
+
 static const bool IsCandidateArgument(const string_view& in_arg, const vector<string_view>& candidates)
 {
 	return std::find(candidates.cbegin(), candidates.cend(), in_arg) != candidates.end();
@@ -38,8 +45,8 @@ static const vector<string_view> value_range_high_args	{"-h", "--high"};
 
 const Args ArgParser::Parse()
 {
-	uint64_t num_points{0};
-	uint32_t num_queries{0};
+	uint8_t num_points_log{0};
+	uint8_t num_queries_log{0};
 	uint8_t selectivity{0};
 	Distribution point_distribution{Distribution::UNIFORM};
 	float low{0};
@@ -50,11 +57,11 @@ const Args ArgParser::Parse()
 		string arg{this->argv[i]};
 		if(IsCandidateArgument(arg, num_points_args))
 		{
-			num_points = stoll(this->argv[++i]);
+			num_points_log = stoll(this->argv[++i]);
 		}
 		else if(IsCandidateArgument(arg, num_queries_args))
 		{
-			num_queries = stoi(this->argv[++i]);
+			num_queries_log = stoi(this->argv[++i]);
 		}
 		else if(IsCandidateArgument(arg, selectivity_args))
 		{
@@ -90,7 +97,7 @@ const Args ArgParser::Parse()
 		}
 	}
 
-	return Args{num_points, num_queries, selectivity, point_distribution, ValueRange{low, high}};
+	return Args{num_points_log, num_queries_log, selectivity, point_distribution, ValueRange{low, high}};
 }
 
 }
