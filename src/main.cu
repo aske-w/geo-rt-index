@@ -70,7 +70,9 @@ OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& input
 	return handle;
 }
 
-int main() {
+int main(int argc, const char** argv) {
+
+	return 0;
     const constexpr bool debug = false;
     optix_wrapper optix(debug);
     optix_pipeline pipeline(&optix);
