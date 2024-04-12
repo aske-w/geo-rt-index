@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import typing
 from abc import ABC, abstractmethod # Abstract Base Class
 import cgi
 import cgitb
@@ -41,6 +42,28 @@ class DataSink(ABC):
     @abstractmethod
     def flush(self):
         pass
+
+class HexSink(DataSink):
+    def __init__(self, output: typing.TextIO):
+        self.output = output
+
+    def writePoint(self, coordinates):
+        import struct
+        # print("hello ", coordinates, flush=True)
+        for oord in coordinates:
+            bits, = struct.unpack('>I', struct.pack('!f', oord))
+            self.output.write(format(bits, 'x'))
+        self.output.write('\n')
+
+    def writeBox(self, coordinates):
+        raise Exception("Not implemented")
+
+    def writePolygon(self, coordinates):
+        raise Exception("Not implemented")
+
+    def flush(self):
+        self.output.flush()
+
 
 class CSVSink(DataSink):
     def __init__(self, output):
@@ -560,6 +583,8 @@ def main():
             print("Content-Type: application/geo+json")
             print("")
         datasink = GeoJSONSink(output)
+    elif(output_format =="hex"):
+        datasink = HexSink(output)
     else:
         raise Exception(f"Unsupported format '{output_format}'")
 
