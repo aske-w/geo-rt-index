@@ -9,6 +9,7 @@ import math # For sin, cos, pi and log functions
 from dataclasses import dataclass # To create data classes
 import os
 import bz2 # For compressing the output to BZ2
+import osgeo.ogr as ogr
 
 # Genreate a random number in the range [min, max)
 def uniform(min, max):
@@ -42,6 +43,8 @@ class DataSink(ABC):
     @abstractmethod
     def flush(self):
         pass
+
+class ParquetDataSink(DataSink):
 
 class HexSink(DataSink):
     def __init__(self, output: typing.TextIO):

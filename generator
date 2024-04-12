@@ -24,7 +24,7 @@ seed="$3"
 
 outname="d${d}_n${n}_s${seed}"
 # parquet="${outname}.parquet"
-format="hex"
+format="csv"
 gen_out="${outname}.${format}"
 
 data_dir="./data"
@@ -39,7 +39,7 @@ polysize="0.05" \
 maxseg="1" \
 seed="$seed" \
 format="${format}" \
-affinematrix=1,0,0,0,1,0 > "data/$gen_out"
+affinematrix=1,0,0,0,1,0 # > "data/$gen_out"
 
 # screen -Dm bash -c "ogr2ogr -f \"Parquet\" \"${parquet}\" \"$gen_out\"" &
 # wait
@@ -100,23 +100,20 @@ d="311471275048084726387878478101677642381
 78634445875808626820666721147246105882
 191650833494423160084350733004591141663"
 
-for seed in $a;
-do 
-  ./generator uniform 28 "$seed" &
+for x in {0..4};
+do
+  echo "generating $((0 * x))-$((4 * x))..."
+  for y in {0..10};
+  do
+    screen -Dm bash -c "./generator gaussian 26 $((((EPOCHSECONDS + x + y) % (RANDOM * 2 + RANDOM))))" &
+  done
+  wait
+done
+
+for z in {0..8};
+do
+  screen -Dm bash -c "./generator gaussian 26 $((((EPOCHSECONDS - z) % (RANDOM * 2 + RANDOM))))" &
 done
 wait
-for seed in $b;
-do  
-  ./generator uniform 28 "$seed" &
-done
-wait
-for seed in $c;
-do  
-  ./generator uniform 28 "$seed" &
-done
-wait
-for seed in $d;
-do  
-  ./generator uniform 28 "$seed" &
-done
-wait
+
+pbzip2 -1zkvf -m2000 data/*.hex
