@@ -54,6 +54,8 @@ cuda_compile_and_embed(embedded_ptx_code src/device_code.cu)
 
 add_executable(${NAME} ${embedded_ptx_code} ${SOURCES})
 
+add_executable(oracle ${ORACLE_SOURCES})
+
 target_link_libraries(${NAME}
 	${CUDA_CUDA_LIBRARY}
 	${CUDA_LIBRARIES}
