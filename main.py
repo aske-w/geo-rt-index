@@ -2,19 +2,23 @@ from time import sleep
 import cuspatial
 import cudf
 import cupy
+import cuspatial.utils
+import cuspatial.utils.column_utils
 import geopandas as gp
 import pandas as pd
 import numpy as np
 import cuda
 import time
+import pyarrow.parquet
 import shapely
 from shapely.geometry import *
-from shapely import wkt
+from shapely import wkt, from_wkb
+import pyarrow.parquet as pq
+import pyarrow
 
+from concurrent.futures import ThreadPoolExecutor
 
-
-print(cuda._version.get_versions())
-print(cupy.is_available())
+pool = ThreadPoolExecutor(12)
 
 NUM = (1 << 25) + (3 * 1 << 23) + (1 << 22) # 62,914,560
 # NUM = (1 << 26) # 67,108,864 - see error in bottom
@@ -22,32 +26,98 @@ NUM = (1 << 25) + (3 * 1 << 23) + (1 << 22) # 62,914,560
 np.random.seed(0)
 cupy.random.seed(0)
 
+p = pq.ParquetFile("data/duniform_p22_s1337.parquet")
+
+def destruct(g):
+  return g[0].x, g[0].y
+
+def work(i) -> list[float]:
+  private_p = pq.ParquetFile("data/duniform_p22_s1337.parquet", memory_map=True, pre_buffer=True)
+  group = private_p.read_row_group(i)
+  geoms: np.ndarray = from_wkb(group)
+  result = [None] * geoms.size
+  for i, geom in enumerate(geoms):
+    result[i] = (geom[0].x)
+    result[i] = (geom[0].y)
+  return result
+
 
 t = time.perf_counter()
-x_points = (cupy.random.random(NUM) - 0.5) * 360
-y_points = (cupy.random.random(NUM) - 0.5) * 180
+futures = []
+for i in range(p.num_row_groups):
+  futures.append(pool.submit(work, i))
+
+xy = []
+for future in futures:
+  xy += future.result()
+
+print(f"converting to xy took: {time.perf_counter() - t:.3f} ms")
+print(len(xy))
+exit()
+
+t = time.perf_counter()
+df = gp.read_parquet("data/duniform_p22_s1337.parquet", ["geometry"])["geometry"]
+print(df.size)
 print(f"generating {NUM:,} xy points took: {time.perf_counter() - t:.3f} ms")
+print("loaded parquet file")
+
+# t = time.perf_counter()
+# xy = []
+# for g in df:
+#     xy.append(g.x)
+#     xy.append(g.y)
+# print(f"converting to xy took: {time.perf_counter() - t:.3f} ms")
+
+t = time.perf_counter()
+points = cuspatial.from_geopandas(df)
+print(f"converting to cuspatial took: {time.perf_counter() - t:.3f} ms")
+del df
+
+# t = time.perf_counter()
+# with open("data/duniform_p26_s1278.pickle", "wb") as f:
+#     pickle.dump(points, f)
+# print(f"pickling took: {time.perf_counter() - t:.3f} ms")
+exit()
+# def worker(slice):
+#     return cuspatial.GeoSeries(slice)
+
+# points_fut = pool.submit(worker, df[:(1<<25)])
+# points2_fut = pool.submit(worker, df[(1<<25):])
+# # points = cuspatial.from_geopandas(df[:(1<<25)])
+# # points2 = cuspatial.from_geopandas(df[(1<<25):])
+# points = points_fut.result()
+# points.append(points2_fut.result())
+del df
+print(f"generating {NUM:,} xy points took: {time.perf_counter() - t:.3f} ms")
+print("loaded geoseries")
+print(points.head())
+
+# t = time.perf_counter()
+# x_points = (cupy.random.random(NUM) - 0.5) * 360
+# y_points = (cupy.random.random(NUM) - 0.5) * 180
+# print(f"generating {NUM:,} xy points took: {time.perf_counter() - t:.3f} ms")
 # sleep(3)
 
 
-t = time.perf_counter()
-xy = cudf.DataFrame({"x": x_points, "y": y_points}).interleave_columns()
-print(f"interleave_columns took: {time.perf_counter() - t:.3f} ms")
+# t = time.perf_counter()
+# xy = cudf.DataFrame({"x": x_points, "y": y_points}).interleave_columns()
+# print(f"interleave_columns took: {time.perf_counter() - t:.3f} ms")
 # sleep(3)
 
 
-t = time.perf_counter()
-points = cuspatial.GeoSeries.from_points_xy(xy)
-del xy, x_points, y_points
-print(f"Creating points from interleaved columns took: {time.perf_counter() - t:.3f} ms")
+# t = time.perf_counter()
+# points = cuspatial.GeoSeries.from_points_xy(xy)
+# del xy, x_points, y_points
+# print(f"Creating points from interleaved columns took: {time.perf_counter() - t:.3f} ms")
+# print(points.head())
+# exit()
 
-
+input()
 hit_start = time.perf_counter()
-hit = cuspatial.points_in_spatial_window(points, 140, 180, 50, 60)
+hit = cuspatial.points_in_spatial_window(points, 0, 1, 0, 1) # beware that it is minx, maxx, miny, maxy
 print("hit took ", time.perf_counter() - hit_start)
 print(hit.head()) # lmao
-sleep(3)
-exit()
+input()
 
 # bboxes_dict = {
 #     "minx": [-20.],
