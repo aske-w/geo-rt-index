@@ -2,6 +2,8 @@
 #define LAUNCH_PARAMETERS_HPP
 
 #include "types.hpp"
+#include "types/aabb.hpp"
+
 #include <optix_types.h>
 
 struct LaunchParameters
@@ -13,7 +15,7 @@ struct LaunchParameters
 #endif
 	bool* result_d;
 	uint32_t* hit_count;
-	geo_rt_index::Aabb query_aabb;
+	geo_rt_index::types::Aabb query_aabb;
 };
 
 #endif //LAUNCH_PARAMETERS_HPP

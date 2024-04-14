@@ -16,7 +16,7 @@ PointToAABBFactory::PointToAABBFactory(const std::vector<Point>& _points)
 	num_points = _points.size();
 }
 
-void PointToAABBFactory::SetQuery(Aabb query)
+void PointToAABBFactory::SetQuery(types::Aabb query)
 {
 	if (aabb_d->raw_ptr != nullptr)
 		aabb_d->free();

@@ -44,7 +44,6 @@ class DataSink(ABC):
     def flush(self):
         pass
 
-class ParquetDataSink(DataSink):
 
 class HexSink(DataSink):
     def __init__(self, output: typing.TextIO):

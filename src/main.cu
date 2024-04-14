@@ -74,6 +74,9 @@ OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& input
 }
 
 int main(const int argc, const char** argv) {
+	geo_rt_index::helpers::ArgParser parser{argc, argv};
+	auto args = parser.Parse();
+
     const constexpr bool debug = false;
     optix_wrapper optix(debug);
     optix_pipeline pipeline(&optix);
@@ -84,13 +87,13 @@ int main(const int argc, const char** argv) {
 //	const uint32_t num_points = (1 << 29) + (1 << 28) + (1 << 26); // = 872,415,232 = 7.76 GB worth of points
 //	const uint32_t num_points = (1 << 25) + (3 * 1 << 23) + (1 << 22); // = 62,914,560
 //	const uint32_t num_in_range = 1 << 23;
-	const auto query = Aabb{0,0,1,1};
+	const auto query = types::Aabb{0,0,1,1};
 //	const auto space = Aabb{-180, -90, 180, 90};
 //	const bool shuffle = !DEBUG;
 	std::vector<Point> points;
 	MEASURE_TIME("Generating points",
 //		points = InputGenerator::Generate(query, space, num_points, num_in_range, shuffle);
-	 	points = DataLoader::Load("/home/aske/dev/geo-rt-index/data/duniform_p22_s1337.parquet");
+	 	points = DataLoader::Load(args.files);
 	);
 	const auto num_points = points.size();
 	const uint32_t num_in_range{4'194'304};
@@ -175,8 +178,11 @@ int main(const int argc, const char** argv) {
 		}
 		std::cout << std::to_string(hit_count) << '\n';
 		std::cout << std::to_string(device_hit_count) << '\n';
-		assert(hit_count == num_in_range);
-		assert(device_hit_count == num_in_range);
+		if(args.debug)
+	    {
+			assert(hit_count == num_in_range);
+			assert(device_hit_count == num_in_range);
+	    }
 	);
 
 

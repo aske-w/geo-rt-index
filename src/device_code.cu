@@ -38,11 +38,11 @@ extern "C" __global__ void __intersection__test() {
 	auto contained = helpers::SpatialHelpers::Contains(params.query_aabb, params.points[point_id]);
 	if(!contained)
 	{
-		D_PRINT("False positive hit for %d\n", point_id);
+//		D_PRINT("False positive hit for %d\n", point_id);
 		return;
 	}
 	atomicAdd(params.hit_count, 1);
-	D_PRINT("True positive hit for %d\n", point_id);
+//	D_PRINT("True positive hit for %d\n", point_id);
 //	D_PRINT("Is frontface hit: %x ", optixIsFrontFaceHit());
 //	D_PRINT("Is backface hit: %x ", optixIsBackFaceHit());
 //	D_PRINT("result_count %u\n", params.result_count);
