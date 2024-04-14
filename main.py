@@ -17,37 +17,31 @@ import pyarrow.parquet as pq
 import pyarrow
 from osgeo import ogr
 
-from concurrent.futures import ThreadPoolExecutor
-
-pool = ThreadPoolExecutor(2)
-
 NUM = (1 << 25) + (3 * 1 << 23) + (1 << 22) # 62,914,560
 # NUM = (1 << 26) # 67,108,864 - see error in bottom
 # NUM = 10
 np.random.seed(0)
 cupy.random.seed(0)
 
-p = pq.read_table("data/duniform_p22_s1337.parquet")
+p = pq.read_table("data/duniform_p26_s369.parquet")
 
 def destruct(g):
   return g[0].x, g[0].y
 
-def work(batch):
-  geom_col = batch["geometry"]
-  result = [None] * batch.num_rows
-  for i, geom in enumerate(geom_col):
-    g = ogr.CreateGeometryFromWkb(geom.as_py())
-    result[i] = (g.GetX())
-    result[i] = (g.GetY())
-  return result
-
 t = time.perf_counter()
-batches: list = p.to_batches(1 << 20)
-
-
 xy = []
-for result in pool.map(work, batches):
-  xy += result
+batches: list = p.to_batches(1 << 20)
+for row in p.column("geometry"):
+  geom = ogr.CreateGeometryFromWkb(row.as_py())
+  xy.append(geom.GetX())
+  xy.append(geom.GetY())
+  # geom_col = batch["geometry"]
+  # result = [None] * batch.num_rows
+  # for i, geom in enumerate(geom_col):
+  #   g = ogr.CreateGeometryFromWkb(geom.as_py())
+  #   xy.append(g.GetX())
+  #   xy.append(g.GetY())
+
 
 # for batch in batches:
 
