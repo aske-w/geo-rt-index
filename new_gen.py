@@ -7,7 +7,7 @@ import sys
 DRIVER = "Parquet"
 seed = int(sys.argv[1])
 P = 22 # 4m
-P = 26 # 67m
+# P = 26 # 67m
 N = 1 << P
 
 os.makedirs("./data", exist_ok=True)
