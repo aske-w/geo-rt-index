@@ -33,8 +33,7 @@ struct cuda_buffer {
     void alloc(size_t size) {
         assert(raw_ptr == nullptr);
         size_in_bytes = size;
-        auto err = cudaMalloc((void**)&raw_ptr, size_in_bytes); CUERR
-//		printf("address %p contains cu_dev_p %Xll", raw_ptr, *((uint64_t*)raw_ptr));
+		cudaMalloc((void**)&raw_ptr, size_in_bytes); CUERR
     }
 
     void free() {

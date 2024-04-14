@@ -35,6 +35,10 @@ public:
 		                     .maxZ = _maxZ
 		                 });
 	}
+	static inline const OptixAabb ToOptixAabb(const Aabb& aabb, float _minZ = 0, float _maxZ = 0)
+	{
+		return aabb.ToOptixAabb(_minZ, _maxZ);
+	}
 #endif
 };
 
