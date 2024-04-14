@@ -6,6 +6,7 @@
 #include "factories/pta_factory.hpp"
 #include "factories/triangle_input_factory.hpp"
 #include "helpers/argparser.hpp"
+#include "helpers/data_loader.hpp"
 #include "helpers/input_generator.hpp"
 #include "helpers/optix_pipeline.hpp"
 #include "helpers/optix_wrapper.hpp"
@@ -17,11 +18,8 @@
 #include "types.hpp"
 
 #include <vector>
-#include "helpers/input_generator.hpp"
-#include "helpers/pretty_printers.hpp"
-#include "helpers/time.hpp"
 
-//#include "device_code.cu"
+// #include "device_code.cu"
 
 
 using std::unique_ptr;
@@ -84,16 +82,18 @@ int main(const int argc, const char** argv) {
 
     cuda_buffer /*curve_points_d,*/ as;
 //	const uint32_t num_points = (1 << 29) + (1 << 28) + (1 << 26); // = 872,415,232 = 7.76 GB worth of points
-	const uint32_t num_points = (1 << 25) + (3 * 1 << 23) + (1 << 22); // = 62,914,560
-	const uint32_t num_in_range = 1 << 23;
-	const auto query = Aabb{140, 50, 180, 60};
-	const auto space = Aabb{-180, -90, 180, 90};
-	const bool shuffle = !DEBUG;
+//	const uint32_t num_points = (1 << 25) + (3 * 1 << 23) + (1 << 22); // = 62,914,560
+//	const uint32_t num_in_range = 1 << 23;
+	const auto query = Aabb{0,0,1,1};
+//	const auto space = Aabb{-180, -90, 180, 90};
+//	const bool shuffle = !DEBUG;
 	std::vector<Point> points;
 	MEASURE_TIME("Generating points",
-		points = InputGenerator::Generate(query, space, num_points, num_in_range, shuffle);
+//		points = InputGenerator::Generate(query, space, num_points, num_in_range, shuffle);
+	 	points = DataLoader::Load("/home/aske/dev/geo-rt-index/data/duniform_p22_s1337.parquet");
 	);
-
+	const auto num_points = points.size();
+	const uint32_t num_in_range{4'194'304};
 #if INDEX_TYPE == 1
 	PointToAABBFactory f{points};
 	f.SetQuery(query);

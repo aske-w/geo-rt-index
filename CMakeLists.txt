@@ -4,6 +4,7 @@ set(NAME geo-rt-index)
 project(${NAME} LANGUAGES C CXX CUDA) # C is needed for embedding the ptx file
 find_package(OptiX REQUIRED)
 find_package(CUDA REQUIRED)
+find_package(GDAL REQUIRED)
 #find_package(OpenMP REQUIRED)
 
 option(USE_MEASURE_TIME "Enable time measuring macro" OFF)
@@ -59,6 +60,7 @@ add_executable(oracle ${ORACLE_SOURCES})
 target_link_libraries(${NAME}
 	${CUDA_CUDA_LIBRARY}
 	${CUDA_LIBRARIES}
+	"libgdal.so"
 )
 
 
