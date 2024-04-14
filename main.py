@@ -15,10 +15,11 @@ from shapely.geometry import *
 from shapely import wkt, from_wkb
 import pyarrow.parquet as pq
 import pyarrow
+from osgeo import ogr
 
 from concurrent.futures import ThreadPoolExecutor
 
-pool = ThreadPoolExecutor(12)
+pool = ThreadPoolExecutor(2)
 
 NUM = (1 << 25) + (3 * 1 << 23) + (1 << 22) # 62,914,560
 # NUM = (1 << 26) # 67,108,864 - see error in bottom
@@ -26,30 +27,29 @@ NUM = (1 << 25) + (3 * 1 << 23) + (1 << 22) # 62,914,560
 np.random.seed(0)
 cupy.random.seed(0)
 
-p = pq.ParquetFile("data/duniform_p22_s1337.parquet")
+p = pq.read_table("data/duniform_p22_s1337.parquet")
 
 def destruct(g):
   return g[0].x, g[0].y
 
-def work(i) -> list[float]:
-  private_p = pq.ParquetFile("data/duniform_p22_s1337.parquet", memory_map=True, pre_buffer=True)
-  group = private_p.read_row_group(i)
-  geoms: np.ndarray = from_wkb(group)
-  result = [None] * geoms.size
-  for i, geom in enumerate(geoms):
-    result[i] = (geom[0].x)
-    result[i] = (geom[0].y)
+def work(batch):
+  geom_col = batch["geometry"]
+  result = [None] * batch.num_rows
+  for i, geom in enumerate(geom_col):
+    g = ogr.CreateGeometryFromWkb(geom.as_py())
+    result[i] = (g.GetX())
+    result[i] = (g.GetY())
   return result
 
-
 t = time.perf_counter()
-futures = []
-for i in range(p.num_row_groups):
-  futures.append(pool.submit(work, i))
+batches: list = p.to_batches(1 << 20)
+
 
 xy = []
-for future in futures:
-  xy += future.result()
+for result in pool.map(work, batches):
+  xy += result
+
+# for batch in batches:
 
 print(f"converting to xy took: {time.perf_counter() - t:.3f} ms")
 print(len(xy))
