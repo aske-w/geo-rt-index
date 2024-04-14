@@ -43,7 +43,7 @@ std::unique_ptr<OptixBuildInput> PointToAABBFactory::Build()
 	return std::move(bi);
 }
 
-Point* PointToAABBFactory::GetPointsDevicePointer() const
+geo_rt_index::Point* PointToAABBFactory::GetPointsDevicePointer() const
 {
 	return reinterpret_cast<Point*>(this->points_d->raw_ptr);
 }

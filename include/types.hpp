@@ -7,6 +7,10 @@
 #include <cstdint>
 #include <cstdio>
 #include <optix_types.h>
+#include <vector_types.h>
+
+namespace geo_rt_index
+{
 
 struct Triangle
 {
@@ -81,4 +85,5 @@ enum class IndexType : uint8_t
 	PTA = 1
 };
 
+} // geo_rt_index
 #endif // TYPES_HPP
