@@ -12,7 +12,7 @@
 class DataLoader
 {
 public:
-	static std::vector<geo_rt_index::Point> Load(const std::string& path);
+	static std::vector<geo_rt_index::Point> Load(const std::vector<std::string>& files);
 };
 
 #endif // GEO_RT_INDEX_DATA_LOADER_HPP
