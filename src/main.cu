@@ -17,6 +17,7 @@
 #include "optix_function_table_definition.h"
 #include "optix_stubs.h"
 #include "types.hpp"
+#include "helpers/spatial_helpers.cuh"
 
 #include <numeric>
 #include <vector>
@@ -82,7 +83,7 @@ int main(const int argc, const char** argv) {
     cudaDeviceSynchronize(); CUERR
 
 	std::vector<Point> points;
-	MEASURE_TIME("Generating points",
+	MEASURE_TIME("Loading points",
 	 	points = DataLoader::Load(args.files);
 	);
 	const auto num_points = points.size();
@@ -120,18 +121,16 @@ int main(const int argc, const char** argv) {
 		.points = f.GetPointsDevicePointer(),
 		.num_points = points.size(),
 		.result_d = result_d->ptr<bool>(),
-//		.hit_count = hit_count_d.ptr<uint32_t*>(),
+//		.hit_count_d = hit_count_d.ptr<uint32_t*>(),
 		.queries = f.GetQueriesDevicePointer()
 	};
-
-	printf("launch parms num_points %u\n", launch_params.num_points);
 
 	cuda_buffer launch_params_d;
 	launch_params_d.alloc(sizeof(launch_params));
 	launch_params_d.upload(&launch_params, 1);
 	cudaDeviceSynchronize(); CUERR
 
-	MEASURE_TIME("Optix launch",
+	MEASURE_TIME("Query execution",
 		OPTIX_CHECK(optixLaunch(
 			pipeline.pipeline,
 			optix.stream,
@@ -149,36 +148,48 @@ int main(const int argc, const char** argv) {
 		cudaDeviceSynchronize();
 	);
 	CUERR
-//	std::cout << points.at(912706) << std::endl;
-//	std::cout << points.at(1692308) << std::endl;
-//	std::cout << points.at(3947100) << std::endl;
-//	std::cout << points.at(5000653) << std::endl;
-//	std::cout << points.at(8974027) << std::endl;
-//	std::cout << points.at(num_points-1) << std::endl;
 
-
-//	bool res[num_points];
 	MEASURE_TIME("result_d->download", result_d->download(*result, num_points * num_queries););
-//	MEASURE_TIME("hit_count_d.download",
-//	             hit_count_d.download(*device_hit_count, num_queries);
-//			 );
+
+#ifdef VERIFICATION_MODE
 	MEASURE_TIME("Result check",
-		uint32_t hit_count = 0;
-		for(uint32_t i = 0; i < result_size; i++)
+	D_PRINT("Checking device results\n");
+	uint32_t hit_count = 0;
+	for(uint32_t i = 0; i < num_queries; i++)
+	{
+		const auto& aabb_query = args.queries.at(i);
+		const auto& optixAabb_query = z_adjusted.at(i);
+		for(uint32_t j = 0; j < num_points; j++)
 		{
-			if ((*result)[i])
+			const auto point = points.at(j);
+			auto aabb_result = helpers::SpatialHelpers::Contains(aabb_query, point);
+			auto optixAabb_result = helpers::SpatialHelpers::Contains(optixAabb_query, point);
+			auto device_result = (*result)[(num_points * i) + j];
+			if(aabb_result != device_result)
+			{
+				throw std::runtime_error("aabb_result != device_result");
+			}
+			if(aabb_result != optixAabb_result)
+			{
+				throw std::runtime_error("aabb_result != optixAabb_result");
+			}
+			if(aabb_result && optixAabb_result && device_result)
 			{
 				hit_count++;
 			}
+			else if(aabb_result | optixAabb_result | device_result)
+			{
+				throw std::runtime_error("Unknown error");
+			}
 		}
-		std::cout << std::to_string(hit_count) << '\n';
-//		std::cout << std::to_string(**device_hit_count) << '\n';
-//		if(args.debug)
-//	    {
-////			assert(hit_count == num_in_range);
-////			assert(device_hit_count == num_in_range);
-//	    }
+	}
+	std::cout << "Hit count: " << std::to_string(hit_count) << '\n';
 	);
+
+
+#endif
+
+
 
 
 	return 0;

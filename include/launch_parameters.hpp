@@ -9,10 +9,8 @@
 struct LaunchParameters
 {
     OptixTraversableHandle traversable;
-#if INDEX_TYPE == 1
 	geo_rt_index::Point* points;
 	const size_t num_points = 0;
-#endif
 	bool* result_d;
 //	uint32_t** hit_count;
 	OptixAabb* queries;
