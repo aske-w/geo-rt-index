@@ -1,53 +1,43 @@
-from time import sleep
 import cuspatial
-import cudf
-import cupy
-import geopandas as gp
-import pandas as pd
-import numpy as np
-import cuda
+import cuspatial.utils
+import cuspatial.utils.column_utils
 import time
-import shapely
-from shapely.geometry import *
-from shapely import wkt
+import pyarrow.parquet as pq
+import multiprocessing as mp
+from osgeo import ogr
+from concurrent.futures import ProcessPoolExecutor # ThreadPoolExecutor locks GIL
 
+BATCH_SIZE = 1 << 21
 
+pool = ProcessPoolExecutor(mp.cpu_count())
 
-print(cuda._version.get_versions())
-print(cupy.is_available())
+data = pq.read_table("data/duniform_p26_s369.parquet")
 
-NUM = (1 << 25) + (3 * 1 << 23) + (1 << 22) # 62,914,560
-# NUM = (1 << 26) # 67,108,864 - see error in bottom
-# NUM = 10
-np.random.seed(0)
-cupy.random.seed(0)
-
-
-t = time.perf_counter()
-x_points = (cupy.random.random(NUM) - 0.5) * 360
-y_points = (cupy.random.random(NUM) - 0.5) * 180
-print(f"generating {NUM:,} xy points took: {time.perf_counter() - t:.3f} ms")
-# sleep(3)
-
+def work(batch):
+  geom_col = batch["geometry"]
+  result = []
+  for geom in geom_col:
+    g = ogr.CreateGeometryFromWkb(geom.as_py())
+    result.append(g.GetX())
+    result.append(g.GetY())
+  return result
 
 t = time.perf_counter()
-xy = cudf.DataFrame({"x": x_points, "y": y_points}).interleave_columns()
-print(f"interleave_columns took: {time.perf_counter() - t:.3f} ms")
-# sleep(3)
-
+batches: list = data.to_batches(BATCH_SIZE) # 1m
+xy = []
+for result in pool.map(work, batches):
+  xy += result
+print(f"converting to xy took: {time.perf_counter() - t:.3f} ms")
 
 t = time.perf_counter()
 points = cuspatial.GeoSeries.from_points_xy(xy)
-del xy, x_points, y_points
 print(f"Creating points from interleaved columns took: {time.perf_counter() - t:.3f} ms")
 
-
+input("Press enter to run cuspatial.points_in_spatial_window")
 hit_start = time.perf_counter()
-hit = cuspatial.points_in_spatial_window(points, 140, 180, 50, 60)
+hit = cuspatial.points_in_spatial_window(points, 0, 1, 0, 1) # beware that it is minx, maxx, miny, maxy
 print("hit took ", time.perf_counter() - hit_start)
 print(hit.head()) # lmao
-sleep(3)
-exit()
 
 # bboxes_dict = {
 #     "minx": [-20.],

@@ -38,7 +38,7 @@ std::unique_ptr<OptixBuildInput> PointFactory::Build()
 	vector<Triangle> transformed;
 	for (auto&& p : *points)
 	{
-		transformed.push_back(p.ToTriangle());
+		transformed.push_back(Triangle::FromPoint(p));
 	}
 
 	this->points_d->alloc_and_upload(transformed);

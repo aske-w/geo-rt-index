@@ -1,4 +1,5 @@
 //#include "configuration.hpp"
+
 #include "factories/aabb_factory.hpp"
 #include "factories/curve_factory.hpp"
 #include "factories/factory.hpp"
@@ -6,6 +7,7 @@
 #include "factories/pta_factory.hpp"
 #include "factories/triangle_input_factory.hpp"
 #include "helpers/argparser.hpp"
+#include "helpers/data_loader.hpp"
 #include "helpers/input_generator.hpp"
 #include "helpers/optix_pipeline.hpp"
 #include "helpers/optix_wrapper.hpp"
@@ -15,14 +17,10 @@
 #include "optix_function_table_definition.h"
 #include "optix_stubs.h"
 #include "types.hpp"
+#include "helpers/spatial_helpers.cuh"
 
+#include <numeric>
 #include <vector>
-#include "helpers/input_generator.hpp"
-#include "helpers/pretty_printers.hpp"
-#include "helpers/time.hpp"
-
-//#include "device_code.cu"
-
 
 using std::unique_ptr;
 using std::unique_ptr;
@@ -76,65 +74,63 @@ OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& input
 }
 
 int main(const int argc, const char** argv) {
+	geo_rt_index::helpers::ArgParser parser{argc, argv};
+	auto args = parser.Parse();
+
     const constexpr bool debug = false;
     optix_wrapper optix(debug);
     optix_pipeline pipeline(&optix);
     cudaDeviceSynchronize(); CUERR
 
-
-    cuda_buffer /*curve_points_d,*/ as;
-//	const uint32_t num_points = (1 << 29) + (1 << 28) + (1 << 26); // = 872,415,232 = 7.76 GB worth of points
-	const uint32_t num_points = (1 << 25) + (3 * 1 << 23) + (1 << 22); // = 62,914,560
-	const uint32_t num_in_range = 1 << 23;
-	const auto query = Aabb{140, 50, 180, 60};
-	const auto space = Aabb{-180, -90, 180, 90};
-	const bool shuffle = !DEBUG;
 	std::vector<Point> points;
-	MEASURE_TIME("Generating points",
-		points = InputGenerator::Generate(query, space, num_points, num_in_range, shuffle);
+	MEASURE_TIME("Loading points",
+	 	points = DataLoader::Load(args.files);
 	);
+	const auto num_points = points.size();
 
-#if INDEX_TYPE == 1
-	PointToAABBFactory f{points};
-	f.SetQuery(query);
+	std::vector<OptixAabb> z_adjusted;
+	z_adjusted.reserve(args.queries.size());
+	for(auto query : args.queries)
+	{
+		z_adjusted.push_back(query.ToOptixAabb(3,4));
+	}
 
-#else
-//	TriangleFactory f{};
-	AabbFactory f{};
-//	PointFactory f{};
-#endif
+	D_PRINT("z: %zu\n", z_adjusted.size());
+	PointToAABBFactory f{points, z_adjusted};
 
 	unique_ptr<cuda_buffer> result_d = std::make_unique<cuda_buffer>();
-	auto result = std::make_unique<bool*>(new bool[num_points]);
-	memset(*result, 0, num_points);
-	result_d->alloc(sizeof(bool) * num_points);
-	result_d->upload(*result, num_points);
-	uint32_t device_hit_count = 0;
-	cuda_buffer hit_count_d;
-	hit_count_d.alloc(sizeof(uint32_t));
-	hit_count_d.upload(&device_hit_count, 1);
+	const auto num_queries = args.queries.size();
+	const auto result_size =num_queries * num_points;
+	auto result = std::make_unique<bool*>(new bool[result_size]);
+	memset(*result, 0, result_size);
+	result_d->alloc(sizeof(bool) * result_size);
+	result_d->upload(*result, result_size);
+
+//	auto device_hit_count = std::make_unique<uint32_t*>(new uint32_t[num_queries]);
+//	memset(*device_hit_count, 0, num_queries * sizeof(uint32_t));
+//	std::vector<uint32_t> device_hit_count(args.queries.size(), 0);
+//	D_PRINT("%zu\n", device_hit_count.size());
+//	cuda_buffer hit_count_d;
+//	hit_count_d.alloc(sizeof(uint32_t) * num_queries);
+//	hit_count_d.upload(*device_hit_count, num_queries);
 
 	auto handle = foo(optix, f);
 	LaunchParameters launch_params
 	{
 		.traversable = handle,
-#if INDEX_TYPE == 1
 		.points = f.GetPointsDevicePointer(),
 		.num_points = points.size(),
-#endif
 		.result_d = result_d->ptr<bool>(),
-		.hit_count = hit_count_d.ptr<uint32_t>(),
-		.query_aabb = query
+//		.hit_count_d = hit_count_d.ptr<uint32_t*>(),
+		.queries = f.GetQueriesDevicePointer()
 	};
-
-	printf("launch parms num_points %u\n", launch_params.num_points);
 
 	cuda_buffer launch_params_d;
 	launch_params_d.alloc(sizeof(launch_params));
 	launch_params_d.upload(&launch_params, 1);
 	cudaDeviceSynchronize(); CUERR
 
-	MEASURE_TIME("Optix launch",
+	MEASURE_TIME("Query execution",
 		OPTIX_CHECK(optixLaunch(
 			pipeline.pipeline,
 			optix.stream,
@@ -152,32 +148,48 @@ int main(const int argc, const char** argv) {
 		cudaDeviceSynchronize();
 	);
 	CUERR
-//	std::cout << points.at(912706) << std::endl;
-//	std::cout << points.at(1692308) << std::endl;
-//	std::cout << points.at(3947100) << std::endl;
-//	std::cout << points.at(5000653) << std::endl;
-//	std::cout << points.at(8974027) << std::endl;
-//	std::cout << points.at(num_points-1) << std::endl;
 
+	MEASURE_TIME("result_d->download", result_d->download(*result, num_points * num_queries););
 
-//	bool res[num_points];
-	MEASURE_TIME("result_d->download", result_d->download(*result, num_points););
-	MEASURE_TIME("hit_count_d.download", hit_count_d.download(&device_hit_count, 1););
+#ifdef VERIFICATION_MODE
 	MEASURE_TIME("Result check",
-		uint32_t hit_count = 0;
-		for(uint32_t i = 0; i < num_points; i++)
+	D_PRINT("Checking device results\n");
+	uint32_t hit_count = 0;
+	for(uint32_t i = 0; i < num_queries; i++)
+	{
+		const auto& aabb_query = args.queries.at(i);
+		const auto& optixAabb_query = z_adjusted.at(i);
+		for(uint32_t j = 0; j < num_points; j++)
 		{
-			if ((*result)[i])
+			const auto point = points.at(j);
+			auto aabb_result = helpers::SpatialHelpers::Contains(aabb_query, point);
+			auto optixAabb_result = helpers::SpatialHelpers::Contains(optixAabb_query, point);
+			auto device_result = (*result)[(num_points * i) + j];
+			if(aabb_result != device_result)
+			{
+				throw std::runtime_error("aabb_result != device_result");
+			}
+			if(aabb_result != optixAabb_result)
+			{
+				throw std::runtime_error("aabb_result != optixAabb_result");
+			}
+			if(aabb_result && optixAabb_result && device_result)
 			{
 				hit_count++;
-	//			std::cout << std::to_string(i) << '\n';
+			}
+			else if(aabb_result | optixAabb_result | device_result)
+			{
+				throw std::runtime_error("Unknown error");
 			}
 		}
-		std::cout << std::to_string(hit_count) << '\n';
-		std::cout << std::to_string(device_hit_count) << '\n';
-		assert(hit_count == num_in_range);
-		assert(device_hit_count == num_in_range);
+	}
+	std::cout << "Hit count: " << std::to_string(hit_count) << '\n';
 	);
+
+
+#endif
+
+
 
 
 	return 0;

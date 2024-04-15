@@ -7,6 +7,12 @@
 #include <cstdint>
 #include <cstdio>
 #include <optix_types.h>
+#include <vector_types.h>
+#include "types/point.hpp"
+
+namespace geo_rt_index
+{
+using types::Point;
 
 struct Triangle
 {
@@ -24,56 +30,21 @@ struct Triangle
 	{
 		return sizeof(float3);
 	}
-};
-
-struct Point {
-	float x, y;
-
-	Point(int _x, int _y) : x(static_cast<float>(_x)), y(static_cast<float>(_y))
-	{
-	}
-	Point(float _x, float _y) : x(_x), y(_y)
-	{
-	}
-
-	Triangle ToTriangle() const {
+	static Triangle FromPoint(const Point& p) {
 		const constexpr float f = 3.f;
 		auto t = Triangle{
-		    {x, 0 - (0.5f * f), -1},
-		    {x, 0 + (0.5f * f), -1},
-		    {x, 0, 1}
+		    {p.x, 0 - (0.5f * f), -1},
+		    {p.x, 0 + (0.5f * f), -1},
+		    {p.x, 0, 1}
 		};
 		D_PRINT("((%f,%f,%f),(%f,%f,%f),(%f,%f,%f))",
-		       t.v1.x, t.v1.y, t.v1.z,
-		       t.v2.x, t.v2.y, t.v2.z,
-		       t.v3.x, t.v3.y, t.v3.z);
+		        t.v1.x, t.v1.y, t.v1.z,
+		        t.v2.x, t.v2.y, t.v2.z,
+		        t.v3.x, t.v3.y, t.v3.z);
 		return t;
 	}
 };
 
-//! Axis-aligned bounding box
-struct Aabb
-{
-public:
-	const float minX, minY, maxX, maxY;
-	Aabb(float _minX, float _minY, float _maxX, float _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY)
-	{ }
-	Aabb(int _minX, int _minY, int _maxX, int _maxY) : Aabb(static_cast<float>(_minX), static_cast<float>(_minY),
-	           static_cast<float>(_maxX), static_cast<float>(_maxY))
-	{ }
-	inline constexpr const OptixAabb ToOptixAabb(float _minZ = 0, float _maxZ = 0) const
-	{
-		return std::move(OptixAabb
-		{
-			.minX = this->minX,
-			.minY = this->minY,
-			.minZ = _minZ,
-			.maxX = this->maxX,
-			.maxY = this->maxY,
-			.maxZ = _maxZ
-		});
-	}
-};
 
 enum class IndexType : uint8_t
 {
@@ -81,4 +52,5 @@ enum class IndexType : uint8_t
 	PTA = 1
 };
 
+} // geo_rt_index
 #endif // TYPES_HPP

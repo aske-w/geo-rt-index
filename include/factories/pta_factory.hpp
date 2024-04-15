@@ -7,6 +7,8 @@
 
 #include "factories/factory.hpp"
 #include "types.hpp"
+#include "types/aabb.hpp"
+
 #include <vector>
 
 namespace geo_rt_index
@@ -18,16 +20,14 @@ class PointToAABBFactory : public Factory<OptixBuildInput>
 {
 private:
 	std::unique_ptr<helpers::cuda_buffer> points_d;
-	size_t num_points;
-//	const std::vector<Point>& points;
-//	OptixAabb query;
+	std::unique_ptr<helpers::cuda_buffer> queries_d;
+	const size_t num_points;
+	const size_t num_queries;
 public:
-	std::unique_ptr<helpers::cuda_buffer> aabb_d;
-	explicit PointToAABBFactory(const std::vector<Point>& _points);
+	explicit PointToAABBFactory(const std::vector<Point>&, const std::vector<OptixAabb>&);
 	std::unique_ptr<OptixBuildInput> Build() override;
-	void SetQuery(Aabb _query);
 	Point* GetPointsDevicePointer() const;
-	size_t GetNumPoints() const;
+	OptixAabb* GetQueriesDevicePointer() const;
 };
 
 } // factories

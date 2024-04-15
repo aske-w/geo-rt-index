@@ -1,6 +1,7 @@
 #ifndef GEO_RT_INDEX_SPATIAL_HELPERS_CUH
 #define GEO_RT_INDEX_SPATIAL_HELPERS_CUH
 
+#include "types/aabb.hpp"
 namespace geo_rt_index
 {
 namespace helpers
@@ -9,10 +10,15 @@ namespace helpers
 class SpatialHelpers
 {
 public:
-	static __host__ __device__ __forceinline__ bool Contains(const Aabb& aabb, const Point& point)
+	static __host__ __device__ __forceinline__ bool Contains(const types::Aabb& aabb, const types::Point& point)
 	{
-		return aabb.minX <= point.x && point.x <= aabb.maxX &&
-			   aabb.minY <= point.y && point.y <= aabb.maxY;
+		return aabb.minX < point.x && point.x < aabb.maxX &&
+			   aabb.minY < point.y && point.y < aabb.maxY;
+	}
+	static __host__ __device__ __forceinline__ bool Contains(const OptixAabb& aabb, const types::Point& point)
+	{
+		return aabb.minX < point.x && point.x < aabb.maxX &&
+		       aabb.minY < point.y && point.y < aabb.maxY;
 	}
 };
 
