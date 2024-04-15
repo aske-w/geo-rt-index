@@ -98,19 +98,20 @@ int main(const int argc, const char** argv) {
 	PointToAABBFactory f{points, z_adjusted};
 
 	unique_ptr<cuda_buffer> result_d = std::make_unique<cuda_buffer>();
-	auto num_queries = args.queries.size();
-	auto result = std::make_unique<bool*>(new bool[num_points * num_queries]);
-	memset(*result, 0, num_points * num_queries);
-	result_d->alloc(sizeof(bool) * num_points * num_queries);
-	result_d->upload(*result, num_points * num_queries);
+	const auto num_queries = args.queries.size();
+	const auto result_size =num_queries * num_points;
+	auto result = std::make_unique<bool*>(new bool[result_size]);
+	memset(*result, 0, result_size);
+	result_d->alloc(sizeof(bool) * result_size);
+	result_d->upload(*result, result_size);
 
-	auto device_hit_count = std::make_unique<uint32_t*>(new uint32_t[num_queries]);
-	memset(*device_hit_count, 0, num_queries * sizeof(uint32_t));
+//	auto device_hit_count = std::make_unique<uint32_t*>(new uint32_t[num_queries]);
+//	memset(*device_hit_count, 0, num_queries * sizeof(uint32_t));
 //	std::vector<uint32_t> device_hit_count(args.queries.size(), 0);
 //	D_PRINT("%zu\n", device_hit_count.size());
-	cuda_buffer hit_count_d;
-	hit_count_d.alloc(sizeof(uint32_t) * num_queries);
-	hit_count_d.upload(*device_hit_count, num_queries);
+//	cuda_buffer hit_count_d;
+//	hit_count_d.alloc(sizeof(uint32_t) * num_queries);
+//	hit_count_d.upload(*device_hit_count, num_queries);
 
 	auto handle = foo(optix, f);
 	LaunchParameters launch_params
@@ -119,7 +120,7 @@ int main(const int argc, const char** argv) {
 		.points = f.GetPointsDevicePointer(),
 		.num_points = points.size(),
 		.result_d = result_d->ptr<bool>(),
-		.hit_count = hit_count_d.ptr<uint32_t*>(),
+//		.hit_count = hit_count_d.ptr<uint32_t*>(),
 		.queries = f.GetQueriesDevicePointer()
 	};
 
@@ -158,23 +159,20 @@ int main(const int argc, const char** argv) {
 
 //	bool res[num_points];
 	MEASURE_TIME("result_d->download", result_d->download(*result, num_points * num_queries););
-	MEASURE_TIME("hit_count_d.download",
-	             hit_count_d.download(*device_hit_count, num_queries);
-			 );
+//	MEASURE_TIME("hit_count_d.download",
+//	             hit_count_d.download(*device_hit_count, num_queries);
+//			 );
 	MEASURE_TIME("Result check",
-//		uint32_t hit_count = 0;
-//		for(uint32_t i = 0; i < num_points * num_queries; i++)
-//		{
-////			for(uint32_t j = 0; j < num_queries; j++)
-////		    {
-//				if ((*result)[i])
-//				{
-//					hit_count++;
-//				}
-////		    }
-//		}
-//		std::cout << std::to_string(hit_count) << '\n';
-		std::cout << std::to_string(**device_hit_count) << '\n';
+		uint32_t hit_count = 0;
+		for(uint32_t i = 0; i < result_size; i++)
+		{
+			if ((*result)[i])
+			{
+				hit_count++;
+			}
+		}
+		std::cout << std::to_string(hit_count) << '\n';
+//		std::cout << std::to_string(**device_hit_count) << '\n';
 //		if(args.debug)
 //	    {
 ////			assert(hit_count == num_in_range);

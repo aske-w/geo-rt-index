@@ -45,14 +45,14 @@ extern "C" __global__ void __intersection__test() {
 //		D_PRINT("False positive hit for %u %u\n", primitive_id, point_id);
 		return;
 	}
-	atomicAdd(params.hit_count[primitive_id], 1);
+//	atomicAdd(params.hit_count[primitive_id], 1);
 //	D_PRINT("True positive hit for %d\n", point_id);
 //	D_PRINT("Is frontface hit: %x ", optixIsFrontFaceHit());
 //	D_PRINT("Is backface hit: %x ", optixIsBackFaceHit());
 //	D_PRINT("result_count %u\n", params.result_count);
 //	D_PRINT("result_d %llX\n", params.result_d);
 //	D_PRINT("access %u\n", params.result_d[x]);
-	params.result_d[point_id * primitive_id] = true;
+	params.result_d[(primitive_id * params.num_points) + point_id] = true;
 //	D_PRINT("Hit %u\n", optixGetPayload_0());
 //	D_PRINT("write");
 	optixSetPayload_1(optixGetPayload_1() + 1);
