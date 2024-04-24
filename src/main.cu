@@ -74,8 +74,9 @@ OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& input
 }
 
 int main(const int argc, const char** argv) {
-	geo_rt_index::helpers::ArgParser parser{argc, argv};
-	auto args = parser.Parse();
+	geo_rt_index::helpers::Args::Parse(argc, argv);
+	const auto& args = geo_rt_index::helpers::Args::GetInstance();
+	const auto queries = args.GetQueries();
 
     const constexpr bool debug = false;
     optix_wrapper optix(debug);
@@ -84,13 +85,13 @@ int main(const int argc, const char** argv) {
 
 	std::vector<Point> points;
 	MEASURE_TIME("Loading points",
-	 	points = DataLoader::Load(args.files);
+	 	points = DataLoader::Load(args.GetFiles());
 	);
 	const auto num_points = points.size();
 
 	std::vector<OptixAabb> z_adjusted;
-	z_adjusted.reserve(args.queries.size());
-	for(auto query : args.queries)
+	z_adjusted.reserve(queries.size());
+	for(auto query : queries)
 	{
 		z_adjusted.push_back(query.ToOptixAabb(3,4));
 	}
@@ -99,12 +100,13 @@ int main(const int argc, const char** argv) {
 	PointToAABBFactory f{points, z_adjusted};
 
 	unique_ptr<cuda_buffer> result_d = std::make_unique<cuda_buffer>();
-	const auto num_queries = args.queries.size();
+	const auto num_queries = queries.size();
 	const auto result_size =num_queries * num_points;
 	auto result = std::make_unique<bool*>(new bool[result_size]);
 	memset(*result, 0, result_size);
 	result_d->alloc(sizeof(bool) * result_size);
 	result_d->upload(*result, result_size);
+	cudaDeviceSynchronize(); CUERR
 
 //	auto device_hit_count = std::make_unique<uint32_t*>(new uint32_t[num_queries]);
 //	memset(*device_hit_count, 0, num_queries * sizeof(uint32_t));
@@ -157,7 +159,7 @@ int main(const int argc, const char** argv) {
 	uint32_t hit_count = 0;
 	for(uint32_t i = 0; i < num_queries; i++)
 	{
-		const auto& aabb_query = args.queries.at(i);
+		const auto& aabb_query = queries.at(i);
 		const auto& optixAabb_query = z_adjusted.at(i);
 		for(uint32_t j = 0; j < num_points; j++)
 		{
