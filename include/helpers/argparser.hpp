@@ -38,6 +38,7 @@ private:
 	std::vector<geo_rt_index::types::Aabb> queries;
 	std::vector<std::string> files;
 	AabbLayering layering;
+	uint32_t rays_per_thread;
 	inline static Args& GetMutableInstance()
 	{
 		static Args instance{};
@@ -64,6 +65,10 @@ public:
 	inline AabbLayering GetLayering() const
 	{
 		return this->layering;
+	}
+	inline auto GetRaysPerThread() const
+	{
+		return rays_per_thread;
 	}
 };
 
