@@ -63,6 +63,10 @@ void Args::Parse(const int argc, const char** argv)
 		}
 		else
 		{
+			if(arg.rfind('\\') != string::npos && fs::is_directory(arg.substr(0, arg.rfind('\\'))))
+			{
+				throw std::runtime_error("File does not exist: " + arg);
+			}
 			throw std::runtime_error("Unknown argument: " + arg);
 		}
 	}
