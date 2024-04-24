@@ -31,6 +31,7 @@ using helpers::optix_wrapper;
 using helpers::cuda_buffer;
 using factories::Factory;
 using factories::PointToAABBFactory;
+using helpers::AabbLayering;
 
 OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& inputFactory) {
 	OptixTraversableHandle handle{0};
@@ -91,16 +92,32 @@ int main(const int argc, const char** argv) {
 
 	std::vector<OptixAabb> z_adjusted;
 	z_adjusted.reserve(queries.size());
-	for(auto query : queries)
+	uint8_t offset = 0;
+	switch (args.GetLayering())
 	{
-		z_adjusted.push_back(query.ToOptixAabb(3,4));
+	case AabbLayering::None:
+		offset = 0;
+		break;
+	case AabbLayering::Stacked:
+		offset = 1;
+		break;
+	case AabbLayering::StackedSpaced:
+		offset = 2;
+		break;
+	default:
+		offset = 0;
+		break;
+	}
+	const auto num_queries = queries.size();
+	for(size_t i = 0; i < num_queries; i++)
+	{
+		auto current_offset = i * offset;
+		z_adjusted.push_back(queries.at(i).ToOptixAabb(current_offset, 1 + current_offset));
 	}
 
-	D_PRINT("z: %zu\n", z_adjusted.size());
 	PointToAABBFactory f{points, z_adjusted};
 
 	unique_ptr<cuda_buffer> result_d = std::make_unique<cuda_buffer>();
-	const auto num_queries = queries.size();
 	const auto result_size =num_queries * num_points;
 	auto result = std::make_unique<bool*>(new bool[result_size]);
 	memset(*result, 0, result_size);
@@ -108,22 +125,14 @@ int main(const int argc, const char** argv) {
 	result_d->upload(*result, result_size);
 	cudaDeviceSynchronize(); CUERR
 
-//	auto device_hit_count = std::make_unique<uint32_t*>(new uint32_t[num_queries]);
-//	memset(*device_hit_count, 0, num_queries * sizeof(uint32_t));
-//	std::vector<uint32_t> device_hit_count(args.queries.size(), 0);
-//	D_PRINT("%zu\n", device_hit_count.size());
-//	cuda_buffer hit_count_d;
-//	hit_count_d.alloc(sizeof(uint32_t) * num_queries);
-//	hit_count_d.upload(*device_hit_count, num_queries);
-
 	auto handle = foo(optix, f);
 	LaunchParameters launch_params
 	{
 		.traversable = handle,
 		.points = f.GetPointsDevicePointer(),
-		.num_points = points.size(),
+		.num_points = num_points,
+		.max_z = num_queries * offset + 4,
 		.result_d = result_d->ptr<bool>(),
-//		.hit_count_d = hit_count_d.ptr<uint32_t*>(),
 		.queries = f.GetQueriesDevicePointer()
 	};
 
@@ -185,7 +194,7 @@ int main(const int argc, const char** argv) {
 			}
 		}
 	}
-	std::cout << "Hit count: " << std::to_string(hit_count) << '\n';
+	 D_PRINT("Hit count: %zu\n", hit_count);
 	);
 
 

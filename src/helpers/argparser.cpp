@@ -10,6 +10,8 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <functional>
+#include <numeric>
 
 namespace geo_rt_index
 {
@@ -18,22 +20,10 @@ namespace helpers
 
 namespace fs = std::filesystem;
 
-using std::stoi, std::stoll, std::stof;
+using std::stoi, std::stoll, std::stof, std::stoull;
 using std::vector;
 using std::string, std::string_view;
-
-
-//Args::Args(bool _debug, bool _benchmark, const vector<geo_rt_index::types::Aabb> _queries, const vector<std::string> _files)
-//    : debug(_debug), benchmark(false), queries(_queries), files(_files)
-//{
-//	if(debug)
-//	{
-//		D_PRINT("Debug enabled\n");
-//		D_PRINT("Number of queries: %zu\n",queries.size());
-//		D_PRINT("Number of files: %zu\n", files.size());
-//	}
-//}
-
+using std::function;
 
 static inline bool IsCandidateArgument(const string_view& in_arg, const vector<string_view>& candidates)
 {
@@ -41,16 +31,11 @@ static inline bool IsCandidateArgument(const string_view& in_arg, const vector<s
 }
 
 static const vector<string_view> query_args{"-q", "--query"};
-static const vector<string_view> debug_args{"-d", "--debug"};
-static const vector<string_view> benchmark_args{"-b", "--benchmark"};
+static const vector<string_view> aabb_layering_args{"-l", "--aabb-layering"};
 
 void Args::Parse(const int argc, const char** argv)
 {
-//	bool debug{false};
-//	bool benchmark{false};
-//	vector<string> files;
-//	vector<types::Aabb> queries;
-
+	auto& instance = GetMutableInstance();
 	for(int32_t i = 1; i < argc; i++)
 	{
 		const string arg{argv[i]};
@@ -60,19 +45,21 @@ void Args::Parse(const int argc, const char** argv)
 			const float miny{stof(argv[++i])};
 			const float maxx{stof(argv[++i])};
 			const float maxy{stof(argv[++i])};
-			GetMutableInstance().queries.emplace_back(minx, miny, maxx, maxy);
+			instance.queries.emplace_back(minx, miny, maxx, maxy);
+		}
+		else if(IsCandidateArgument(arg, aabb_layering_args))
+		{
+			const uint64_t input = stoull(argv[++i]);
+			if(input > static_cast<uint64_t>(AabbLayering::Last))
+			{
+				throw std::runtime_error("AabbLayering input out of range, max is "
+					+ std::to_string(static_cast<uint8_t>(AabbLayering::Last)));
+			}
+			instance.layering = static_cast<AabbLayering>(input);
 		}
 		else if(fs::exists(arg))
 		{
-			GetMutableInstance().files.push_back(arg);
-		}
-		else if(IsCandidateArgument(arg, debug_args))
-		{
-			GetMutableInstance().debug = true;
-		}
-		else if(IsCandidateArgument(arg, benchmark_args))
-		{
-			GetMutableInstance().benchmark = true;
+			instance.files.push_back(arg);
 		}
 		else
 		{

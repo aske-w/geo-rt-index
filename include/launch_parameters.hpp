@@ -11,6 +11,7 @@ struct LaunchParameters
     OptixTraversableHandle traversable;
 	geo_rt_index::Point* points;
 	const size_t num_points = 0;
+	const size_t max_z = 0;
 	bool* result_d;
 //	uint32_t** hit_count;
 	OptixAabb* queries;

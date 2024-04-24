@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <cuda_runtime.h>
 #include "helpers/spatial_helpers.cuh"
+#include <numeric>
 #include "../include/helpers/spatial_helpers.cuh"
 
 using namespace geo_rt_index;
@@ -71,6 +72,7 @@ extern "C" __global__ void __anyhit__test() {
 extern "C" __global__ void __raygen__test() {
 //	D_PRINT("running from thread ID %d\ntx:%d,ty:%d,tz:%d,bx:%d,by:%d,bdx:%d,bdy:%d\n", threadIdx.x + blockDim.x * blockIdx.x, threadIdx.x, threadIdx.y,threadIdx.z,blockIdx.x,blockIdx.y,blockDim.x,blockDim.y);
 	constexpr const uint32_t ray_flags = 0;
+	constexpr const float float_max = 1e16f;
 	const auto limit = params.num_points;
 	const auto points = params.points;
 	const auto t_max = 1e16f;
@@ -86,9 +88,9 @@ extern "C" __global__ void __raygen__test() {
 		}
 		const float3 origin {point.x, point.y, 0};
 //		D_PRINT("Origin: (%f,%f,0)\n", point.x, point.y);
-		const float3 direction {point.x, point.y, t_max};
+		const float3 direction {point.x, point.y, float_max};
 //		D_PRINT("Direction: (%f,%f,5)\n", point.x, point.y);
-		optixTrace(params.traversable, origin, direction, 0, t_max, 0.0f, OptixVisibilityMask(255), ray_flags, 0, 0,
+		optixTrace(params.traversable, origin, direction, 0, t_max, 0, OptixVisibilityMask(255), ray_flags, 0, 0,
 		           0, i, count);
 //		D_PRINT("__raygen_test hit %d\n", i, i0);
 //	}
