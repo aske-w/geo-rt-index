@@ -144,6 +144,6 @@ vector<Point> DataLoader::Load(const vector<std::string>& files)
 		auto future_result = handle.get();
 		result.insert(result.end(), future_result.begin(), future_result.end());
 	}
-	printf("size: %zu\n", result.size());
+	D_PRINT("size: %zu\n", result.size());
 	return result;
 }
