@@ -24,23 +24,44 @@ namespace helpers
 
 class Args
 {
+private:
+	bool debug;
+	bool benchmark;
+	std::vector<geo_rt_index::types::Aabb> queries;
+	std::vector<std::string> files;
+	inline static Args& GetMutableInstance()
+	{
+		static Args instance{};
+		return instance;
+	}
+	explicit Args() { };
 public:
-	const bool debug;
-	const bool benchmark;
-	const std::vector<geo_rt_index::types::Aabb> queries;
-	const std::vector<std::string> files;
-	explicit Args(bool, bool, const std::vector<geo_rt_index::types::Aabb>, const std::vector<std::string>);
+	inline static const Args& GetInstance()
+	{
+		return GetMutableInstance();
+	}
+	static void Parse(const int, const char**);
+public:
+	Args(Args&) = delete;
+	void operator=(const Args&) = delete;
+	inline bool IsDebug() const
+	{
+		return this->debug;
+	}
+	inline bool IsBenchmark() const
+	{
+		return this->benchmark;
+	}
+	inline const std::vector<geo_rt_index::types::Aabb> GetQueries() const
+	{
+		return this->queries;
+	}
+	inline const std::vector<std::string> GetFiles() const
+	{
+		return this->files;
+	}
 };
 
-class ArgParser
-{
-private:
-	const int argc;
-	const char** argv;
-public:
-	explicit ArgParser(const int, const char**);
-	const Args Parse();
-};
 
 }
 }
