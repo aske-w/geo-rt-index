@@ -33,7 +33,7 @@ using factories::Factory;
 using factories::PointToAABBFactory;
 using helpers::AabbLayering;
 
-OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& inputFactory) {
+OptixTraversableHandle BuildAccelerationStructure(optix_wrapper& optix, Factory<OptixBuildInput>& inputFactory) {
 	OptixTraversableHandle handle{0};
 	unique_ptr<OptixBuildInput> bi = inputFactory.Build();
 
@@ -125,7 +125,7 @@ int main(const int argc, const char** argv) {
 	result_d->upload(*result, result_size);
 	cudaDeviceSynchronize(); CUERR
 
-	auto handle = foo(optix, f);
+	auto handle = BuildAccelerationStructure(optix, f);
 	LaunchParameters launch_params
 	{
 		.traversable = handle,
@@ -133,6 +133,7 @@ int main(const int argc, const char** argv) {
 		.num_points = num_points,
 		.max_z = num_queries * offset + 4,
 		.result_d = result_d->ptr<bool>(),
+		.rays_per_thread = args.GetRaysPerThread(),
 		.queries = f.GetQueriesDevicePointer()
 	};
 
@@ -140,7 +141,11 @@ int main(const int argc, const char** argv) {
 	launch_params_d.alloc(sizeof(launch_params));
 	launch_params_d.upload(&launch_params, 1);
 	cudaDeviceSynchronize(); CUERR
-
+	D_PRINT("num_points == %zu\n", num_points);
+	D_PRINT("args.GetRaysPerThread() == %u\n", args.GetRaysPerThread());
+	D_PRINT("num_points / args.GetRaysPerThread() == %zu\n", num_points / args.GetRaysPerThread());
+	const auto num_threads = num_points / args.GetRaysPerThread();
+	D_PRINT("num_threads: %zu\n", num_threads);
 	MEASURE_TIME("Query execution",
 		OPTIX_CHECK(optixLaunch(
 			pipeline.pipeline,
@@ -148,11 +153,7 @@ int main(const int argc, const char** argv) {
 			launch_params_d.cu_ptr(),
 			launch_params_d.size_in_bytes,
 			&pipeline.sbt,
-	#if SINGLE_THREAD
-			1
-	#else
-			num_points,
-	#endif
+			num_threads,
 			1,
 			1
 		))
@@ -194,7 +195,7 @@ int main(const int argc, const char** argv) {
 			}
 		}
 	}
-	 D_PRINT("Hit count: %zu\n", hit_count);
+	 D_PRINT("Hit count: %u\n", hit_count);
 	);
 
 

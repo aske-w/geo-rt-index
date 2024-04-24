@@ -73,19 +73,14 @@ extern "C" __global__ void __raygen__test() {
 //	D_PRINT("running from thread ID %d\ntx:%d,ty:%d,tz:%d,bx:%d,by:%d,bdx:%d,bdy:%d\n", threadIdx.x + blockDim.x * blockIdx.x, threadIdx.x, threadIdx.y,threadIdx.z,blockIdx.x,blockIdx.y,blockDim.x,blockDim.y);
 	constexpr const uint32_t ray_flags = 0;
 	constexpr const float float_max = 1e16f;
-	const auto limit = params.num_points;
 	const auto points = params.points;
 	const auto t_max = 1e16f;
 	uint32_t count = 0;
-	uint32_t i = threadIdx.x;
-//	for (uint32_t i = 0; i < limit; i++)
-//	{
+	const uint32_t t_idx = threadIdx.x * params.rays_per_thread; // 0 | 4 etc
+	const auto limit = t_idx + params.rays_per_thread;
+	for (uint32_t i = t_idx; i < limit; i++) // 0,1,2,3 | 4,5,6,7 etc
+	{
 		const Point point = points[i];
-		if(0 <= point.x && point.x <= 1 &&
-		        0 <= point.y && point.y <= 1)
-		{
-//			D_PRINT("Point: (%f,%f)\n", point.x, point.y);
-		}
 		const float3 origin {point.x, point.y, 0};
 //		D_PRINT("Origin: (%f,%f,0)\n", point.x, point.y);
 		const float3 direction {point.x, point.y, float_max};
@@ -93,7 +88,7 @@ extern "C" __global__ void __raygen__test() {
 		optixTrace(params.traversable, origin, direction, 0, t_max, 0, OptixVisibilityMask(255), ray_flags, 0, 0,
 		           0, i, count);
 //		D_PRINT("__raygen_test hit %d\n", i, i0);
-//	}
+	}
 //	D_PRINT("count: %d\n", count);
 }
 
