@@ -30,11 +30,11 @@ DIR  = os.path.join("/Volumes/untitled/data", dist)
 os.makedirs(DIR, exist_ok=True)
 driver: ogr.Driver = GetDriverByName(DRIVER)
 
-file = os.path.join(DIR, f"p{P}_s{seed}_r01.parquet")
+file = os.path.join(DIR, f"p{P}_s{seed}_r-11.parquet")
 while os.path.exists(file):
     seed = (seed + int(seed / 2)) % (1 << 15 )
     print("dub", seed)
-    file = os.path.join(DIR, f"p{P}_s{seed}_r01.parquet")
+    file = os.path.join(DIR, f"p{P}_s{seed}_r-11.parquet")
     # os.remove(FILE)
 
 ds: ogr.DataSource = driver.CreateDataSource(file)
@@ -49,7 +49,7 @@ base_feature = ogr.Feature(layer_def)
 
 nums = rng()
 for f in tqdm.tqdm(nums):
-    while f[0] < 0 or f[1] < 0 or f[0] > 1 or f[1] > 1:
+    while f[0] < -1 or f[1] < -1 or f[0] > 1 or f[1] > 1:
         f = rng_single()
 
     point = Geometry(ogr.wkbPoint)
