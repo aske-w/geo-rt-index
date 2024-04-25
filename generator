@@ -23,7 +23,7 @@ n="$2"
 seed="$3"
 
 outname="d${d}_n${n}_s${seed}"
-# parquet="${outname}.parquet"
+parquet="${outname}.parquet"
 format="csv"
 gen_out="${outname}.${format}"
 
@@ -39,10 +39,10 @@ polysize="0.05" \
 maxseg="1" \
 seed="$seed" \
 format="${format}" \
-affinematrix=1,0,0,0,1,0 # > "data/$gen_out"
+affinematrix=1,0,0,0,1,0 > "data/$gen_out"
 
-# screen -Dm bash -c "ogr2ogr -f \"Parquet\" \"${parquet}\" \"$gen_out\"" &
-# wait
+bash -c "ogr2ogr -f \"Parquet\" \"${parquet}\" \"data/$gen_out\"" &
+wait
 
 # mv ${parquet} "${data_dir}/"
 # rm ${gen_out}
