@@ -9,7 +9,6 @@ import math # For sin, cos, pi and log functions
 from dataclasses import dataclass # To create data classes
 import os
 import bz2 # For compressing the output to BZ2
-import osgeo.ogr as ogr
 
 # Genreate a random number in the range [min, max)
 def uniform(min, max):
@@ -44,6 +43,30 @@ class DataSink(ABC):
     def flush(self):
         pass
 
+from osgeo.ogr import DataSource, GetDriverByName, Geometry, Layer, wkbPoint
+
+class OGRSink(DataSink):
+
+    def __init__(self, driver_name):
+        driver = GetDriverByName(driver_name)
+        ds: DataSource = driver.CreateDataSource("./x.parquet")
+        layer: Layer = ds.CreateLayer("points")
+        p = Geometry(wkbPoint)
+        p.AddPoint(0,0)
+        f = layer.CreateFeature(p)
+        print()
+
+    def writePoint(self, coordinates):
+        return super().writePoint(coordinates)
+
+    def writeBox(self, coordinates):
+        raise Exception("Not implemented")
+
+    def writePolygon(self, coordinates):
+        raise Exception("Not implemented")
+
+    def flush(self):
+        self.output.flush()
 
 class HexSink(DataSink):
     def __init__(self, output: typing.TextIO):
@@ -587,6 +610,8 @@ def main():
         datasink = GeoJSONSink(output)
     elif(output_format =="hex"):
         datasink = HexSink(output)
+    elif(output_format == "parquet"):
+        datasink = OGRSink("Parquet")
     else:
         raise Exception(f"Unsupported format '{output_format}'")
 
