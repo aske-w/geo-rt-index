@@ -90,7 +90,7 @@ print(hit.head()) # lmao
 
 """
 Traceback (most recent call last):
-  File "/home/aske/dev/py_cuspatial/main.py", line 44, in <module>
+  File "/home/aske/dev/py_cuspatial/cuspatial.py", line 44, in <module>
     hit = cuspatial.points_in_spatial_window(points, 140, 180, 50, 60)
   File "/usr/local/lib/python3.10/dist-packages/cuspatial/core/spatial/filtering.py", line 52, in points_in_spatial_window
     ys = as_column(points.points.y)
