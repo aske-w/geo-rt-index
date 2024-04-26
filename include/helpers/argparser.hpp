@@ -22,13 +22,23 @@ namespace geo_rt_index
 namespace helpers
 {
 
+enum class AabbLayering : uint8_t
+{
+	None,
+	Stacked,
+	StackedSpaced,
+
+	First = None,
+	Last = StackedSpaced
+};
+
 class Args
 {
 private:
-	bool debug;
-	bool benchmark;
 	std::vector<geo_rt_index::types::Aabb> queries;
 	std::vector<std::string> files;
+	AabbLayering layering;
+	uint32_t rays_per_thread;
 	inline static Args& GetMutableInstance()
 	{
 		static Args instance{};
@@ -44,21 +54,21 @@ public:
 public:
 	Args(Args&) = delete;
 	void operator=(const Args&) = delete;
-	inline bool IsDebug() const
-	{
-		return this->debug;
-	}
-	inline bool IsBenchmark() const
-	{
-		return this->benchmark;
-	}
-	inline const std::vector<geo_rt_index::types::Aabb> GetQueries() const
+	inline const std::vector<geo_rt_index::types::Aabb>& GetQueries() const
 	{
 		return this->queries;
 	}
-	inline const std::vector<std::string> GetFiles() const
+	inline const std::vector<std::string>& GetFiles() const
 	{
 		return this->files;
+	}
+	inline AabbLayering GetLayering() const
+	{
+		return this->layering;
+	}
+	inline auto GetRaysPerThread() const
+	{
+		return rays_per_thread;
 	}
 };
 

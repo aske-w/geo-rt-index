@@ -2,19 +2,21 @@
 BasedOnStyle: LLVM
 TabWidth: 4
 IndentWidth: 4
-ColumnLimit: 120
+ColumnLimit: 100
 AllowShortFunctionsOnASingleLine: None
 ---
 UseTab: ForIndentation
 DerivePointerAlignment: false
 PointerAlignment: Left
 AlignConsecutiveMacros: Consecutive
-AlignTrailingComments: true
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
 AllowAllArgumentsOnNextLine: false
 AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
-AlignAfterOpenBracket: Align
-SpaceBeforeCpp11BracedList: true
+AlignAfterOpenBracket: DontAlign
+SpaceBeforeCpp11BracedList: false
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpacesInAngles: false

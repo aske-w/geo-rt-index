@@ -32,7 +32,7 @@ endif ()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CUDA_STANDARD 20)
-set(CMAKE_CUDA_ARCHITECTURES 75) # RTX 2070 Super
+set(CMAKE_CUDA_ARCHITECTURES 75 86) # RTX 2070 Super, A40
 
 include_directories(include)
 include_directories(${OptiX_INCLUDE}) # Set during find_package(OptiX REQUIRED)
@@ -60,10 +60,11 @@ add_executable(${NAME} ${embedded_ptx_code} ${SOURCES})
 
 add_executable(oracle ${ORACLE_SOURCES})
 
+
 target_link_libraries(${NAME}
 	${CUDA_CUDA_LIBRARY}
 	${CUDA_LIBRARIES}
-	"libgdal.so"
+	${GDAL_LIBRARY}
 )
 
 
