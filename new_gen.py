@@ -14,7 +14,7 @@ dist = sys.argv[2].strip()
 match dist:
     case "uniform":
         rng = lambda: np.random.uniform(-1,1,(N,2))
-        rng_single = lambda: np.random.uniform(0,1,2)
+        rng_single = lambda: np.random.uniform(-1,1,2)
     case "normal":
         # rng = lambda: np.random.normal(0.5,0.15,(N,2))
         # rng_single = lambda: np.random.normal(0.5, 0.15, 2)
