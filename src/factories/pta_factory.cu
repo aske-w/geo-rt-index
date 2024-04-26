@@ -1,27 +1,29 @@
 #include "factories/pta_factory.hpp"
 #include "helpers/time.hpp"
+#include <optix_types.h>
 
 using std::make_unique;
 using namespace geo_rt_index::factories;
 using geo_rt_index::helpers::cuda_buffer;
 
-PointToAABBFactory::PointToAABBFactory(const std::vector<Point>& _points)
+using std::vector;
+
+PointToAABBFactory::PointToAABBFactory(const vector<types::Point>& _points,
+                                       const vector<OptixAabb>& _queries)
 	: points_d(std::move(make_unique<cuda_buffer>())),
-      aabb_d(std::move(make_unique<cuda_buffer>()))
+      queries_d(std::move(make_unique<cuda_buffer>())),
+      num_points(_points.size()),
+      num_queries(_queries.size())
 
 {
 	MEASURE_TIME("Uploading points to GPU",
-		points_d->alloc_and_upload(_points);
+		 points_d->alloc_and_upload(_points);
 	);
-	num_points = _points.size();
-}
 
-void PointToAABBFactory::SetQuery(Aabb query)
-{
-	if (aabb_d->raw_ptr != nullptr)
-		aabb_d->free();
-
-	aabb_d->alloc_and_upload<OptixAabb>({query.ToOptixAabb(2, 4)});
+	MEASURE_TIME("Uploading queries to GPU",
+		 queries_d->alloc_and_upload(_queries);
+	);
+	cudaDeviceSynchronize(); CUERR
 }
 
 std::unique_ptr<OptixBuildInput> PointToAABBFactory::Build()
@@ -34,8 +36,8 @@ std::unique_ptr<OptixBuildInput> PointToAABBFactory::Build()
 	bi->type = OPTIX_BUILD_INPUT_TYPE_CUSTOM_PRIMITIVES;
 
 	auto& prim= bi->customPrimitiveArray;
-	prim.aabbBuffers = (CUdeviceptr*) &(aabb_d->raw_ptr);
-	prim.numPrimitives = 1;
+	prim.aabbBuffers = (CUdeviceptr*) &(queries_d->raw_ptr);
+	prim.numPrimitives = num_queries;
 	prim.numSbtRecords = 1;
 	prim.strideInBytes = sizeof(OptixAabb);
 	prim.flags = flags;
@@ -43,12 +45,11 @@ std::unique_ptr<OptixBuildInput> PointToAABBFactory::Build()
 	return std::move(bi);
 }
 
-Point* PointToAABBFactory::GetPointsDevicePointer() const
+geo_rt_index::types::Point* PointToAABBFactory::GetPointsDevicePointer() const
 {
 	return reinterpret_cast<Point*>(this->points_d->raw_ptr);
 }
-
-size_t PointToAABBFactory::GetNumPoints() const
+OptixAabb* PointToAABBFactory::GetQueriesDevicePointer() const
 {
-	return this->num_points;
+	return reinterpret_cast<OptixAabb*>(this->queries_d->raw_ptr);
 }

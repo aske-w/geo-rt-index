@@ -4,9 +4,12 @@ set(NAME geo-rt-index)
 project(${NAME} LANGUAGES C CXX CUDA) # C is needed for embedding the ptx file
 find_package(OptiX REQUIRED)
 find_package(CUDA REQUIRED)
+find_package(GDAL REQUIRED)
 
 option(USE_MEASURE_TIME "Enable time measuring macro" OFF)
-add_compile_definitions(USE_MEASURE_TIME=${USE_MEASURE_TIME})
+if (USE_MEASURE_TIME)
+	add_compile_definitions(USE_MEASURE_TIME)
+endif ()
 
 option(USE_DEBUG "Enable debug statements. Always enabled for debug builds." OFF)
 if (USE_DEBUG OR ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug"))
@@ -15,8 +18,10 @@ else ()
 	add_compile_definitions(DEBUG=0)
 endif()
 
-option(INDEX_TYPE "Index type" 1)
-add_compile_definitions(INDEX_TYPE)
+option(VERIFICATION_MODE "Verify device results by comparing them to host results" OFF)
+if (VERIFICATION_MODE)
+	add_compile_definitions(VERIFICATION_MODE)
+endif ()
 
 option(DEBUG_PRINT "Enable debug print statements" 0)
 if((DEFINED DEBUG_PRINT) AND (DEBUG_PRINT STREQUAL "ON"))
@@ -27,7 +32,7 @@ endif ()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CUDA_STANDARD 20)
-set(CMAKE_CUDA_ARCHITECTURES 75) # RTX 2070 Super
+set(CMAKE_CUDA_ARCHITECTURES 75 86) # RTX 2070 Super, A40
 
 include_directories(include)
 include_directories(${OptiX_INCLUDE}) # Set during find_package(OptiX REQUIRED)
@@ -58,6 +63,7 @@ add_library(${NAME}_lib STATIC ${SOURCES})
 target_link_libraries(${NAME}
 	${CUDA_CUDA_LIBRARY}
 	${CUDA_LIBRARIES}
+	${GDAL_LIBRARY}
 )
 
 

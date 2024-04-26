@@ -1,4 +1,5 @@
 //#include "configuration.hpp"
+
 #include "factories/aabb_factory.hpp"
 #include "factories/curve_factory.hpp"
 #include "factories/factory.hpp"
@@ -6,6 +7,7 @@
 #include "factories/pta_factory.hpp"
 #include "factories/triangle_input_factory.hpp"
 #include "helpers/argparser.hpp"
+#include "helpers/data_loader.hpp"
 #include "helpers/input_generator.hpp"
 #include "helpers/optix_pipeline.hpp"
 #include "helpers/optix_wrapper.hpp"
@@ -15,14 +17,10 @@
 #include "optix_function_table_definition.h"
 #include "optix_stubs.h"
 #include "types.hpp"
+#include "helpers/spatial_helpers.cuh"
 
+#include <numeric>
 #include <vector>
-#include "helpers/input_generator.hpp"
-#include "helpers/pretty_printers.hpp"
-#include "helpers/time.hpp"
-
-//#include "device_code.cu"
-
 
 using std::unique_ptr;
 using std::unique_ptr;
@@ -33,11 +31,13 @@ using helpers::optix_wrapper;
 using helpers::cuda_buffer;
 using factories::Factory;
 using factories::PointToAABBFactory;
-using helpers::InputGenerator;
+using helpers::AabbLayering;
 
-OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& inputFactory) {
+OptixTraversableHandle BuildAccelerationStructure(optix_wrapper& optix,
+    Factory<OptixBuildInput>& input_factory)
+{
 	OptixTraversableHandle handle{0};
-	unique_ptr<OptixBuildInput> bi = inputFactory.Build();
+	auto bi = input_factory.Build();
 
 	OptixAccelBuildOptions bo {};
 	memset(&bo, 0, sizeof(OptixAccelBuildOptions));
@@ -77,108 +77,133 @@ OptixTraversableHandle foo(optix_wrapper& optix, Factory<OptixBuildInput>& input
 }
 
 int main(const int argc, const char** argv) {
+	geo_rt_index::helpers::Args::Parse(argc, argv);
+	const auto& args = geo_rt_index::helpers::Args::GetInstance();
+	const auto queries = args.GetQueries();
+
     const constexpr bool debug = false;
     optix_wrapper optix(debug);
     optix_pipeline pipeline(&optix);
     cudaDeviceSynchronize(); CUERR
 
-
-    cuda_buffer /*curve_points_d,*/ as;
-//	const uint32_t num_points = (1 << 29) + (1 << 28) + (1 << 26); // = 872,415,232 = 7.76 GB worth of points
-	const uint32_t num_points = (1 << 25) + (3 * 1 << 23) + (1 << 22); // = 62,914,560
-	const uint32_t num_in_range = 1 << 27;
-	const auto query = Aabb{140, 50, 180, 60};
-	const auto space = Aabb{-180, -90, 180, 90};
-	const bool shuffle = !DEBUG;
 	std::vector<Point> points;
-	MEASURE_TIME("Generating points",
-		points = InputGenerator::Generate(query, space, num_points, num_in_range, shuffle);
+	MEASURE_TIME("Loading points",
+	 	points = DataLoader::Load(args.GetFiles());
 	);
+	const auto num_points = points.size();
 
-#if INDEX_TYPE == 1
-	PointToAABBFactory f{points};
-	f.SetQuery(query);
+	std::vector<OptixAabb> z_adjusted;
+	z_adjusted.reserve(queries.size());
+	uint8_t offset = 0;
+	switch (args.GetLayering())
+	{
+	case AabbLayering::None:
+		offset = 0;
+		break;
+	case AabbLayering::Stacked:
+		offset = 1;
+		break;
+	case AabbLayering::StackedSpaced:
+		offset = 2;
+		break;
+	default:
+		offset = 0;
+		break;
+	}
+	const auto num_queries = queries.size();
+	for(size_t i = 0; i < num_queries; i++)
+	{
+		auto current_offset = i * offset;
+		z_adjusted.push_back(queries.at(i).ToOptixAabb(current_offset, 1 + current_offset));
+	}
 
-#else
-//	TriangleFactory f{};
-	AabbFactory f{};
-//	PointFactory f{};
-#endif
+	PointToAABBFactory f{points, z_adjusted};
 
 	unique_ptr<cuda_buffer> result_d = std::make_unique<cuda_buffer>();
-	auto result = std::make_unique<bool*>(new bool[num_points]);
-	memset(*result, 0, num_points);
-	result_d->alloc(sizeof(bool) * num_points);
-	result_d->upload(*result, num_points);
-	uint32_t device_hit_count = 0;
-	cuda_buffer hit_count_d;
-	hit_count_d.alloc(sizeof(uint32_t));
-	hit_count_d.upload(&device_hit_count, 1);
+	const auto result_size =num_queries * num_points;
+	auto result = std::make_unique<bool*>(new bool[result_size]);
+	memset(*result, 0, result_size);
+	result_d->alloc(sizeof(bool) * result_size);
+	result_d->upload(*result, result_size);
+	cudaDeviceSynchronize(); CUERR
 
-	auto handle = foo(optix, f);
+	auto handle = BuildAccelerationStructure(optix, f);
 	LaunchParameters launch_params
 	{
 		.traversable = handle,
-#if INDEX_TYPE == 1
 		.points = f.GetPointsDevicePointer(),
-		.num_points = points.size(),
-#endif
+		.num_points = num_points,
+		.max_z = num_queries * offset + 4,
 		.result_d = result_d->ptr<bool>(),
-		.hit_count = hit_count_d.ptr<uint32_t>(),
-		.query_aabb = query
+		.rays_per_thread = args.GetRaysPerThread(),
+		.queries = f.GetQueriesDevicePointer()
 	};
-
-	printf("launch parms num_points %u\n", launch_params.num_points);
 
 	cuda_buffer launch_params_d;
 	launch_params_d.alloc(sizeof(launch_params));
 	launch_params_d.upload(&launch_params, 1);
 	cudaDeviceSynchronize(); CUERR
-
-	MEASURE_TIME("Optix launch",
+	D_PRINT("num_points == %zu\n", num_points);
+	D_PRINT("args.GetRaysPerThread() == %u\n", args.GetRaysPerThread());
+	D_PRINT("num_points / args.GetRaysPerThread() == %zu\n", num_points / args.GetRaysPerThread());
+	const auto num_threads = num_points / args.GetRaysPerThread();
+	D_PRINT("num_threads: %zu\n", num_threads);
+	MEASURE_TIME("Query execution",
 		OPTIX_CHECK(optixLaunch(
 			pipeline.pipeline,
 			optix.stream,
 			launch_params_d.cu_ptr(),
 			launch_params_d.size_in_bytes,
 			&pipeline.sbt,
-	#if SINGLE_THREAD
-			1
-	#else
-			num_points,
-	#endif
+			num_threads,
 			1,
 			1
 		))
 		cudaDeviceSynchronize();
 	);
 	CUERR
-//	std::cout << points.at(912706) << std::endl;
-//	std::cout << points.at(1692308) << std::endl;
-//	std::cout << points.at(3947100) << std::endl;
-//	std::cout << points.at(5000653) << std::endl;
-//	std::cout << points.at(8974027) << std::endl;
-//	std::cout << points.at(num_points-1) << std::endl;
 
+	MEASURE_TIME("result_d->download", result_d->download(*result, num_points * num_queries););
 
-//	bool res[num_points];
-	MEASURE_TIME("result_d->download", result_d->download(*result, num_points););
-	MEASURE_TIME("hit_count_d.download", hit_count_d.download(&device_hit_count, 1););
+#ifdef VERIFICATION_MODE
 	MEASURE_TIME("Result check",
-		uint32_t hit_count = 0;
-		for(uint32_t i = 0; i < num_points; i++)
+	D_PRINT("Checking device results\n");
+	uint32_t hit_count = 0;
+	for(uint32_t i = 0; i < num_queries; i++)
+	{
+		const auto& aabb_query = queries.at(i);
+		const auto& optixAabb_query = z_adjusted.at(i);
+		for(uint32_t j = 0; j < num_points; j++)
 		{
-			if ((*result)[i])
+			const auto point = points.at(j);
+			auto aabb_result = helpers::SpatialHelpers::Contains(aabb_query, point);
+			auto optixAabb_result = helpers::SpatialHelpers::Contains(optixAabb_query, point);
+			auto device_result = (*result)[(num_points * i) + j];
+			if(aabb_result != device_result)
+			{
+				throw std::runtime_error("aabb_result != device_result");
+			}
+			if(aabb_result != optixAabb_result)
+			{
+				throw std::runtime_error("aabb_result != optixAabb_result");
+			}
+			if(aabb_result && optixAabb_result && device_result)
 			{
 				hit_count++;
-	//			std::cout << std::to_string(i) << '\n';
+			}
+			else if(aabb_result | optixAabb_result | device_result)
+			{
+				throw std::runtime_error("Unknown error");
 			}
 		}
-		std::cout << std::to_string(hit_count) << '\n';
-		std::cout << std::to_string(device_hit_count) << '\n';
-		assert(hit_count == num_in_range);
-		assert(device_hit_count == num_in_range);
+	}
+	 D_PRINT("Hit count: %u\n", hit_count);
 	);
+
+
+#endif
+
+
 
 
 	return 0;

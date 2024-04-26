@@ -5,46 +5,73 @@
 #ifndef GEO_RT_INDEX_ARGPARSER_HPP
 #define GEO_RT_INDEX_ARGPARSER_HPP
 
-#include <memory>
+#include "types/aabb.hpp"
 
+#include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
+
+/**
+
+/home/aske/dev/geo-rt-index/data/duniform_p22_s1337.parquet /home/aske/dev/geo-rt-index/data/duniform_p26_s10422.parquet
+
+ */
 namespace geo_rt_index
 {
 namespace helpers
 {
 
-enum class Distribution : uint8_t
+enum class AabbLayering : uint8_t
 {
-	UNIFORM = 0,
-	GAUSSIAN = 1
-};
+	None,
+	Stacked,
+	StackedSpaced,
 
-class ValueRange
-{
-public:
-	const float low, high;
-	explicit ValueRange(float, float);
+	First = None,
+	Last = StackedSpaced
 };
 
 class Args
 {
+private:
+	std::vector<geo_rt_index::types::Aabb> queries;
+	std::vector<std::string> files;
+	AabbLayering layering;
+	uint32_t rays_per_thread;
+	inline static Args& GetMutableInstance()
+	{
+		static Args instance{};
+		return instance;
+	}
+	explicit Args() { };
 public:
-	const uint8_t num_points_log;
-	const uint8_t num_queries_log;
-	const uint8_t selectivity;
-	const Distribution point_distribution;
-	const ValueRange value_range;
-	explicit Args(uint8_t, uint8_t, uint8_t, Distribution, ValueRange);
+	inline static const Args& GetInstance()
+	{
+		return GetMutableInstance();
+	}
+	static void Parse(const int, const char**);
+public:
+	Args(Args&) = delete;
+	void operator=(const Args&) = delete;
+	inline const std::vector<geo_rt_index::types::Aabb>& GetQueries() const
+	{
+		return this->queries;
+	}
+	inline const std::vector<std::string>& GetFiles() const
+	{
+		return this->files;
+	}
+	inline AabbLayering GetLayering() const
+	{
+		return this->layering;
+	}
+	inline auto GetRaysPerThread() const
+	{
+		return rays_per_thread;
+	}
 };
 
-class ArgParser
-{
-private:
-	const int argc;
-	const char** argv;
-public:
-	explicit ArgParser(const int, const char**);
-	const Args Parse();
-};
 
 }
 }

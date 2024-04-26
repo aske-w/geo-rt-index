@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import typing
 from abc import ABC, abstractmethod # Abstract Base Class
 import cgi
 import cgitb
@@ -41,6 +42,53 @@ class DataSink(ABC):
     @abstractmethod
     def flush(self):
         pass
+
+from osgeo.ogr import DataSource, GetDriverByName, Geometry, Layer, wkbPoint
+
+class OGRSink(DataSink):
+
+    def __init__(self, driver_name):
+        driver = GetDriverByName(driver_name)
+        ds: DataSource = driver.CreateDataSource("./x.parquet")
+        layer: Layer = ds.CreateLayer("points")
+        p = Geometry(wkbPoint)
+        p.AddPoint(0,0)
+        f = layer.CreateFeature(p)
+        print()
+
+    def writePoint(self, coordinates):
+        return super().writePoint(coordinates)
+
+    def writeBox(self, coordinates):
+        raise Exception("Not implemented")
+
+    def writePolygon(self, coordinates):
+        raise Exception("Not implemented")
+
+    def flush(self):
+        self.output.flush()
+
+class HexSink(DataSink):
+    def __init__(self, output: typing.TextIO):
+        self.output = output
+
+    def writePoint(self, coordinates):
+        import struct
+        # print("hello ", coordinates, flush=True)
+        for oord in coordinates:
+            bits, = struct.unpack('>I', struct.pack('!f', oord))
+            self.output.write(format(bits, 'x'))
+        self.output.write('\n')
+
+    def writeBox(self, coordinates):
+        raise Exception("Not implemented")
+
+    def writePolygon(self, coordinates):
+        raise Exception("Not implemented")
+
+    def flush(self):
+        self.output.flush()
+
 
 class CSVSink(DataSink):
     def __init__(self, output):
@@ -560,6 +608,10 @@ def main():
             print("Content-Type: application/geo+json")
             print("")
         datasink = GeoJSONSink(output)
+    elif(output_format =="hex"):
+        datasink = HexSink(output)
+    elif(output_format == "parquet"):
+        datasink = OGRSink("Parquet")
     else:
         raise Exception(f"Unsupported format '{output_format}'")
 

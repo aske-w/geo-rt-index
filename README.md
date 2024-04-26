@@ -14,3 +14,12 @@
 ```bash
 ogrinfo -dialect sqlite -sql "select count(*) from duniform_n10 where (ST_X(geometry) <= 0.1)" duniform_n10.parquet
 ```
+
+## pbzip2
+
+### Compression
+
+```
+pbzip2 -1zkvf -m2000
+```
+

@@ -5,9 +5,11 @@
 #ifndef GEO_RT_INDEX_INPUT_GENERATOR_HPP
 #define GEO_RT_INDEX_INPUT_GENERATOR_HPP
 
-#include <vector>
-#include <memory>
 #include "types.hpp"
+#include "types/aabb.hpp"
+
+#include <memory>
+#include <vector>
 
 namespace geo_rt_index
 {

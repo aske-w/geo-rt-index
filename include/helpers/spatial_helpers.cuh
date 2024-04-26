@@ -15,10 +15,16 @@ class SpatialHelpers
 {
 public:
 	//! Should match https://docs.rapids.ai/api/cuspatial/stable/api_docs/spatial/#spatial-filtering-functions
-	static __host__ __device__ __forceinline__ bool Contains(const Aabb& aabb, const Point& point)
+	static __host__ __device__ __forceinline__ bool Contains(const types::Aabb& aabb, const types::Point& point)
 	{
 		return aabb.minX < point.x && point.x < aabb.maxX &&
 			   aabb.minY < point.y && point.y < aabb.maxY;
+	}
+	//! Should match https://docs.rapids.ai/api/cuspatial/stable/api_docs/spatial/#spatial-filtering-functions
+	static __host__ __device__ __forceinline__ bool Contains(const OptixAabb& aabb, const types::Point& point)
+	{
+		return aabb.minX < point.x && point.x < aabb.maxX &&
+		       aabb.minY < point.y && point.y < aabb.maxY;
 	}
 };
 

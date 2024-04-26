@@ -31,7 +31,7 @@ static inline constexpr float PreviousBefore(const float f)
 	return nextafterf(f, numeric_limits<float>::lowest());
 }
 
-static vector<Point> Worker(const Aabb& query_aabb, const Aabb& space_aabb, const uint32_t num, uint64_t seed)
+static vector<Point> Worker(const types::Aabb& query_aabb, const types::Aabb& space_aabb, const uint32_t num, uint64_t seed)
 {
 	static thread_local std::mt19937_64 gen{seed}; // thread local because of https://stackoverflow.com/questions/21237905/how-do-i-generate-thread-safe-uniform-random-numbers
 	vector<Point> points;
@@ -54,7 +54,7 @@ static vector<Point> Worker(const Aabb& query_aabb, const Aabb& space_aabb, cons
 	return points;
 }
 
-vector<Point> InputGenerator::Generate(const Aabb& query_aabb, const Aabb& space_aabb,
+vector<Point> InputGenerator::Generate(const types::Aabb& query_aabb, const types::Aabb& space_aabb,
                                                    const uint32_t num_total, const uint32_t num_in_aabb,
                                                    const bool shuffle)
 {

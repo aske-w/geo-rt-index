@@ -3,101 +3,83 @@
 //
 
 #include "helpers/argparser.hpp"
+
+#include "helpers/debug_helpers.hpp"
+
 #include <exception>
+#include <filesystem>
 #include <string>
 #include <vector>
+#include <functional>
+#include <numeric>
 
 namespace geo_rt_index
 {
 namespace helpers
 {
 
-using std::stoi, std::stoll, std::stof;
+namespace fs = std::filesystem;
+
+using std::stoi, std::stoll, std::stof, std::stoull;
 using std::vector;
 using std::string, std::string_view;
+using std::function;
 
-ValueRange::ValueRange(float _low, float _high) : low(_low), high(_high)
-{
-}
-
-ArgParser::ArgParser(const int _argc, const char** _argv) : argc(_argc), argv(_argv)
-{
-}
-
-Args::Args(uint8_t _num_points_log, uint8_t _num_queries_log, uint8_t _selectivity,
-           geo_rt_index::helpers::Distribution _dist, geo_rt_index::helpers::ValueRange _range)
-    : num_points_log(_num_points_log), num_queries_log(_num_queries_log), selectivity(_selectivity),
-      point_distribution(_dist), value_range(_range)
-{
-}
-
-static const bool IsCandidateArgument(const string_view& in_arg, const vector<string_view>& candidates)
+static inline bool IsCandidateArgument(const string_view& in_arg, const vector<string_view>& candidates)
 {
 	return std::find(candidates.cbegin(), candidates.cend(), in_arg) != candidates.end();
 }
 
-static const vector<string_view> num_points_args		{"-p", "--num_points"};
-static const vector<string_view> num_queries_args		{"-q", "--num_queries"};
-static const vector<string_view> selectivity_args		{"-s", "--selectivity"};
-static const vector<string_view> point_distribution_args{"-d", "--dist"};
-static const vector<string_view> value_range_low_args	{"-l", "--low"};
-static const vector<string_view> value_range_high_args	{"-h", "--high"};
+static const vector<string_view> query_args{"-q", "--query"};
+static const vector<string_view> aabb_layering_args{"-l", "--aabb-layering"};
+static const vector<string_view> rays_per_thread_args{"-r", "--rays-per-thread"};
 
-const Args ArgParser::Parse()
+void Args::Parse(const int argc, const char** argv)
 {
-	uint8_t num_points_log{0};
-	uint8_t num_queries_log{0};
-	uint8_t selectivity{0};
-	Distribution point_distribution{Distribution::UNIFORM};
-	float low{0};
-	float high{0};
-
-	for(int32_t i = 1; i < this->argc; i++)
+	auto& instance = GetMutableInstance();
+	for(int32_t i = 1; i < argc; i++)
 	{
-		string arg{this->argv[i]};
-		if(IsCandidateArgument(arg, num_points_args))
+		const string arg{argv[i]};
+		if(IsCandidateArgument(arg, query_args))
 		{
-			num_points_log = stoll(this->argv[++i]);
+			const float minx{stof(argv[++i])};
+			const float miny{stof(argv[++i])};
+			const float maxx{stof(argv[++i])};
+			const float maxy{stof(argv[++i])};
+			instance.queries.emplace_back(minx, miny, maxx, maxy);
 		}
-		else if(IsCandidateArgument(arg, num_queries_args))
+		else if(IsCandidateArgument(arg, aabb_layering_args))
 		{
-			num_queries_log = stoi(this->argv[++i]);
-		}
-		else if(IsCandidateArgument(arg, selectivity_args))
-		{
-			selectivity = stoi(this->argv[++i]);
-		}
-		else if(IsCandidateArgument(arg, point_distribution_args))
-		{
-			string dist{this->argv[++i]};
-			if(dist == "uniform")
+			const uint64_t input = stoull(argv[++i]);
+			if(input > static_cast<uint64_t>(AabbLayering::Last))
 			{
-				point_distribution = Distribution::UNIFORM;
+				throw std::runtime_error("AabbLayering input out of range, max is "
+					+ std::to_string(static_cast<uint8_t>(AabbLayering::Last)));
 			}
-			else if(dist == "gaussian")
-			{
-				point_distribution = Distribution::GAUSSIAN;
-			}
-			else
-			{
-				throw std::runtime_error("Unknown distribution " + dist);
-			}
+			instance.layering = static_cast<AabbLayering>(input);
 		}
-		else if(IsCandidateArgument(arg, value_range_low_args))
+		else if(IsCandidateArgument(arg, rays_per_thread_args))
 		{
-			low = stof(this->argv[++i]);
+			const auto input = stoi(argv[++i]);
+			if (input < 0 || __builtin_clz(input) != 0)
+			{
+				std::runtime_error("u stoopid");
+			}
+			instance.rays_per_thread = static_cast<uint32_t>(input);
 		}
-		else if(IsCandidateArgument(arg, value_range_high_args))
+		else if(fs::exists(arg))
 		{
-			high = stof(this->argv[++i]);
+			instance.files.push_back(arg);
 		}
 		else
 		{
-			throw std::runtime_error("Unknown argument " + arg);
+			if(arg.rfind('\\') != string::npos && fs::is_directory(arg.substr(0, arg.rfind('\\'))))
+			{
+				throw std::runtime_error("File does not exist: " + arg);
+			}
+			throw std::runtime_error("Unknown argument: " + arg);
 		}
 	}
-
-	return Args{num_points_log, num_queries_log, selectivity, point_distribution, ValueRange{low, high}};
 }
 
 }
