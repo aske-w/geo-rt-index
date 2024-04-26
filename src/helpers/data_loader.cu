@@ -13,8 +13,7 @@
 #include <future>
 #include <string>
 
-using geo_rt_index::Point;
-using geo_rt_index::Point;
+using geo_rt_index::types::Point;
 
 using std::vector;
 

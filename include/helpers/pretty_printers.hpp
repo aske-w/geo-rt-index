@@ -19,7 +19,7 @@ std::ostream & operator<<(std::ostream & os, std::vector<T> vec)
 	return os;
 }
 
-std::ostream & operator<<(std::ostream & os, geo_rt_index::Point p)
+std::ostream & operator<<(std::ostream & os, geo_rt_index::types::Point p)
 {
 	os << "(" << std::to_string(p.x) << ", " << std::to_string(p.y) << ")";
 	return os;

@@ -36,6 +36,7 @@ set(CMAKE_CUDA_ARCHITECTURES 75 86) # RTX 2070 Super, A40
 
 include_directories(include)
 include_directories(${OptiX_INCLUDE}) # Set during find_package(OptiX REQUIRED)
+add_subdirectory(tests)
 add_subdirectory(src)
 
 # from https://gitlab.rlp.net/juhenneb/rtindex/-/tree/main
@@ -57,9 +58,7 @@ endmacro()
 cuda_compile_and_embed(embedded_ptx_code src/device_code.cu)
 
 add_executable(${NAME} ${embedded_ptx_code} ${SOURCES})
-
-add_executable(oracle ${ORACLE_SOURCES})
-
+add_library(${NAME}_lib STATIC ${SOURCES})
 
 target_link_libraries(${NAME}
 	${CUDA_CUDA_LIBRARY}

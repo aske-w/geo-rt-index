@@ -16,7 +16,7 @@ namespace types
 struct Aabb
 {
 public:
-	const float minX, minY, maxX, maxY;
+	float minX, minY, maxX, maxY;
 	Aabb(float _minX, float _minY, float _maxX, float _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY)
 	{ }
 	Aabb(int _minX, int _minY, int _maxX, int _maxY) : Aabb(static_cast<float>(_minX), static_cast<float>(_minY),
@@ -40,6 +40,14 @@ public:
 		return aabb.ToOptixAabb(_minZ, _maxZ);
 	}
 #endif
+};
+
+constexpr inline bool operator==(const Aabb& lhs, const Aabb& rhs)
+{
+	return lhs.minX == rhs.minX
+		&& lhs.minY == rhs.minY
+		&& lhs.maxX == rhs.maxX
+		&& lhs.maxY == rhs.maxY;
 };
 
 }

@@ -33,9 +33,11 @@ using factories::Factory;
 using factories::PointToAABBFactory;
 using helpers::AabbLayering;
 
-OptixTraversableHandle BuildAccelerationStructure(optix_wrapper& optix, Factory<OptixBuildInput>& inputFactory) {
+OptixTraversableHandle BuildAccelerationStructure(optix_wrapper& optix,
+    Factory<OptixBuildInput>& input_factory)
+{
 	OptixTraversableHandle handle{0};
-	unique_ptr<OptixBuildInput> bi = inputFactory.Build();
+	auto bi = input_factory.Build();
 
 	OptixAccelBuildOptions bo {};
 	memset(&bo, 0, sizeof(OptixAccelBuildOptions));

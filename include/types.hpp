@@ -3,16 +3,25 @@
 
 #include "helpers/cuda_buffer.hpp"
 #include "helpers/debug_helpers.hpp"
+#include "helpers/exception.hpp"
+#include "helpers/general.hpp"
 
 #include <cstdint>
 #include <cstdio>
 #include <optix_types.h>
 #include <vector_types.h>
 #include "types/point.hpp"
+#include "types/aabb.hpp"
+
 
 namespace geo_rt_index
 {
-using types::Point;
+namespace types
+{
+
+
+using geo_rt_index::helpers::string_format;
+using geo_rt_index::helpers::ArgumentException;
 
 struct Triangle
 {
@@ -30,7 +39,7 @@ struct Triangle
 	{
 		return sizeof(float3);
 	}
-	static Triangle FromPoint(const Point& p) {
+	static Triangle FromPoint(const geo_rt_index::types::Point& p) {
 		const constexpr float f = 3.f;
 		auto t = Triangle{
 		    {p.x, 0 - (0.5f * f), -1},
@@ -45,12 +54,14 @@ struct Triangle
 	}
 };
 
-
 enum class IndexType : uint8_t
 {
 	RESERVED = 0,
 	PTA = 1
 };
 
+
+} // types
 } // geo_rt_index
+
 #endif // TYPES_HPP

@@ -6,12 +6,30 @@
 #include "helpers/input_generator.hpp"
 #include <random>
 #include "helpers/spatial_helpers.cuh"
+#include "helpers/exception.hpp"
+#include "helpers/general.hpp"
 
 using namespace geo_rt_index;
+using namespace helpers;
+
 using std::unique_ptr, std::make_unique;
 using std::vector;
 using std::uniform_real_distribution;
 using helpers::SpatialHelpers;
+using std::nextafterf, std::numeric_limits;
+using geo_rt_index::helpers::ArgumentException;
+using geo_rt_index::helpers::string_format;
+using geo_rt_index::types::Aabb, geo_rt_index::types::Point;
+
+static inline constexpr float NextAfter(const float f)
+{
+	return nextafterf(f, numeric_limits<float>::max());
+}
+
+static inline constexpr float PreviousBefore(const float f)
+{
+	return nextafterf(f, numeric_limits<float>::lowest());
+}
 
 static vector<Point> Worker(const types::Aabb& query_aabb, const types::Aabb& space_aabb, const uint32_t num, uint64_t seed)
 {
@@ -40,18 +58,30 @@ vector<Point> InputGenerator::Generate(const types::Aabb& query_aabb, const type
                                                    const uint32_t num_total, const uint32_t num_in_aabb,
                                                    const bool shuffle)
 {
-	assert(num_total >= num_in_aabb);
+	if (query_aabb == space_aabb && num_total != num_in_aabb) {
+		throw ArgumentException{nameof(query_aabb),
+			string_format("If %s and %s bound the same area, then %s must be equal to",
+		    nameof(query_aabb), nameof(space_aabb), nameof(num_total), nameof(num_in_aabb))};
+	}
+	if (num_total == 0)
+	{
+		throw ArgumentException(nameof(num_total), string_format("%s must be greater than zero", nameof(num_total)));
+	}
+	if (num_total < num_in_aabb)
+	{
+		throw ArgumentException{nameof(num_in_aabb), string_format("%s may not be greater than %s", nameof(num_in_aabb), nameof(num_total))};
+	}
 	std::random_device rd;
 	const auto seed = rd();
-	D_PRINT("InputGenerator seed: %d\n", seed);
+//	D_PRINT("InputGenerator seed: %d\n", seed);
 	std::mt19937_64 gen{seed};
 	auto points = vector<Point>();
 	points.reserve(num_total);
 	uniform_real_distribution<float> rng{0, 1};
 
 	{
-		uniform_real_distribution<float> inside_x_rng {query_aabb.minX, query_aabb.maxX};
-		uniform_real_distribution<float> inside_y_rng {query_aabb.minY, query_aabb.maxY};
+		uniform_real_distribution<float> inside_x_rng {NextAfter(query_aabb.minX), PreviousBefore(query_aabb.maxX)};
+		uniform_real_distribution<float> inside_y_rng {NextAfter(query_aabb.minY), PreviousBefore(query_aabb.maxY)};
 		for (uint32_t i = 0; i < num_in_aabb; i++)
 		{
 			const float x = inside_x_rng(gen);

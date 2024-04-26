@@ -6,10 +6,13 @@
 
 #include <optix_types.h>
 
+using geo_rt_index::types::Point;
+using geo_rt_index::types::Aabb;
+
 struct LaunchParameters
 {
     OptixTraversableHandle traversable;
-	geo_rt_index::Point* points;
+	geo_rt_index::types::Point* points;
 	const size_t num_points = 0;
 	const size_t max_z = 0;
 	bool* result_d;

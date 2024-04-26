@@ -14,6 +14,7 @@ using std::unique_ptr;
 using std::make_unique;
 using std::vector;
 using namespace geo_rt_index::factories;
+using geo_rt_index::types::Triangle;
 
 TriangleFactory::TriangleFactory() : triangles_d(std::move(std::make_unique<helpers::cuda_buffer>())) { }
 
