@@ -129,7 +129,7 @@ static vector<Point> Work(const std::string& path) noexcept
 //! from https://gdal.org/tutorials/vector_api_tut.html#reading-from-ogr-using-the-arrow-c-stream-data-interface
 vector<Point> DataLoader::Load(const vector<std::string>& files)
 {
-	GDALAllRegister();
+	OGRRegisterAll();
 	vector<Point> result;
 	vector<std::future<vector<Point>>> futures;
 	for(auto path : files)
@@ -144,5 +144,6 @@ vector<Point> DataLoader::Load(const vector<std::string>& files)
 		result.insert(result.end(), future_result.begin(), future_result.end());
 	}
 	D_PRINT("size: %zu\n", result.size());
+	OGRCleanupAll();
 	return result;
 }
