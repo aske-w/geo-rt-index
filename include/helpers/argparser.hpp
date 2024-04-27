@@ -39,6 +39,7 @@ private:
 	std::vector<std::string> files;
 	AabbLayering layering;
 	uint32_t rays_per_thread;
+	uint8_t repetitions;
 	inline static Args& GetMutableInstance()
 	{
 		static Args instance{};
@@ -69,6 +70,10 @@ public:
 	inline auto GetRaysPerThread() const
 	{
 		return rays_per_thread;
+	}
+	inline auto GetRepetitions() const
+	{
+		return this->repetitions;
 	}
 };
 
