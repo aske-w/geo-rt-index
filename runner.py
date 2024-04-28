@@ -75,7 +75,10 @@ while file_count <= len(datasets):
         files = datasets[:file_count]
         cmd = CUSPATIAL_CMD if PROG == Program.CUSPATIAL else []
         local_cmd = cmd + files
-        print("cmd:", " ".join(local_cmd))
+        local_cmd_str = " ".join(local_cmd)
+        prog_out.write(local_cmd_str)
+        prog_out.flush()
+        print("cmd:", local_cmd_str)
         prog_process = sp.Popen(local_cmd, stdout=prog_out, stderr=sys.stderr)
         # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=sys.stderr)
         prog_process.wait()
