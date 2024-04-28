@@ -1,0 +1,12 @@
+nvidia-smi \
+--query-gpu \
+clocks.gr,\
+clocks.sm,\
+clocks.mem,\
+utilization.gpu,\
+utilization.memory,\
+memory.free,\
+memory.reserved,\
+memory.used \
+-lms 200 \
+--format=csv,nounits
