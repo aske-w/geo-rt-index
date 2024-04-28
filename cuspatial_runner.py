@@ -45,7 +45,7 @@ for file in files:
 print(f"load + convert: {time.perf_counter() - t:.3f}s.")
 pool.shutdown()
 
-for i in range(n):
+for i in range(n + 1):
   from_xy_time = 0.0
   query_time = 0.0
 
@@ -58,6 +58,9 @@ for i in range(n):
     maxx = query[2]
     maxy = query[3]
 
+    if i == 0: # warmup
+      cuspatial.points_in_spatial_window(points, minx, maxx, miny, maxy) # beware that it is minx, maxx, miny, maxy
+      continue
     t = time.perf_counter()
     cuspatial.points_in_spatial_window(points, minx, maxx, miny, maxy) # beware that it is minx, maxx, miny, maxy
     query_time += time.perf_counter() - t
@@ -65,8 +68,9 @@ for i in range(n):
     gc.collect()
 
   points = None
-  print(f"from_points_xy: {from_xy_time:.3f}s.")
-  print(f"queries took: {query_time:.3f}s.")
+  if(i != 0):
+    print(f"from_points_xy: {from_xy_time:.3f}s.")
+    print(f"queries took: {query_time:.3f}s.")
 
 exit()
 
