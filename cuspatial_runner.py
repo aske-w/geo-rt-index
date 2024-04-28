@@ -6,12 +6,23 @@ import pyarrow.parquet as pq
 import multiprocessing as mp
 from osgeo import ogr
 from concurrent.futures import ProcessPoolExecutor # ThreadPoolExecutor locks GIL
+import argparse
+import gc
 
-BATCH_SIZE = 1 << 21
+BATCH_SIZE = 1 << 20
+# -n 5 -q 0.5 0.5 1 1 -q 0.3 0.3 0.8 0.8 -q 0.1 0.1 0.6 0.6 -q 0 0 0.5 0.5 /home/aske/dev/geo-rt-index/data/duniform_p26_s13573.parquet
+
+# arg parsing from ChatGPT
+parser = argparse.ArgumentParser(description='Cuspatial runner')
+parser.add_argument('-n', type=int, help='Number of repetitions', required=True)
+parser.add_argument('-q', nargs=4, type=float, action='append', help='Bounding box (minx, miny, maxx, maxy)', required=True)
+parser.add_argument('file', nargs='+', help='File paths')
+args = parser.parse_args()
+n = args.n
+queries = args.q
+files = args.file
 
 pool = ProcessPoolExecutor(mp.cpu_count())
-
-data = pq.read_table("data/duniform_p26_s369.parquet")
 
 def work(batch):
   geom_col = batch["geometry"]
@@ -23,21 +34,41 @@ def work(batch):
   return result
 
 t = time.perf_counter()
-batches: list = data.to_batches(BATCH_SIZE) # 1m
 xy = []
-for result in pool.map(work, batches):
-  xy += result
-print(f"converting to xy took: {time.perf_counter() - t:.3f} ms")
+for file in files:
+  # print("file:", file)
+  data = pq.read_table(file)
+  batches: list = data.to_batches(BATCH_SIZE) # 1m
+  for result in pool.map(work, batches):
+    xy += result
 
-t = time.perf_counter()
-points = cuspatial.GeoSeries.from_points_xy(xy)
-print(f"Creating points from interleaved columns took: {time.perf_counter() - t:.3f} ms")
+print(f"load + convert: {time.perf_counter() - t:.3f}s.")
+pool.shutdown()
 
-input("Press enter to run cuspatial.points_in_spatial_window")
-hit_start = time.perf_counter()
-hit = cuspatial.points_in_spatial_window(points, 0, 1, 0, 1) # beware that it is minx, maxx, miny, maxy
-print("hit took ", time.perf_counter() - hit_start)
-print(hit.head()) # lmao
+for i in range(n):
+  from_xy_time = 0.0
+  query_time = 0.0
+
+  t = time.perf_counter()
+  points = cuspatial.GeoSeries.from_points_xy(xy)
+  from_xy_time += time.perf_counter() - t
+  for query in queries:
+    minx = query[0]
+    miny = query[1]
+    maxx = query[2]
+    maxy = query[3]
+
+    t = time.perf_counter()
+    cuspatial.points_in_spatial_window(points, minx, maxx, miny, maxy) # beware that it is minx, maxx, miny, maxy
+    query_time += time.perf_counter() - t
+
+    gc.collect()
+
+  points = None
+  print(f"from_points_xy: {from_xy_time:.3f}s.")
+  print(f"queries took: {query_time:.3f}s.")
+
+exit()
 
 # bboxes_dict = {
 #     "minx": [-20.],
