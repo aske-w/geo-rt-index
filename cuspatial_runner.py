@@ -9,7 +9,7 @@ from concurrent.futures import ProcessPoolExecutor # ThreadPoolExecutor locks GI
 import argparse
 import gc
 
-BATCH_SIZE = 1 << 20
+BATCH_SIZE = 1 << 21
 # -n 5 -q 0.5 0.5 1 1 -q 0.3 0.3 0.8 0.8 -q 0.1 0.1 0.6 0.6 -q 0 0 0.5 0.5 /home/aske/dev/geo-rt-index/data/duniform_p26_s13573.parquet
 
 # arg parsing from ChatGPT
