@@ -37,12 +37,15 @@ parser.add_argument('-s', type=int, help='Seed for numpy.random',required=False,
 parser.add_argument("-d", type=str, help='Distribution', required=True,choices=[e.value for e in Distribution])
 parser.add_argument("-b", type=str, help="Benchmark to run", required=True,choices=[e.value for e in Benchmark])
 parser.add_argument("-p", type=str, help="Program to benchmark", required=True,choices=[e.value for e in Program])
+parser.add_argument("--dry-run", help='Print commands that would be used to start a program but do not run program', default=False, action='store_true')
+
 args = parser.parse_args()
 
 SEED = args.s
 BENCHMARK = Benchmark(args.b)
 DIST = Distribution(args.d)
 PROG = Program(args.p)
+DRY_RUN = args.dry_run
 
 N = 5
 INPUT_DATA_DIR = os.path.join("/home/aske/dev/geo-rt-index/data" if get_system() == "ubuntu" else "/home/ucloud/geo-rt-index/data", DIST.value)
@@ -56,8 +59,14 @@ SMI_CMD = [
     "200",
     "--format=csv,nounits"
 ]
-CUSPATIAL_CMD = ["python3", "cuspatial_runner.py", "-n", f"{N}"]
-# GEO_RT_CMD = ["./build/release/geo-rt-index", "-n", f"{N}", "-q", "0", "0", "0.5", "0.5"]
+
+def get_cuspatial_cmd(n = N):
+    CUSPATIAL_CMD = ["python3", "cuspatial_runner.py", "-n", f"{n}"]
+    return CUSPATIAL_CMD
+
+def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1):
+    GEO_RT_CMD = ["./build/release/geo-rt-index", "-n", f"{N}", "-r", f"{r}", "-l", f"{l}", "-m", f"{m}"]
+    return GEO_RT_CMD
 
 def get_session_str():
     return f"s{SEED}_b{BENCHMARK.value}_d{DIST.value}_p{PROG.value}_n{N}"
@@ -65,7 +74,8 @@ def get_session_str():
 np.random.seed(SEED)
 TIME = datetime.now(timezone.utc).isoformat()
 SESSION_OUTPUT_DIR = os.path.join(OUTPUT_DATA_DIR, get_session_str(), TIME)
-os.makedirs(SESSION_OUTPUT_DIR, exist_ok=True)
+if not DRY_RUN: 
+    os.makedirs(SESSION_OUTPUT_DIR, exist_ok=True)
 
 def mk_query(selectivity: float, lo = 0, hi = 1):
     # raise NotImplementedError()
@@ -101,12 +111,16 @@ match BENCHMARK:
         file_count = 1
         while file_count <= len(datasets):
             try:
-                prog_out=open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_prog.txt"), "x")
-                # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
                 files = datasets[:file_count]
-                cmd = CUSPATIAL_CMD if PROG == Program.CUSPATIAL else []
+                cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
                 local_cmd = cmd + ["-q", "0", "0", "0.5", "0.5"] + files
                 local_cmd_str = " ".join(local_cmd)
+                file_count *= 2
+                if DRY_RUN:
+                    print(local_cmd_str)
+                    continue
+                prog_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_prog.txt"), "x")
+                # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
                 prog_out.write(local_cmd_str)
                 prog_out.write('\n')
                 prog_out.flush()
@@ -115,9 +129,9 @@ match BENCHMARK:
                 # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=sys.stderr)
                 prog_process.wait()
                 # smi_process.kill()
-                file_count *= 2
             finally:
-                prog_out.close()
+                if not DRY_RUN:
+                    prog_out.close()
                 # smi_out.close()
         
     case Benchmark.DS_TIME_CHECK_EACH:
@@ -160,13 +174,17 @@ match BENCHMARK:
         #     # ["-q", f"{LO}",          f"{HI - 0.44721}",   f"{LO + 0.44721}",   f"{HI}"], # ll
         # ]
         try:
-            prog_out=open(os.path.join(SESSION_OUTPUT_DIR, f"lo{LO}hi{HI}_prog.txt"), "x")
+            prog_out = None
+            if not DRY_RUN:
+                prog_out=open(os.path.join(SESSION_OUTPUT_DIR, f"lo{LO}hi{HI}_prog.txt"), "x")
             # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
-            cmd = CUSPATIAL_CMD if PROG == Program.CUSPATIAL else []
+            cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
             for file in FILES:
                 local_cmd = cmd + QUERIES + [file]
                 local_cmd_str = " ".join(local_cmd)
-                print(local_cmd_str)
+                if DRY_RUN:
+                    print(local_cmd_str)
+                    continue
                 prog_out.write(local_cmd_str)
                 prog_out.write('\n')
                 prog_out.flush()
@@ -176,7 +194,8 @@ match BENCHMARK:
                 prog_process.wait()
             # smi_process.kill()
         finally:
-            prog_out.close()
+            if not DRY_RUN:
+                prog_out.close()
             # smi_out.close()
 
     case _: raise NotImplementedError(f"Unimplemented benchmark: {BENCHMARK.value}")
