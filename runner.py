@@ -93,7 +93,7 @@ def mk_query(selectivity: float, lo = 0, hi = 1):
 
 def mk_queries(selectivity: float, n: int, lo = 0, hi = 1):
     for _ in range(n):
-        yield mk_query(selectivity)
+        yield mk_query(selectivity, lo, hi)
 
 match BENCHMARK:
     case Benchmark.DS_SCALING:
