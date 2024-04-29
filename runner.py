@@ -124,14 +124,14 @@ match BENCHMARK:
         # Check each data set has approximately the same run time
         LO = -1
         HI = 1
-        QUERIES = [
+        QUERIES = list(flatten(map(lambda t: [f"-q", f"{t[0]}", f"{t[1]}", f"{t[2]}", f"{t[3]}"], [
             *mk_queries(0.01, 5, LO, HI), 
             *mk_queries(0.02, 5, LO, HI),
             *mk_queries(0.05, 5, LO, HI),
             *mk_queries(0.10, 5, LO, HI),
             *mk_queries(0.20, 5, LO, HI)
-            ]
-        
+        ])))
+    
         # QUERIES = [
         #     # 1% selectivity on corners
         #     # ["-q", f"0",     f"0",    f"0.1",  f"0.1"], # ul
@@ -159,11 +159,11 @@ match BENCHMARK:
         #     # ["-q", f"{HI - 0.44721}",f"{LO}",             f"{HI}",             f"{LO + 0.44721}"], # ur
         #     # ["-q", f"{LO}",          f"{HI - 0.44721}",   f"{LO + 0.44721}",   f"{HI}"], # ll
         # ]
-        for file in FILES:
-            try:
-                prog_out=open(os.path.join(SESSION_OUTPUT_DIR, f"{Path(file).stem}_lo{LO}hi{HI}_prog.txt"), "x")
-                # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
-                cmd = CUSPATIAL_CMD if PROG == Program.CUSPATIAL else []
+        try:
+            prog_out=open(os.path.join(SESSION_OUTPUT_DIR, f"lo{LO}hi{HI}_prog.txt"), "x")
+            # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
+            cmd = CUSPATIAL_CMD if PROG == Program.CUSPATIAL else []
+            for file in FILES:
                 local_cmd = cmd + QUERIES + [file]
                 local_cmd_str = " ".join(local_cmd)
                 print(local_cmd_str)
@@ -174,10 +174,10 @@ match BENCHMARK:
                 prog_process = sp.Popen(local_cmd, stdout=prog_out, stderr=sys.stderr)
                 # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=sys.stderr)
                 prog_process.wait()
-                # smi_process.kill()
-            finally:
-                prog_out.close()
-                # smi_out.close()
+            # smi_process.kill()
+        finally:
+            prog_out.close()
+            # smi_out.close()
 
     case _: raise NotImplementedError(f"Unimplemented benchmark: {BENCHMARK.value}")
 
