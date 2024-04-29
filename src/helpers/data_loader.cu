@@ -19,7 +19,7 @@ using std::vector;
 
 static std::counting_semaphore load_limiter{std::ptrdiff_t{std::thread::hardware_concurrency()}};
 
-static vector<Point> Work(const std::string& path) noexcept
+static vector<Point> Work(const std::string& path, const float modifier) noexcept
 {
 	load_limiter.acquire();
 	GDALDataset* poDS = GDALDataset::Open(path.c_str());
@@ -106,8 +106,8 @@ static vector<Point> Work(const std::string& path) noexcept
 			//					OGRGeometryFactory::createFromWkb(wkb, nullptr, reinterpret_cast<OGRGeometry**>(&point), length);
 			//					assert(geom != nullptr);
 			//					assert(geom->getGeometryType() == OGRwkbGeometryType::wkbPoint);
-			const auto x = static_cast<float>(point.getX());
-			const auto y = static_cast<float>(point.getY());
+			const auto x = static_cast<float>(point.getX()) * modifier;
+			const auto y = static_cast<float>(point.getY()) * modifier;
 			private_result.emplace_back(x, y);
 			//					delete point;
 			//				}
@@ -127,14 +127,14 @@ static vector<Point> Work(const std::string& path) noexcept
 }
 
 //! from https://gdal.org/tutorials/vector_api_tut.html#reading-from-ogr-using-the-arrow-c-stream-data-interface
-vector<Point> DataLoader::Load(const vector<std::string>& files)
+vector<Point> DataLoader::Load(const vector<std::string>& files, const float modifier)
 {
 	OGRRegisterAll();
 	vector<Point> result;
 	vector<std::future<vector<Point>>> futures;
 	for(auto path : files)
 	{
-		auto handle = std::async(std::launch::async, Work, path);
+		auto handle = std::async(std::launch::async, Work, path, modifier);
 		futures.push_back(std::move(handle));
 	}
 

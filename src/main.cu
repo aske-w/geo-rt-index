@@ -214,7 +214,7 @@ int main(const int argc, const char** argv) {
 
 	std::vector<Point> points;
 	MEASURE_TIME("Loading points",
-	 	points = DataLoader::Load(Args::GetInstance().GetFiles());
+	 	points = DataLoader::Load(Args::GetInstance().GetFiles(), Args::GetInstance().GetModifier());
 	);
 	for(size_t i = 0; i < Args::GetInstance().GetRepetitions(); i++)
 	{
