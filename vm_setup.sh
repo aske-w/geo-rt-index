@@ -28,11 +28,11 @@ sudo apt install python3-pip
 # # shellcheck disable=SC1090
 # source ~/.profile
 
-pip3.10 install cmake
+pip3.10 install cmake "numpy<1.25"
 sudo apt install -y cmake-curses-gui
 pip3.10 install \
     --extra-index-url=https://pypi.nvidia.com \
-    cudf-cu12==24.4.* cuspatial-cu12==24.4.* cuproj-cu12==24.4.*
+    cudf-cu11==24.4.* cuspatial-cu11==24.4.* cuproj-cu11==24.4.*
 
 git clone https://github.com/OSGeo/gdal.git
 mkdir -p gdal/build
