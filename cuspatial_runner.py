@@ -53,6 +53,7 @@ for i in range(n + 1):
   points = cuspatial.GeoSeries.from_points_xy(xy)
   from_xy_time += time.perf_counter() - t
   for query in queries:
+    gc.collect()
     minx = query[0]
     miny = query[1]
     maxx = query[2]
@@ -65,7 +66,6 @@ for i in range(n + 1):
     cuspatial.points_in_spatial_window(points, minx, maxx, miny, maxy) # beware that it is minx, maxx, miny, maxy
     query_time += time.perf_counter() - t
 
-    gc.collect()
 
   points = None
   if(i != 0):
