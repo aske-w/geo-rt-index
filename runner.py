@@ -33,7 +33,7 @@ class Benchmark(Enum):
     DS_TIME_CHECK_EACH = "ds_check_each"
 
 parser = argparse.ArgumentParser(description='Cuspatial runner')
-parser.add_argument('-s', type=int, help='Seed for numpy.random',required=False, default=0)
+parser.add_argument('-s', type=int, help='Seed for numpy.random',required=False, default=None)
 parser.add_argument("-d", type=str, help='Distribution', required=True,choices=[e.value for e in Distribution])
 parser.add_argument("-b", type=str, help="Benchmark to run", required=True,choices=[e.value for e in Benchmark])
 parser.add_argument("-p", type=str, help="Program to benchmark", required=True,choices=[e.value for e in Program])
@@ -41,7 +41,7 @@ parser.add_argument("--dry-run", help='Print commands that would be used to star
 
 args = parser.parse_args()
 
-SEED = args.s
+SEED = np.random.randint(1_000_000) if args.s is None else args.s
 BENCHMARK = Benchmark(args.b)
 DIST = Distribution(args.d)
 PROG = Program(args.p)
