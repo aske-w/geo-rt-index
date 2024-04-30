@@ -8,12 +8,15 @@ from osgeo import ogr
 from concurrent.futures import ProcessPoolExecutor # ThreadPoolExecutor locks GIL
 import argparse
 import gc
+import pathlib
+import pickle
 
 BATCH_SIZE = 1 << 21
 # -n 5 -q 0.5 0.5 1 1 -q 0.3 0.3 0.8 0.8 -q 0.1 0.1 0.6 0.6 -q 0 0 0.5 0.5 /home/aske/dev/geo-rt-index/data/duniform_p26_s13573.parquet
 
 # arg parsing from ChatGPT
 parser = argparse.ArgumentParser(description='Cuspatial runner')
+parser.add_argument('--pickle', action='store_true')
 parser.add_argument('-n', type=int, help='Number of repetitions', required=True)
 parser.add_argument('-q', nargs=4, type=float, action='append', help='Bounding box (minx, miny, maxx, maxy)', required=True)
 parser.add_argument('file', nargs='+', help='File paths')
@@ -37,13 +40,29 @@ t = time.perf_counter()
 xy = []
 for file in files:
   # print("file:", file)
-  data = pq.read_table(file)
-  batches: list = data.to_batches(BATCH_SIZE) # 1m
-  for result in pool.map(work, batches):
-    xy += result
+  pp = pathlib.Path(file)
+  if pp.suffixes == ['.xy', '.pickle']:
+    if args.pickle:
+      raise Exception("Can not pickle a pickled file")
+    with open(file, "rb") as dump_file:
+      xy += pickle.load(dump_file)
+  else: 
+    data = pq.read_table(file)
+    batches: list = data.to_batches(BATCH_SIZE) # 1m
+    for result in pool.map(work, batches):
+      xy += result
+    if args.pickle:
+      pickle_file = pp.parent.joinpath(f"{pp.stem}.xy.pickle")
+      with open(pickle_file, "wb") as dump_file:
+        pickle.dump(xy, dump_file)
+      xy = []
+
 
 print(f"load + convert: {time.perf_counter() - t:.3f}s.")
 pool.shutdown()
+
+if args.pickle:
+  exit(0)
 
 for i in range(n + 1):
   from_xy_time = 0.0
