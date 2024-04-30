@@ -107,7 +107,7 @@ def mk_queries(selectivity: float, n: int, lo = 0, hi = 1):
 
 match BENCHMARK:
     case Benchmark.DS_SCALING:
-        datasets = np.random.choice(FILES, 8, True).tolist()
+        datasets = np.random.choice(FILES, 8, False).tolist()
         file_count = 1
         while file_count <= len(datasets):
             try:
