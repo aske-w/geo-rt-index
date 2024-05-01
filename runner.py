@@ -129,32 +129,32 @@ QUERIES = mk_query_strings([
 
 match BENCHMARK:
     case Benchmark.DS_SCALING:
-        datasets = np.random.choice(FILES, 6, False).tolist()
-        file_count = 1
-        while file_count <= len(datasets):
+        counts = [1,2,4,6] if PROG == Program.CUSPATIAL else [1,2,4,6,8,16,32]
+        for file_count in counts:
             try:
-                files = datasets[:(min(file_count, len(datasets)))]
+                prog_out= None if DRY_RUN else open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_prog.txt"), "a")
                 cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
-                local_cmd = cmd + QUERIES + files
-                local_cmd_str = " ".join(local_cmd)
-                file_count *= 2
-                if DRY_RUN:
-                    print(local_cmd_str)
-                    continue
-                prog_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_prog.txt"), "x")
-                # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
-                prog_out.write(local_cmd_str)
-                prog_out.write('\n')
-                prog_out.flush()
-                # print("cmd:", local_cmd_str)
-                prog_process = sp.Popen(local_cmd, stdout=prog_out, stderr=sys.stderr)
-                # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=sys.stderr)
-                prog_process.wait()
-                # smi_process.kill()
+                for _ in range(5):
+                    datasets = np.random.choice(FILES, 6, False).tolist()
+                    files = datasets[:file_count]
+                    local_cmd = cmd + QUERIES + files
+                    local_cmd_str = " ".join(local_cmd)
+                    if DRY_RUN:
+                        print(local_cmd_str)
+                        continue
+                    # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
+                    prog_out.write(local_cmd_str)
+                    prog_out.write('\n')
+                    prog_out.flush()
+                    # print("cmd:", local_cmd_str)
+                    prog_process = sp.Popen(local_cmd, stdout=prog_out, stderr=sys.stderr)
+                    # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=sys.stderr)
+                    prog_process.wait()
+                    # smi_process.kill()
             finally:
                 if not DRY_RUN:
                     prog_out.close()
-                # smi_out.close()
+                    # smi_out.close()
     case Benchmark.QUERY_SCALING:
         raise NotImplementedError(Benchmark.QUERY_SCALING)    
     
