@@ -1,23 +1,15 @@
-//#include "configuration.hpp"
-
-#include "factories/aabb_factory.hpp"
-#include "factories/curve_factory.hpp"
 #include "factories/factory.hpp"
-#include "factories/point_factory.hpp"
 #include "factories/pta_factory.hpp"
-#include "factories/triangle_input_factory.hpp"
 #include "helpers/argparser.hpp"
 #include "helpers/data_loader.hpp"
-#include "helpers/input_generator.hpp"
 #include "helpers/optix_pipeline.hpp"
 #include "helpers/optix_wrapper.hpp"
-#include "helpers/pretty_printers.hpp"
 #include "helpers/time.hpp"
 #include "launch_parameters.hpp"
-#include "optix_function_table_definition.h"
-#include "optix_stubs.h"
-#include "types.hpp"
+#include <optix_function_table_definition.h>
+#include <optix_stubs.h>
 #include "helpers/spatial_helpers.cuh"
+#include "types/point.hpp"
 
 #include <numeric>
 #include <vector>
