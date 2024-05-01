@@ -30,7 +30,11 @@ pool = ProcessPoolExecutor(mp.cpu_count())
 def work(batch):
   geom_col = batch["geometry"]
   result = []
+  i = 0
   for geom in geom_col:
+    i += 1
+    if i % 6 == 0:
+      continue
     g = ogr.CreateGeometryFromWkb(geom.as_py())
     result.append(g.GetX())
     result.append(g.GetY())
@@ -87,6 +91,7 @@ for i in range(n + 1):
 
 
   points = None
+  gc.collect()
   if(i != 0):
     print(f"from_points_xy: {from_xy_time:.3f}s.")
     print(f"queries took: {query_time:.3f}s.")
