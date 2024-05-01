@@ -4,6 +4,7 @@ import glob
 import os
 import argparse
 import sys
+from typing import Iterable
 from more_itertools import flatten
 import numpy as np
 import subprocess as sp
@@ -31,6 +32,14 @@ class Program(Enum):
 class Benchmark(Enum):
     DS_SCALING = "dataset_scaling"
     DS_TIME_CHECK_EACH = "ds_check_each"
+    QUERY_SCALING = "query_scaling"
+    AABB_LAYERING_SCALING = "aabb_layering"
+    RAYS_PER_THREAD_SCALING = "rays_per_thread"
+
+class NotSupportedException(RuntimeError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
 
 parser = argparse.ArgumentParser(description='Cuspatial runner')
 parser.add_argument('-s', type=int, help='Seed for numpy.random',required=False, default=None)
@@ -105,6 +114,19 @@ def mk_queries(selectivity: float, n: int, lo = 0, hi = 1):
     for _ in range(n):
         yield mk_query(selectivity, lo, hi)
 
+def mk_query_strings(queries: Iterable):
+    return list(flatten(map(lambda t: [f"-q", f"{t[0]}", f"{t[1]}", f"{t[2]}", f"{t[3]}"], queries)))
+
+LO = -1
+HI = 1
+QUERIES = mk_query_strings([
+    *mk_queries(0.01, 5, LO, HI), 
+    *mk_queries(0.02, 5, LO, HI),
+    *mk_queries(0.05, 5, LO, HI),
+    *mk_queries(0.10, 5, LO, HI),
+    *mk_queries(0.20, 5, LO, HI)
+])
+
 match BENCHMARK:
     case Benchmark.DS_SCALING:
         datasets = np.random.choice(FILES, 8, False).tolist()
@@ -113,7 +135,7 @@ match BENCHMARK:
             try:
                 files = datasets[:file_count]
                 cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
-                local_cmd = cmd + ["-q", "0", "0", "0.5", "0.5"] + files
+                local_cmd = cmd + QUERIES + files
                 local_cmd_str = " ".join(local_cmd)
                 file_count *= 2
                 if DRY_RUN:
@@ -133,46 +155,11 @@ match BENCHMARK:
                 if not DRY_RUN:
                     prog_out.close()
                 # smi_out.close()
-        
+    case Benchmark.QUERY_SCALING:
+        raise NotImplementedError(Benchmark.QUERY_SCALING)    
+    
     case Benchmark.DS_TIME_CHECK_EACH:
         # Check each data set has approximately the same run time
-        LO = -1
-        HI = 1
-        QUERIES = list(flatten(map(lambda t: [f"-q", f"{t[0]}", f"{t[1]}", f"{t[2]}", f"{t[3]}"], [
-            *mk_queries(0.01, 5, LO, HI), 
-            *mk_queries(0.02, 5, LO, HI),
-            *mk_queries(0.05, 5, LO, HI),
-            *mk_queries(0.10, 5, LO, HI),
-            *mk_queries(0.20, 5, LO, HI)
-        ])))
-    
-        # QUERIES = [
-        #     # 1% selectivity on corners
-        #     # ["-q", f"0",     f"0",    f"0.1",  f"0.1"], # ul
-        #     # ["-q", f"0.9",   f"0.9",  f"1",    f"1"], # lr
-        #     # ["-q", f"0.9",   f"0",    f"1",    f"0.1"], # ur
-        #     # ["-q", f"0",     f"0.9",  f"0.1",  f"1"], # ll
-        #     # 2% selectivity on corners
-        #     ["-q", f"{LO}",          f"{LO}",             f"{LO + 0.14142}",   f"{LO + 0.14142}"], # ul
-        #     ["-q", f"{HI - 0.14142}",f"{HI - 0.14142}",   f"{HI}",             f"{HI}"], # lr
-        #     ["-q", f"{HI - 0.14142}",f"{LO}",             f"{HI}",             f"{LO + 0.14142}"], # ur
-        #     ["-q", f"{LO}",          f"{HI - 0.14142}",   f"{LO + 0.14142}",   f"{HI}"], # ll
-        #     # 5% selectivity on corners
-        #     ["-q", f"{LO}",          f"{LO}",             f"{LO + 0.22361}",   f"{LO + 0.22361}"], # ul
-        #     ["-q", f"{HI - 0.22361}",f"{HI - 0.22361}",   f"{HI}",             f"{HI}"], # lr
-        #     ["-q", f"{HI - 0.22361}",f"{LO}",             f"{HI}",             f"{LO + 0.22361}"], # ur
-        #     ["-q", f"{LO}",          f"{HI - 0.22361}",   f"{LO + 0.22361}",   f"{HI}"], # ll
-        #     # # 10% selectivity on corners
-        #     # ["-q", f"{LO}",          f"{LO}",             f"{LO + 0.31623}",   f"{LO + 0.31623}"], # ul
-        #     # ["-q", f"{HI - 0.31623}",f"{HI - 0.31623}",   f"{HI}",             f"{HI}"], # lr
-        #     # ["-q", f"{HI - 0.31623}",f"{LO}",             f"{HI}",             f"{LO + 0.31623}"], # ur
-        #     # ["-q", f"{LO}",          f"{HI - 0.31623}",   f"{LO + 0.31623}",   f"{HI}"], # ll
-        #     # # 20% selectivity on corners
-        #     # ["-q", f"{LO}",          f"{LO}",             f"{LO + 0.44721}",   f"{LO + 0.44721}"], # ul
-        #     # ["-q", f"{HI - 0.44721}",f"{HI - 0.44721}",   f"{HI}",             f"{HI}"], # lr
-        #     # ["-q", f"{HI - 0.44721}",f"{LO}",             f"{HI}",             f"{LO + 0.44721}"], # ur
-        #     # ["-q", f"{LO}",          f"{HI - 0.44721}",   f"{LO + 0.44721}",   f"{HI}"], # ll
-        # ]
         try:
             prog_out = None
             if not DRY_RUN:
@@ -198,5 +185,20 @@ match BENCHMARK:
                 prog_out.close()
             # smi_out.close()
 
+    case Benchmark.AABB_LAYERING_SCALING:
+        raise NotImplementedError(Benchmark.AABB_LAYERING_SCALING)
+        if PROG == Program.CUSPATIAL:
+            raise NotSupportedException(f"Program {PROG} does not support benchmark {BENCHMARK}")
+        
+        layering_types = [0, 1, 2]
+
+        pass
+    case Benchmark.RAYS_PER_THREAD_SCALING:
+        raise NotImplementedError(Benchmark.RAYS_PER_THREAD_SCALING)
+        if PROG == Program.CUSPATIAL:
+            raise NotSupportedException(f"Program {PROG} does not support benchmark {BENCHMARK}")
+        
+        rp = [2 ** x for x in range(10)]
+        pass
     case _: raise NotImplementedError(f"Unimplemented benchmark: {BENCHMARK.value}")
 
