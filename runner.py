@@ -139,8 +139,8 @@ match BENCHMARK:
                     files = datasets[:file_count]
                     local_cmd = cmd + QUERIES + files
                     local_cmd_str = " ".join(local_cmd)
+                    print(local_cmd_str)
                     if DRY_RUN:
-                        print(local_cmd_str)
                         continue
                     # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
                     prog_out.write(local_cmd_str)
