@@ -129,11 +129,11 @@ QUERIES = mk_query_strings([
 
 match BENCHMARK:
     case Benchmark.DS_SCALING:
-        datasets = np.random.choice(FILES, 8, False).tolist()
+        datasets = np.random.choice(FILES, 6, False).tolist()
         file_count = 1
         while file_count <= len(datasets):
             try:
-                files = datasets[:file_count]
+                files = datasets[:(min(file_count, len(datasets)))]
                 cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
                 local_cmd = cmd + QUERIES + files
                 local_cmd_str = " ".join(local_cmd)
