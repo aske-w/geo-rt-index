@@ -69,12 +69,16 @@ if args.pickle:
   exit(0)
 
 for i in range(n + 1):
+  WARMUP = i == 0
   from_xy_time = 0.0
   query_time = 0.0
 
   t = time.perf_counter()
   points = cuspatial.GeoSeries.from_points_xy(xy)
   from_xy_time += time.perf_counter() - t
+  if not WARMUP:
+    print(f"from_points_xy: {from_xy_time:.3f}s.")
+    
   for query in queries:
     gc.collect()
     minx = query[0]
@@ -92,8 +96,7 @@ for i in range(n + 1):
 
   points = None
   gc.collect()
-  if(i != 0):
-    print(f"from_points_xy: {from_xy_time:.3f}s.")
+  if not WARMUP:
     print(f"queries took: {query_time:.3f}s.")
 
 exit()
