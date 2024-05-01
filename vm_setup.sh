@@ -35,7 +35,9 @@ cmake .. -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=~/.local \
     -DBUILD_APPS=OFF \
     -DBUILD_GMOCK=OFF \
-    -DBUILD_TESTING=OFF
+    -DBUILD_TESTING=OFF \
+    -DENABLE_IPO=ON \
+    -DCMAKE_CXX_FLAGS="-march=native"
 make -j40 install
 
 cd ~ || exit 1
