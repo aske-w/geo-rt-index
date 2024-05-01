@@ -12,6 +12,7 @@
 #include <cassert>
 #include <future>
 #include <string>
+#include "helpers/debug_helpers.hpp"
 
 using geo_rt_index::types::Point;
 

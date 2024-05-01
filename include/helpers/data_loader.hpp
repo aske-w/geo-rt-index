@@ -7,7 +7,7 @@
 
 #include <string>
 #include <vector>
-#include "types.hpp"
+#include "types/point.hpp"
 
 class DataLoader
 {
