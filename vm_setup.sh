@@ -44,9 +44,10 @@ cd ~ || exit 1
 git clone https://github.com/aske-w/geo-rt-index.git
 cd geo-rt-index || exit 1
 mkdir -p build/release
-cmake .. -DCMAKE_INSTALL_PREFIX:PATH="/home/ucloud/.local;/usr/local;/home/ucloud/NVIDIA-OptiX-SDK-8.0.0-linux64-x86_64/SDK/CMake" \
-    -DCMAKE_MODULE_PATH=/home/ucloud/NVIDIA-OptiX-SDK-8.0.0-linux64-x86_64/SDK/CMake \
-    -DOptiX_INSTALL_DIR:PATH=/home/ucloud/NVIDIA-OptiX-SDK-8.0.0-linux64-x86_64 \
+cmake .. -DCMAKE_INSTALL_PREFIX:PATH="/home/ucloud/.local;/usr/local;/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64/SDK/CMake" \
+    -DCMAKE_MODULE_PATH=/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64/SDK/CMake \
+    -DOptiX_INSTALL_DIR:PATH=/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64 \
+    -DOptiX_INCLUDE:PATH=/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64/include \
     -DCUDA_CUDA_LIBRARY=/usr/lib/x86_64-linux-gnu/libcuda.so \
     -DBIN2C=/usr/bin/bin2c \
     -DUSE_DEBUG=OFF \

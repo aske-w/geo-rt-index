@@ -116,7 +116,7 @@ void optix_wrapper::create_module() {
 
     char log[2048];
     size_t sizeof_log = sizeof(log);
-    OPTIX_CHECK(optixModuleCreate(
+    OPTIX_CHECK(optixModuleCreateFromPTX(
             optix_context,
             &module_compile_options,
             &pipeline_compile_options,
