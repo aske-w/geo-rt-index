@@ -51,6 +51,7 @@ parser.add_argument("--dry-run", help='Print commands that would be used to star
 args = parser.parse_args()
 
 SEED = np.random.randint(1_000_000) if args.s is None else args.s
+print("Using seed ", SEED)
 BENCHMARK = Benchmark(args.b)
 DIST = Distribution(args.d)
 PROG = Program(args.p)
