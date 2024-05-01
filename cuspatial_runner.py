@@ -30,11 +30,11 @@ pool = ProcessPoolExecutor(mp.cpu_count())
 def work(batch):
   geom_col = batch["geometry"]
   result = []
-  i = 0
+  # i = 0
   for geom in geom_col:
-    i += 1
-    if i % 6 == 0:
-      continue
+    # i += 1
+    # if i % 6 == 0:
+    #   continue
     g = ogr.CreateGeometryFromWkb(geom.as_py())
     result.append(g.GetX())
     result.append(g.GetY())
