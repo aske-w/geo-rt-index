@@ -208,6 +208,7 @@ int main(const int argc, const char** argv) {
 	MEASURE_TIME("Loading points",
 	 	points = DataLoader::Load(Args::GetInstance().GetFiles(), Args::GetInstance().GetModifier());
 	);
+	MEASURE_TIME("Warmup", Run(points));
 	for(size_t i = 0; i < Args::GetInstance().GetRepetitions(); i++)
 	{
 		MEASURE_TIME("Run", Run(points));

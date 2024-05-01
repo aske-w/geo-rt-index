@@ -1,7 +1,7 @@
 #! /bin/bash
 
 sudo apt update
-sudo apt install -y -V ca-certificates lsb-release wget libc6 libproj-dev swig python3-pip pbzip2
+sudo apt install -y -V ca-certificates lsb-release wget libc6 libproj-dev swig python3-pip pbzip2 g++-10
 # shellcheck disable=SC2019,SC2018
 wget "https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb"
 sudo apt install -y -V "./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb"
@@ -42,3 +42,20 @@ make -j40 install
 
 cd ~ || exit 1
 git clone https://github.com/aske-w/geo-rt-index.git
+cd geo-rt-index || exit 1
+mkdir -p build/release
+cmake .. -DCMAKE_INSTALL_PREFIX:PATH="/home/ucloud/.local;/usr/local;/home/ucloud/NVIDIA-OptiX-SDK-8.0.0-linux64-x86_64/SDK/CMake" \
+    -DCMAKE_MODULE_PATH=/home/ucloud/NVIDIA-OptiX-SDK-8.0.0-linux64-x86_64/SDK/CMake \
+    -DOptiX_INSTALL_DIR:PATH=/home/ucloud/NVIDIA-OptiX-SDK-8.0.0-linux64-x86_64 \
+    -DCUDA_CUDA_LIBRARY=/usr/lib/x86_64-linux-gnu/libcuda.so \
+    -DBIN2C=/usr/bin/bin2c \
+    -DUSE_DEBUG=OFF \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON \
+    -DDEBUG_PRINT:BOOL=OFF \
+    -DCUDA_USE_STATIC_CUDA_RUNTIME:BOOL=ON \
+    -DCMAKE_CXX_FLAGS:STRING="-I/usr/include -march=native -std=c++20 -I/home/ucloud/.local/include" \
+    -DCMAKE_CUDA_FLAGS:STRING="-I/home/ucloud/.local/include" \
+    -DUSE_MEASURE_TIME:BOOL=ON \
+    -DVERIFICATION_MODE:BOOL=ON \
+    -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-10 \
+    -DBUILD_TESTS=OFF
