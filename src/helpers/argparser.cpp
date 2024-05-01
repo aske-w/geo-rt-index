@@ -63,7 +63,7 @@ void Args::Parse(const int argc, const char** argv)
 		else if(IsCandidateArgument(arg, rays_per_thread_args))
 		{
 			const auto input = stoi(argv[++i]);
-			if (input < 0 || __builtin_clz(input) != 0)
+			if (input < 0 || __builtin_clz(input) == 0)
 			{
 				throw std::runtime_error("u stoopid");
 			}
