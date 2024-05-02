@@ -169,8 +169,27 @@ match BENCHMARK:
                     prog_out.close()
                     # smi_out.close()
     case Benchmark.QUERY_SCALING:
-        raise NotImplementedError(Benchmark.QUERY_SCALING)    
-    
+        raise NotImplementedError(Benchmark.QUERY_SCALING)
+        selectivities = {
+            0.01: [],
+            0.02: [],
+            0.05: [],
+            0.10: [],
+            0.20: []
+        }
+        SCALE_LOG = 10
+        for log in range(SCALE_LOG):
+            for selectivity in selectivities.keys():
+                while len(selectivities[selectivity]) <= 2**log:
+                    selectivities[selectivity].append(mk_query(selectivity, LO, HI))
+
+            if DRY_RUN:
+                continue # skip to next log
+
+            with open(os.path.join(SESSION_OUTPUT_DIR, f"query_scaling_log{log}_prog.txt"), "x") as prog_out:
+                pass
+
+
     case Benchmark.DS_TIME_CHECK_EACH:
         # Check each data set has approximately the same run time
         try:
