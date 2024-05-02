@@ -59,7 +59,12 @@ DRY_RUN = args.dry_run
 
 N = 5
 INPUT_DATA_DIR = os.path.join("/home/aske/dev/geo-rt-index/data" if get_system() == "ubuntu" else "/home/ucloud/geo-rt-index/data", DIST.value)
-FILES = glob.glob(os.path.join(INPUT_DATA_DIR, "*.parquet"))
+PARQUET_FILES = glob.glob(os.path.join(INPUT_DATA_DIR, "*.parquet"))
+PICKLE_FILES = None if PROG is Program.GEO_RT_INDEX else glob.glob(os.path.join(INPUT_DATA_DIR, "*.xy.pickle"))
+PARQUET_FILES.sort(key=lambda t: Path(t).stem) # file name without path or extensions
+if PICKLE_FILES is not None:
+    PICKLE_FILES.sort(key=lambda t: Path(t).stem)
+
 OUTPUT_DATA_DIR  = "/home/aske/dev/geo-rt-index/data/runs" if get_system() == "ubuntu" else "/home/ucloud/geo-rt-index/data/runs"
 SMI_CMD = [
     "nvidia-smi",
@@ -121,39 +126,46 @@ def mk_query_strings(queries: Iterable):
 LO = -1
 HI = 1
 QUERIES = mk_query_strings([
-    *mk_queries(0.01, 5, LO, HI), 
-    *mk_queries(0.02, 5, LO, HI),
-    *mk_queries(0.05, 5, LO, HI),
-    *mk_queries(0.10, 5, LO, HI),
-    *mk_queries(0.20, 5, LO, HI)
+    *mk_queries(0.01, 1, LO, HI),
+    # *mk_queries(0.02, 5, LO, HI),
+    # *mk_queries(0.05, 5, LO, HI),
+    # *mk_queries(0.10, 5, LO, HI),
+    # *mk_queries(0.20, 5, LO, HI)
 ])
+
+_files = PICKLE_FILES if PROG == Program.CUSPATIAL and PICKLE_FILES is not None else PARQUET_FILES
 
 match BENCHMARK:
     case Benchmark.DS_SCALING:
         counts = [1,2,4,6] if PROG == Program.CUSPATIAL else [1,2,4,6,8,16,32]
+        shuffle_mapping = [x for x in range(len(_files))]
+        np.random.shuffle(shuffle_mapping)
+        shuffled_files = []
+        for mapping in shuffle_mapping:
+            shuffled_files.append(_files[mapping])
+
         for file_count in counts:
             try:
-                prog_out= None if DRY_RUN else open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_prog.txt"), "a")
+                prog_out = None if DRY_RUN else open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_prog.txt"), "a")
                 cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
-                for _ in range(5):
-                    datasets = np.random.choice(FILES, 6, False).tolist()
-                    files = datasets[:file_count]
-                    local_cmd = cmd + QUERIES + files
-                    local_cmd_str = " ".join(local_cmd)
-                    print(local_cmd_str)
-                    if DRY_RUN:
-                        continue
-                    # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
-                    prog_out.write(local_cmd_str)
-                    prog_out.write('\n')
-                    prog_out.flush()
-                    # print("cmd:", local_cmd_str)
-                    prog_process = sp.Popen(local_cmd, stdout=prog_out, stderr=sys.stderr)
-                    # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=sys.stderr)
-                    prog_process.wait()
-                    # smi_process.kill()
+                files = shuffled_files[:file_count]
+                local_cmd = cmd + QUERIES + files
+                local_cmd_str = " ".join(local_cmd)
+                print(local_cmd_str)
+                if DRY_RUN:
+                    continue
+                # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
+                prog_out.write(local_cmd_str)
+                prog_out.write('\n')
+                prog_out.flush()
+                # print("cmd:", local_cmd_str)
+                prog_process = sp.Popen(local_cmd, stdout=prog_out, stderr=sys.stderr)
+                # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=sys.stderr)
+                prog_process.wait()
+                # smi_process.kill()
             finally:
                 if not DRY_RUN:
+                    assert(prog_out is not None)
                     prog_out.close()
                     # smi_out.close()
     case Benchmark.QUERY_SCALING:
@@ -167,7 +179,7 @@ match BENCHMARK:
                 prog_out=open(os.path.join(SESSION_OUTPUT_DIR, f"lo{LO}hi{HI}_prog.txt"), "x")
             # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
             cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
-            for file in FILES:
+            for file in _files:
                 local_cmd = cmd + QUERIES + [file]
                 local_cmd_str = " ".join(local_cmd)
                 if DRY_RUN:
@@ -183,6 +195,7 @@ match BENCHMARK:
             # smi_process.kill()
         finally:
             if not DRY_RUN:
+                assert(prog_out is not None)
                 prog_out.close()
             # smi_out.close()
 
