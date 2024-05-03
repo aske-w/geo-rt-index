@@ -172,7 +172,7 @@ match BENCHMARK:
         if PROG != Program.GEO_RT_INDEX:
             raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
 
-        fixed_file = np.random.choice(_files, 1).tolist()[0]
+        FIXED_FILES = np.random.choice(_files, 1).tolist()[0]
         SCALE_LOG = 10
         for selectivity in [0.01, 0.02, 0.05, 0.10, 0.20]:
             queries = []
@@ -185,7 +185,7 @@ match BENCHMARK:
                     while len(queries) < limit:
                         queries.append(mk_query(selectivity, LO, HI))
 
-                    query_scaling_cmd = get_geo_rt_cmd() + mk_query_strings(queries) + [fixed_file]
+                    query_scaling_cmd = get_geo_rt_cmd() + mk_query_strings(queries) + [FIXED_FILES]
                     local_cmd_str = " ".join(query_scaling_cmd)
                     print(local_cmd_str)
                     if DRY_RUN:
@@ -230,11 +230,39 @@ match BENCHMARK:
             # smi_out.close()
 
     case Benchmark.AABB_LAYERING_SCALING:
-        raise NotImplementedError(Benchmark.AABB_LAYERING_SCALING)
-        if PROG == Program.CUSPATIAL:
-            raise NotSupportedException(f"Program {PROG} does not support benchmark {BENCHMARK}")
-        
-        layering_types = [0, 1, 2]
+        if PROG != Program.GEO_RT_INDEX:
+            raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
+
+        LAYERING_TYPES = [0, 1, 2]
+        FIXED_FILES = np.random.choice(_files, 1).tolist()[0]
+        SELECTIVITY = 0.20
+
+        SCALE_LOG = 10 # 1024
+        fixed_queries = []
+        while len(fixed_queries) < 2**SCALE_LOG:
+            fixed_queries.append(mk_query(SELECTIVITY, LO, HI))
+        CMD_SUFFIX = mk_query_strings(fixed_queries) + [FIXED_FILES]
+        for layer_type in LAYERING_TYPES:
+            prog_out = None
+            try:
+                if not DRY_RUN:
+                    PATH = os.path.join(SESSION_OUTPUT_DIR, f"aabb_layering_type{layer_type}_prog.txt")
+                    prog_out = open(PATH, "x")
+
+                query_scaling_cmd = get_geo_rt_cmd(l=layer_type) + CMD_SUFFIX
+                local_cmd_str = " ".join(query_scaling_cmd)
+                print(local_cmd_str)
+                if DRY_RUN:
+                    continue # skip to next log
+                prog_out.write(f"Running with layer type {layer_type} queries\n")
+                prog_out.write(f"{local_cmd_str}\n")
+                prog_out.flush()
+                prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
+                prog_process.wait()
+            finally:
+                if not DRY_RUN:
+                    assert prog_out is not None
+                    prog_out.close()
 
         pass
     case Benchmark.RAYS_PER_THREAD_SCALING:
