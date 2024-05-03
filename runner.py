@@ -159,8 +159,8 @@ match BENCHMARK:
                 prog_out.write('\n')
                 prog_out.flush()
                 # print("cmd:", local_cmd_str)
-                prog_process = sp.Popen(local_cmd, stdout=prog_out, stderr=sys.stderr)
-                # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=sys.stderr)
+                prog_process = sp.Popen(local_cmd, stdout=prog_out, stderr=prog_out)
+                # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=prog_out)
                 prog_process.wait()
                 # smi_process.kill()
             finally:
@@ -169,25 +169,36 @@ match BENCHMARK:
                     prog_out.close()
                     # smi_out.close()
     case Benchmark.QUERY_SCALING:
-        raise NotImplementedError(Benchmark.QUERY_SCALING)
-        selectivities = {
-            0.01: [],
-            0.02: [],
-            0.05: [],
-            0.10: [],
-            0.20: []
-        }
+        if PROG != Program.GEO_RT_INDEX:
+            raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
+
+        fixed_file = np.random.choice(_files, 1).tolist()[0]
         SCALE_LOG = 10
-        for log in range(SCALE_LOG):
-            for selectivity in selectivities.keys():
-                while len(selectivities[selectivity]) <= 2**log:
-                    selectivities[selectivity].append(mk_query(selectivity, LO, HI))
+        for selectivity in [0.01, 0.02, 0.05, 0.10, 0.20]:
+            queries = []
+            prog_out = None
+            try:
+                if not DRY_RUN:
+                    prog_out = open(os.path.join(SESSION_OUTPUT_DIR, f"query_scaling_selectivity{selectivity}_prog.txt"), "x")
 
-            if DRY_RUN:
-                continue # skip to next log
+                for limit in map(lambda power: 2**power, range(SCALE_LOG)):
+                    while len(queries) < limit:
+                        queries.append(mk_query(selectivity, LO, HI))
 
-            with open(os.path.join(SESSION_OUTPUT_DIR, f"query_scaling_log{log}_prog.txt"), "x") as prog_out:
-                pass
+                    query_scaling_cmd = get_geo_rt_cmd() + mk_query_strings(queries) + [fixed_file]
+                    local_cmd_str = " ".join(query_scaling_cmd)
+                    print(local_cmd_str)
+                    if DRY_RUN:
+                        continue # skip to next log
+                    prog_out.write(f"Running with {limit} queries\n")
+                    prog_out.write(f"{local_cmd_str}\n")
+                    prog_out.flush()
+                    prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
+                    prog_process.wait()
+            finally:
+                if not DRY_RUN:
+                    prog_out.close()
+
 
 
     case Benchmark.DS_TIME_CHECK_EACH:
@@ -208,8 +219,8 @@ match BENCHMARK:
                 prog_out.write('\n')
                 prog_out.flush()
                 # print("cmd:", local_cmd_str)
-                prog_process = sp.Popen(local_cmd, stdout=prog_out, stderr=sys.stderr)
-                # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=sys.stderr)
+                prog_process = sp.Popen(local_cmd, stdout=prog_out, stderr=prog_out)
+                # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=prog_out)
                 prog_process.wait()
             # smi_process.kill()
         finally:
