@@ -237,7 +237,7 @@ match BENCHMARK:
         FIXED_FILES = np.random.choice(_files, 1).tolist()[0]
         SELECTIVITY = 0.20
 
-        SCALE_LOG = 10 # 1024
+        SCALE_LOG = 10 # 512
         fixed_queries = []
         while len(fixed_queries) < 2**SCALE_LOG:
             fixed_queries.append(mk_query(SELECTIVITY, LO, HI))
@@ -264,13 +264,43 @@ match BENCHMARK:
                     assert prog_out is not None
                     prog_out.close()
 
-        pass
     case Benchmark.RAYS_PER_THREAD_SCALING:
-        raise NotImplementedError(Benchmark.RAYS_PER_THREAD_SCALING)
-        if PROG == Program.CUSPATIAL:
-            raise NotSupportedException(f"Program {PROG} does not support benchmark {BENCHMARK}")
+        if PROG != Program.GEO_RT_INDEX:
+            raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
         
-        rp = [2 ** x for x in range(10)]
-        pass
+        rays_per_threads = [2 ** x for x in range(10)]
+        fc = [1,2,4]
+        FIXED_FILES = np.random.choice(_files, fc[-1], False)
+        np.random.shuffle(FIXED_FILES)
+        SELECTIVITY = 0.20
+
+        NUM_QUERIES = 64 # 512
+        fixed_queries = [mk_query(SELECTIVITY, LO, HI) for _ in range(NUM_QUERIES)]
+
+        for count in fc:
+            files = FIXED_FILES[:count].tolist()
+            CMD_SUFFIX = mk_query_strings(fixed_queries) + files
+            prog_out = None
+            try:
+                if not DRY_RUN:
+                    PATH = os.path.join(SESSION_OUTPUT_DIR, f"rays_per_thread_numfiles{count}_prog.txt")
+                    prog_out = open(PATH, "x")
+                for rays_per_thread in rays_per_threads:
+                    query_scaling_cmd = get_geo_rt_cmd(r=rays_per_thread) + CMD_SUFFIX
+                    local_cmd_str = " ".join(query_scaling_cmd)
+                    print(local_cmd_str)
+                    if DRY_RUN:
+                        continue # skip to next log
+                    prog_out.write(f"Running with {rays_per_thread} rays per thread\n")
+                    prog_out.write(f"{local_cmd_str}\n")
+                    prog_out.flush()
+                    prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
+                    prog_process.wait()
+            finally:
+                if not DRY_RUN:
+                    assert prog_out is not None
+                    prog_out.close()
+
+
     case _: raise NotImplementedError(f"Unimplemented benchmark: {BENCHMARK.value}")
 
