@@ -10,6 +10,7 @@
 #include <optix_stubs.h>
 #include "helpers/spatial_helpers.cuh"
 #include "types/point.hpp"
+#include <nvtx3/nvToolsExt.h>
 
 #include <numeric>
 #include <vector>
@@ -65,7 +66,7 @@ OptixTraversableHandle BuildAccelerationStructure(const optix_wrapper& optix,
 	                            uncompacted_structure_buffer.size_in_bytes, &handle, &emit_desc, 1))
 	cudaDeviceSynchronize();
 	CUERR
-//	temp_buffer.free();
+	temp_buffer.free();
 	return handle;
 }
 
