@@ -10,7 +10,6 @@
 #include <optix_stubs.h>
 #include "helpers/spatial_helpers.cuh"
 #include "types/point.hpp"
-#include <nvtx3/nvToolsExt.h>
 
 #include <numeric>
 #include <vector>

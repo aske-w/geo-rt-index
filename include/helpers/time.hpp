@@ -9,16 +9,19 @@
 #include "helpers/argparser.hpp"
 #include <functional>
 #include <vector>
+#include <nvtx3/nvToolsExt.h>
 
 #ifdef USE_MEASURE_TIME
 
 static void MeasureTime(const char* msg, std::function<void(void)> subject)
 {
+	nvtxRangePushA(msg);
 	const auto begin = std::chrono::steady_clock::now();
 	subject();
 	const auto end = std::chrono::steady_clock::now();
 	const std::chrono::duration<double> duration = end - begin;
 	printf("%s: %.3fs.\n", msg, duration.count());
+	nvtxRangePop();
 }
 
 #define MEASURE_TIME(msg, ...) 					\
