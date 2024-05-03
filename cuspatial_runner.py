@@ -6,38 +6,100 @@ import pyarrow.parquet as pq
 import multiprocessing as mp
 from osgeo import ogr
 from concurrent.futures import ProcessPoolExecutor # ThreadPoolExecutor locks GIL
+import argparse
+import gc
+import pathlib
+import pickle
 
 BATCH_SIZE = 1 << 21
+# -n 5 -q 0.5 0.5 1 1 -q 0.3 0.3 0.8 0.8 -q 0.1 0.1 0.6 0.6 -q 0 0 0.5 0.5 /home/aske/dev/geo-rt-index/data/duniform_p26_s13573.parquet
+
+# arg parsing from ChatGPT
+parser = argparse.ArgumentParser(description='Cuspatial runner')
+parser.add_argument('--pickle', action='store_true')
+parser.add_argument('-n', type=int, help='Number of repetitions', required=True)
+parser.add_argument('-q', nargs=4, type=float, action='append', help='Bounding box (minx, miny, maxx, maxy)', required=True)
+parser.add_argument('file', nargs='+', help='File paths')
+args = parser.parse_args()
+n = args.n
+queries = args.q
+files = args.file
 
 pool = ProcessPoolExecutor(mp.cpu_count())
-
-data = pq.read_table("data/duniform_p26_s369.parquet")
 
 def work(batch):
   geom_col = batch["geometry"]
   result = []
+  # i = 0
   for geom in geom_col:
+    # i += 1
+    # if i % 6 == 0:
+    #   continue
     g = ogr.CreateGeometryFromWkb(geom.as_py())
     result.append(g.GetX())
     result.append(g.GetY())
   return result
 
 t = time.perf_counter()
-batches: list = data.to_batches(BATCH_SIZE) # 1m
 xy = []
-for result in pool.map(work, batches):
-  xy += result
-print(f"converting to xy took: {time.perf_counter() - t:.3f} ms")
+for file in files:
+  # print("file:", file)
+  pp = pathlib.Path(file)
+  if pp.suffixes == ['.xy', '.pickle']:
+    if args.pickle:
+      raise Exception("Can not pickle a pickled file")
+    with open(file, "rb") as dump_file:
+      xy += pickle.load(dump_file)
+  else: 
+    data = pq.read_table(file)
+    batches: list = data.to_batches(BATCH_SIZE) # 1m
+    for result in pool.map(work, batches):
+      xy += result
+    if args.pickle:
+      pickle_file = pp.parent.joinpath(f"{pp.stem}.xy.pickle")
+      with open(pickle_file, "wb") as dump_file:
+        pickle.dump(xy, dump_file)
+      xy = []
 
-t = time.perf_counter()
-points = cuspatial.GeoSeries.from_points_xy(xy)
-print(f"Creating points from interleaved columns took: {time.perf_counter() - t:.3f} ms")
 
-input("Press enter to run cuspatial.points_in_spatial_window")
-hit_start = time.perf_counter()
-hit = cuspatial.points_in_spatial_window(points, 0, 1, 0, 1) # beware that it is minx, maxx, miny, maxy
-print("hit took ", time.perf_counter() - hit_start)
-print(hit.head()) # lmao
+print(f"load + convert: {time.perf_counter() - t:.3f}s.")
+pool.shutdown()
+
+if args.pickle:
+  exit(0)
+
+for i in range(n + 1):
+  WARMUP = i == 0
+  from_xy_time = 0.0
+  query_time = 0.0
+
+  t = time.perf_counter()
+  points = cuspatial.GeoSeries.from_points_xy(xy)
+  from_xy_time += time.perf_counter() - t
+  if not WARMUP:
+    print(f"from_points_xy: {from_xy_time:.3f}s.")
+    
+  for query in queries:
+    gc.collect()
+    minx = query[0]
+    miny = query[1]
+    maxx = query[2]
+    maxy = query[3]
+
+    if i == 0: # warmup
+      cuspatial.points_in_spatial_window(points, minx, maxx, miny, maxy) # beware that it is minx, maxx, miny, maxy
+      continue
+    t = time.perf_counter()
+    cuspatial.points_in_spatial_window(points, minx, maxx, miny, maxy) # beware that it is minx, maxx, miny, maxy
+    query_time += time.perf_counter() - t
+
+
+  points = None
+  gc.collect()
+  if not WARMUP:
+    print(f"queries took: {query_time:.3f}s.")
+
+exit()
 
 # bboxes_dict = {
 #     "minx": [-20.],
@@ -90,7 +152,7 @@ print(hit.head()) # lmao
 
 """
 Traceback (most recent call last):
-  File "/home/aske/dev/py_cuspatial/main.py", line 44, in <module>
+  File "/home/aske/dev/py_cuspatial/cuspatial.py", line 44, in <module>
     hit = cuspatial.points_in_spatial_window(points, 140, 180, 50, 60)
   File "/usr/local/lib/python3.10/dist-packages/cuspatial/core/spatial/filtering.py", line 52, in points_in_spatial_window
     ys = as_column(points.points.y)

@@ -37,8 +37,10 @@ class Args
 private:
 	std::vector<geo_rt_index::types::Aabb> queries;
 	std::vector<std::string> files;
-	AabbLayering layering;
-	uint32_t rays_per_thread;
+	AabbLayering layering = AabbLayering::None;
+	uint32_t rays_per_thread = 1;
+	uint8_t repetitions;
+	float modifier = 1;
 	inline static Args& GetMutableInstance()
 	{
 		static Args instance{};
@@ -69,6 +71,14 @@ public:
 	inline auto GetRaysPerThread() const
 	{
 		return rays_per_thread;
+	}
+	inline auto GetRepetitions() const
+	{
+		return this->repetitions;
+	}
+	inline auto GetModifier() const
+	{
+		return this->modifier;
 	}
 };
 

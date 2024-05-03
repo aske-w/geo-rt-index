@@ -22,10 +22,25 @@ match dist:
         rng_single = lambda: np.random.normal(0.0, 0.3, 2)
 
 np.random.seed(seed)
-# P = 22 # 4m
-P = 26 # 67m
+P = 22 # 4m
+# P = 26 # 67m
 N = 1 << P
-DIR  = os.path.join("/Volumes/untitled/data", dist)
+
+def get_dir() -> str:
+    import platform
+    match platform.system():
+        case "Linux":
+            if platform.platform() == 'Linux-5.15.0-105-generic-x86_64-with-glibc2.35':
+                return os.path.join("/home/aske/dev/geo-rt-index/data", dist)
+            else:
+                raise Exception("Implement on VM")
+        case "Darwin": # MacOS
+            return os.path.join("/Volumes/untitled/data", dist)
+        case _:
+            raise Exception(f"Unsupported system {platform.system()}")
+
+DIR  = get_dir()
+print("DIR:", DIR)
 
 os.makedirs(DIR, exist_ok=True)
 driver: ogr.Driver = GetDriverByName(DRIVER)

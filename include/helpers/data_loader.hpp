@@ -7,12 +7,12 @@
 
 #include <string>
 #include <vector>
-#include "types.hpp"
+#include "types/point.hpp"
 
 class DataLoader
 {
 public:
-	static std::vector<geo_rt_index::types::Point> Load(const std::vector<std::string>& files);
+	static std::vector<geo_rt_index::types::Point> Load(const std::vector<std::string>& files, const float modifier);
 };
 
 #endif // GEO_RT_INDEX_DATA_LOADER_HPP

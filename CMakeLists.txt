@@ -36,7 +36,12 @@ set(CMAKE_CUDA_ARCHITECTURES 75 86) # RTX 2070 Super, A40
 
 include_directories(include)
 include_directories(${OptiX_INCLUDE}) # Set during find_package(OptiX REQUIRED)
-add_subdirectory(tests)
+
+option(BUILD_TESTS "Build unit tests" ON)
+if(BUILD_TESTS)
+	add_subdirectory(tests)
+endif()
+
 add_subdirectory(src)
 
 # from https://gitlab.rlp.net/juhenneb/rtindex/-/tree/main

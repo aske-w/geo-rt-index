@@ -33,6 +33,8 @@ static inline bool IsCandidateArgument(const string_view& in_arg, const vector<s
 static const vector<string_view> query_args{"-q", "--query"};
 static const vector<string_view> aabb_layering_args{"-l", "--aabb-layering"};
 static const vector<string_view> rays_per_thread_args{"-r", "--rays-per-thread"};
+static const vector<string_view> num_repetitions_args{"-n", "--number-of-repetitions"};
+static const vector<string_view> modifier_args{"-m", "--modifier"};
 
 void Args::Parse(const int argc, const char** argv)
 {
@@ -61,11 +63,25 @@ void Args::Parse(const int argc, const char** argv)
 		else if(IsCandidateArgument(arg, rays_per_thread_args))
 		{
 			const auto input = stoi(argv[++i]);
-			if (input < 0 || __builtin_clz(input) != 0)
+			if (input < 0 || __builtin_clz(input) == 0)
 			{
-				std::runtime_error("u stoopid");
+				throw std::runtime_error("u stoopid");
 			}
 			instance.rays_per_thread = static_cast<uint32_t>(input);
+		}
+		else if(IsCandidateArgument(arg, num_repetitions_args))
+		{
+			const auto input = stoi(argv[++i]);
+			if (input < 0 || input > 255)
+			{
+				throw std::runtime_error("u stoopid");
+			}
+			instance.repetitions = static_cast<uint8_t>(input);
+		}
+		else if (IsCandidateArgument(arg, modifier_args))
+		{
+			const auto input = stof(argv[++i]);
+			instance.modifier = input;
 		}
 		else if(fs::exists(arg))
 		{
