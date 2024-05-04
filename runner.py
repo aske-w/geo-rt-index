@@ -165,11 +165,13 @@ match BENCHMARK:
                 # print("cmd:", local_cmd_str)
                 prog_process = sp.Popen(local_cmd, stdout=prog_out, stderr=prog_out)
                 # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=prog_out)
-                prog_process.wait()
+                assert (prog_process.wait() == 0)
+                prog_out.flush()
                 # smi_process.kill()
             finally:
                 if not DRY_RUN:
                     assert(prog_out is not None)
+                    prog_out.flush()
                     prog_out.close()
                     # smi_out.close()
     case Benchmark.QUERY_SCALING:
@@ -198,9 +200,11 @@ match BENCHMARK:
                     prog_out.write(f"{local_cmd_str}\n")
                     prog_out.flush()
                     prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
-                    prog_process.wait()
+                    assert (prog_process.wait() == 0)
+                    prog_out.flush()
             finally:
                 if not DRY_RUN:
+                    prog_out.flush()
                     prog_out.close()
 
 
@@ -225,11 +229,13 @@ match BENCHMARK:
                 # print("cmd:", local_cmd_str)
                 prog_process = sp.Popen(local_cmd, stdout=prog_out, stderr=prog_out)
                 # smi_process = sp.Popen(SMI_CMD, stdout=smi_out, stderr=prog_out)
-                prog_process.wait()
+                assert (prog_process.wait() == 0)
+                prog_out.flush()
             # smi_process.kill()
         finally:
             if not DRY_RUN:
                 assert(prog_out is not None)
+                prog_out.flush()
                 prog_out.close()
             # smi_out.close()
 
@@ -262,10 +268,12 @@ match BENCHMARK:
                 prog_out.write(f"{local_cmd_str}\n")
                 prog_out.flush()
                 prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
-                prog_process.wait()
+                assert (prog_process.wait() == 0)
+                prog_out.flush()
             finally:
                 if not DRY_RUN:
                     assert prog_out is not None
+                    prog_out.flush()
                     prog_out.close()
 
     case Benchmark.RAYS_PER_THREAD_SCALING:
@@ -299,10 +307,12 @@ match BENCHMARK:
                     prog_out.write(f"{local_cmd_str}\n")
                     prog_out.flush()
                     prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
-                    prog_process.wait()
+                    assert (prog_process.wait() == 0)
+                    prog_out.flush()
             finally:
                 if not DRY_RUN:
                     assert prog_out is not None
+                    prog_out.flush()
                     prog_out.close()
 
 
