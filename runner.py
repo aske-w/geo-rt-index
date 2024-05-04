@@ -9,6 +9,7 @@ from more_itertools import flatten
 import numpy as np
 import subprocess as sp
 from pathlib import Path
+import uuid
 
 def get_system():
     import platform
@@ -156,7 +157,7 @@ match BENCHMARK:
                 prog_out = None if DRY_RUN else open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_prog.txt"), "a")
                 cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
                 files = shuffled_files[:file_count]
-                local_cmd = cmd + QUERIES + files
+                local_cmd = cmd  + ["--id", uuid.uuid4().hex] + QUERIES + files
                 local_cmd_str = " ".join(local_cmd)
                 print(local_cmd_str)
                 if DRY_RUN:
@@ -194,7 +195,7 @@ match BENCHMARK:
                     while len(queries) < limit:
                         queries.append(mk_query(selectivity, LO, HI))
 
-                    query_scaling_cmd = get_geo_rt_cmd() + mk_query_strings(queries) + [FIXED_FILES]
+                    query_scaling_cmd = get_geo_rt_cmd()  + ["--id", uuid.uuid4().hex] + mk_query_strings(queries) + [FIXED_FILES]
                     local_cmd_str = " ".join(query_scaling_cmd)
                     print(local_cmd_str)
                     if DRY_RUN:
@@ -221,7 +222,7 @@ match BENCHMARK:
             # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
             cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
             for file in _files:
-                local_cmd = cmd + QUERIES + [file]
+                local_cmd = cmd  + ["--id", uuid.uuid4().hex] + QUERIES + [file]
                 local_cmd_str = " ".join(local_cmd)
                 if DRY_RUN:
                     print(local_cmd_str)
@@ -262,7 +263,7 @@ match BENCHMARK:
                     PATH = os.path.join(SESSION_OUTPUT_DIR, f"aabb_layering_type{layer_type}_prog.txt")
                     prog_out = open(PATH, "x")
 
-                query_scaling_cmd = get_geo_rt_cmd(l=layer_type) + CMD_SUFFIX
+                query_scaling_cmd = get_geo_rt_cmd(l=layer_type) + ["--id", uuid.uuid4().hex] + CMD_SUFFIX
                 local_cmd_str = " ".join(query_scaling_cmd)
                 print(local_cmd_str)
                 if DRY_RUN:
@@ -301,7 +302,7 @@ match BENCHMARK:
                     PATH = os.path.join(SESSION_OUTPUT_DIR, f"rays_per_thread_numfiles{count}_prog.txt")
                     prog_out = open(PATH, "x")
                 for rays_per_thread in rays_per_threads:
-                    query_scaling_cmd = get_geo_rt_cmd(r=rays_per_thread) + CMD_SUFFIX
+                    query_scaling_cmd = get_geo_rt_cmd(r=rays_per_thread) + ["--id", uuid.uuid4().hex] + CMD_SUFFIX
                     local_cmd_str = " ".join(query_scaling_cmd)
                     print(local_cmd_str)
                     if DRY_RUN:
