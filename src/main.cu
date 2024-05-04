@@ -202,6 +202,7 @@ void Run(const std::vector<Point>& points)
 }
 
 int main(const int argc, const char** argv) {
+	geo_rt_index::helpers::PrintCSVHeader();
 	MEASURE_TIME("Parsing args", Args::Parse(argc, argv));
 
 	std::vector<Point> points;
