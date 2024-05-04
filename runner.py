@@ -130,11 +130,11 @@ def mk_query_strings(queries: Iterable):
     return list(flatten(map(lambda t: [f"-q", f"{t[0]}", f"{t[1]}", f"{t[2]}", f"{t[3]}"], queries)))
 
 QUERIES = mk_query_strings([
-    *mk_queries(0.01, 1, LO, HI),
-    # *mk_queries(0.02, 5, LO, HI),
-    # *mk_queries(0.05, 5, LO, HI),
-    # *mk_queries(0.10, 5, LO, HI),
-    # *mk_queries(0.20, 5, LO, HI)
+    *mk_queries(0.01, 5, LO, HI),
+    *mk_queries(0.02, 5, LO, HI),
+    *mk_queries(0.05, 5, LO, HI),
+    *mk_queries(0.10, 5, LO, HI),
+    *mk_queries(0.20, 5, LO, HI)
 ])
 
 _files = PICKLE_FILES if PROG == Program.CUSPATIAL and PICKLE_FILES is not None else PARQUET_FILES
