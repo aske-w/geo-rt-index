@@ -1,7 +1,7 @@
 #! /bin/bash
 
 sudo apt update
-sudo apt install -y -V ca-certificates lsb-release wget libc6 libproj-dev swig python3-pip pbzip2 g++-10 libnvidia-gl-525 libnvidia-fbc1-525 libnvidia-common-525
+sudo apt install -y -V ca-certificates lsb-release wget libc6 libproj-dev swig python3-pip pbzip2 g++-10 libnvidia-extra-525 libnvidia-cfg1-525 libnvidia-common-525 libnvidia-compute-525 libnvidia-extra-525 libnvidia-fbc1-525 libnvidia-gl-525
 # shellcheck disable=SC2019,SC2018
 wget "https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb"
 sudo apt install -y -V "./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb"
