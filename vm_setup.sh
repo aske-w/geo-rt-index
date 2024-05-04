@@ -19,7 +19,8 @@ sudo apt install -y libarrow-dev libparquet-dev
 # shellcheck disable=SC1090
 source ~/.profile
 
-pip3.10 install cmake "numpy<1.25"
+pip3.10 install "numpy==1.24"
+pip3.10 install cmake
 sudo apt install -y cmake-curses-gui
 pip3.10 install \
     --extra-index-url=https://pypi.nvidia.com \
@@ -43,7 +44,8 @@ make -j40 install
 cd ~ || exit 1
 git clone https://github.com/aske-w/geo-rt-index.git
 cd geo-rt-index || exit 1
-mkdir -p build/release
+mkdir -p build
+cd build || exit 1
 cmake .. -DCMAKE_INSTALL_PREFIX:PATH="/home/ucloud/.local;/usr/local;/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64/SDK/CMake" \
     -DCMAKE_MODULE_PATH=/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64/SDK/CMake \
     -DOptiX_INSTALL_DIR:PATH=/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64 \
@@ -60,3 +62,4 @@ cmake .. -DCMAKE_INSTALL_PREFIX:PATH="/home/ucloud/.local;/usr/local;/home/uclou
     -DVERIFICATION_MODE:BOOL=ON \
     -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-10 \
     -DBUILD_TESTS=OFF
+cmake --build . --target geo-rt-index
