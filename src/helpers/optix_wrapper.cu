@@ -1,5 +1,6 @@
 #include "helpers/debug_helpers.hpp"
 #include "helpers/optix_wrapper.hpp"
+#include "helpers/time.hpp"
 #include "optix_stubs.h"
 
 #include <optix_stubs.h>
@@ -9,12 +10,14 @@ extern "C" char embedded_ptx_code[];
 using namespace geo_rt_index::helpers;
 
 optix_wrapper::optix_wrapper(bool debug) : debug{debug} {
-    init_optix();
-    create_context();
-    create_module();
-#if PRIMITIVE == 1
-    create_sphere_module();
-#endif
+	MEASURE_TIME("optix_wrapper ctor",
+		init_optix();
+		create_context();
+		create_module();
+	#if PRIMITIVE == 1
+		create_sphere_module();
+	#endif
+	);
 }
 
 optix_wrapper::~optix_wrapper() {
