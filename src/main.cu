@@ -210,9 +210,11 @@ int main(const int argc, const char** argv) {
 	 	points = DataLoader::Load(Args::GetInstance().GetFiles(), Args::GetInstance().GetModifier());
 	);
 	MEASURE_TIME("Warmup", Run(points));
+	nvtxRangePushA("Benchmark loop");
 	for(size_t i = 0; i < Args::GetInstance().GetRepetitions(); i++)
 	{
 		MEASURE_TIME("Run", Run(points));
 	}
+	nvtxRangePop();
 	return 0;
 }
