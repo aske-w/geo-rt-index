@@ -13,6 +13,7 @@
 
 #include <numeric>
 #include <vector>
+#include <future>
 
 using std::unique_ptr;
 using std::unique_ptr;
@@ -161,41 +162,55 @@ void Run(const std::vector<Point>& points)
 	MEASURE_TIME("result_d.download", result_d.download(result, num_points * num_queries););
 
 #ifdef VERIFICATION_MODE
-	MEASURE_TIME("Result check",
-	             D_PRINT("Checking device results\n");
-	             uint32_t hit_count = 0;
-	             for(uint32_t i = 0; i < num_queries; i++)
-	             {
-		             D_PRINT("Query %d\n",i);
-		             const auto& aabb_query = queries.at(i);
-		             const auto& optixAabb_query = z_adjusted.at(i);
-		             for(uint32_t j = 0; j < num_points; j++)
-		             {
-			             const auto point = points.at(j);
-			             auto aabb_result = helpers::SpatialHelpers::Contains(aabb_query, point);
-			             auto optixAabb_result = helpers::SpatialHelpers::Contains(optixAabb_query, point);
-			             auto device_result = result[(num_points * i) + j];
-			             if(aabb_result != device_result)
-			             {
-				             throw std::runtime_error("aabb_result != device_result");
-			             }
-			             if(aabb_result != optixAabb_result)
-			             {
-				             throw std::runtime_error("aabb_result != optixAabb_result");
-			             }
-			             if(aabb_result && optixAabb_result && device_result)
-			             {
-				             hit_count++;
-			             }
-			             else if(aabb_result | optixAabb_result | device_result)
-			             {
-				             throw std::runtime_error("Unknown error");
-			             }
-		             }
-	             }
-	             D_PRINT("Hit count: %u\n", hit_count);
-	);
+	 MEASURE_TIME("Result check",
+		auto query_checker = [&](int i) 
+		{
+			uint32_t hit_count = 0;
+			D_PRINT("Query %d\n",i);
+			const auto& aabb_query = queries.at(i);
+			const auto& optixAabb_query = z_adjusted.at(i);
+			for(uint32_t j = 0; j < num_points; j++)
+			{
+				const auto point = points.at(j);
+				const auto aabb_result = helpers::SpatialHelpers::Contains(aabb_query, point);
+				const auto optixAabb_result = helpers::SpatialHelpers::Contains(optixAabb_query, point);
+				const auto device_result = result[(num_points * i) + j];
+				if(aabb_result != device_result)
+				{
+					throw std::runtime_error("aabb_result != device_result");
+				}
+				if(aabb_result != optixAabb_result)
+				{
+					throw std::runtime_error("aabb_result != optixAabb_result");
+				}
+				if(aabb_result && optixAabb_result && device_result)
+				{
+					hit_count++;
+				}
+				else if(aabb_result | optixAabb_result | device_result)
+				{
+					throw std::runtime_error("Unknown error");
+				}
+			}
+		    return hit_count;
+		};
 
+		std::vector<std::future<uint32_t>> futures;
+		futures.reserve(num_queries);
+
+	    D_PRINT("Checking device results\n");
+		for(uint32_t i = 0; i < num_queries; i++)
+		{
+			auto query_check_handle = std::async(std::launch::async, query_checker, i);
+		    futures.push_back(std::move(query_check_handle));
+		}
+	    uint32_t hit_sum = 0;
+	    for(auto&& future : futures)
+	    {
+		    hit_sum += future.get();
+	    }
+		D_PRINT("Hit count: %u\n", hit_sum);
+	 );
 
 #endif
 	delete[] result;
