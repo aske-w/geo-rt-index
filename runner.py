@@ -46,6 +46,9 @@ parser.add_argument('-s', type=int, help='Seed for numpy.random',required=False,
 parser.add_argument("-d", type=str, help='Distribution', required=True,choices=[e.value for e in Distribution])
 parser.add_argument("-b", type=str, help="Benchmark to run", required=True,choices=[e.value for e in Benchmark])
 parser.add_argument("-p", type=str, help="Program to benchmark", required=True,choices=[e.value for e in Program])
+parser.add_argument("--lo", type=int, help="Low", required=True)
+parser.add_argument("--hi", type=int, help="High", required=True)
+parser.add_argument("--file-stem-suffix", type=str, required=False, default="*")
 parser.add_argument("--dry-run", help='Print commands that would be used to start a program but do not run program', default=False, action='store_true')
 
 args = parser.parse_args()
@@ -56,11 +59,14 @@ BENCHMARK = Benchmark(args.b)
 DIST = Distribution(args.d)
 PROG = Program(args.p)
 DRY_RUN = args.dry_run
+SUFFIX = args.file_stem_suffix
+LO = args.lo
+HI = args.hi
 
 N = 5
 INPUT_DATA_DIR = os.path.join("/home/aske/dev/geo-rt-index/data" if get_system() == "ubuntu" else "/home/ucloud/geo-rt-index/data", DIST.value)
-PARQUET_FILES = glob.glob(os.path.join(INPUT_DATA_DIR, "*.parquet"))
-PICKLE_FILES = None if PROG is Program.GEO_RT_INDEX else glob.glob(os.path.join(INPUT_DATA_DIR, "*.xy.pickle"))
+PARQUET_FILES = glob.glob(os.path.join(INPUT_DATA_DIR, f"{SUFFIX}.parquet"))
+PICKLE_FILES = None if PROG is Program.GEO_RT_INDEX else glob.glob(os.path.join(INPUT_DATA_DIR, f"{SUFFIX}.xy.pickle"))
 PARQUET_FILES.sort(key=lambda t: Path(t).stem) # file name without path or extensions
 if PICKLE_FILES is not None:
     PICKLE_FILES.sort(key=lambda t: Path(t).stem)
@@ -123,8 +129,6 @@ def mk_queries(selectivity: float, n: int, lo = 0, hi = 1):
 def mk_query_strings(queries: Iterable):
     return list(flatten(map(lambda t: [f"-q", f"{t[0]}", f"{t[1]}", f"{t[2]}", f"{t[3]}"], queries)))
 
-LO = -1
-HI = 1
 QUERIES = mk_query_strings([
     *mk_queries(0.01, 1, LO, HI),
     # *mk_queries(0.02, 5, LO, HI),
