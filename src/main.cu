@@ -65,7 +65,7 @@ OptixTraversableHandle BuildAccelerationStructure(const optix_wrapper& optix,
 	                            uncompacted_structure_buffer.size_in_bytes, &handle, &emit_desc, 1))
 	cudaDeviceSynchronize();
 	CUERR
-//	temp_buffer.free();
+	temp_buffer.free();
 	return handle;
 }
 
@@ -202,6 +202,7 @@ void Run(const std::vector<Point>& points)
 }
 
 int main(const int argc, const char** argv) {
+	geo_rt_index::helpers::PrintCSVHeader();
 	MEASURE_TIME("Parsing args", Args::Parse(argc, argv));
 
 	std::vector<Point> points;
@@ -209,9 +210,11 @@ int main(const int argc, const char** argv) {
 	 	points = DataLoader::Load(Args::GetInstance().GetFiles(), Args::GetInstance().GetModifier());
 	);
 	MEASURE_TIME("Warmup", Run(points));
+	nvtxRangePushA("Benchmark loop");
 	for(size_t i = 0; i < Args::GetInstance().GetRepetitions(); i++)
 	{
 		MEASURE_TIME("Run", Run(points));
 	}
+	nvtxRangePop();
 	return 0;
 }

@@ -1,4 +1,5 @@
 #include "helpers/optix_pipeline.hpp"
+#include "helpers/time.hpp"
 
 #include <iostream>
 #include <optix_stubs.h>
@@ -27,22 +28,24 @@ void *data;
 
 
 optix_pipeline::optix_pipeline(optix_wrapper* optix, bool verbose) : optix{optix}, verbose{verbose} {
-    if (verbose) {std::cout << "#rtx: creating raygen programs ..." << std::endl;}
-    create_raygen_programs();
+	MEASURE_TIME("optix_pipeline ctor",
+		if (verbose) {std::cout << "#rtx: creating raygen programs ..." << std::endl;}
+		create_raygen_programs();
 
-    if (verbose) {std::cout << "#rtx: creating miss programs ..." << std::endl;}
-    create_miss_programs();
+		if (verbose) {std::cout << "#rtx: creating miss programs ..." << std::endl;}
+		create_miss_programs();
 
-    if (verbose) {std::cout << "#rtx: creating hitgroup programs ..." << std::endl;}
-    create_hitgroup_programs();
+		if (verbose) {std::cout << "#rtx: creating hitgroup programs ..." << std::endl;}
+		create_hitgroup_programs();
 
-    if (verbose) {std::cout << "#rtx: setting up optix pipeline ..." << std::endl;}
-    assemble_pipeline();
+		if (verbose) {std::cout << "#rtx: setting up optix pipeline ..." << std::endl;}
+		assemble_pipeline();
 
-    if (verbose) {std::cout << "#rtx: building SBT ..." << std::endl;}
-    build_sbt();
+		if (verbose) {std::cout << "#rtx: building SBT ..." << std::endl;}
+		build_sbt();
 
-    if (verbose) {std::cout << "#rtx: pipeline all set up ..." << std::endl;}
+		if (verbose) {std::cout << "#rtx: pipeline all set up ..." << std::endl;}
+	);
 }
 
 optix_pipeline::~optix_pipeline() {

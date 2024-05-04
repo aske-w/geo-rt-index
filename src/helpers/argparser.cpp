@@ -35,6 +35,7 @@ static const vector<string_view> aabb_layering_args{"-l", "--aabb-layering"};
 static const vector<string_view> rays_per_thread_args{"-r", "--rays-per-thread"};
 static const vector<string_view> num_repetitions_args{"-n", "--number-of-repetitions"};
 static const vector<string_view> modifier_args{"-m", "--modifier"};
+static const vector<string_view> id_args{"--id"};
 
 void Args::Parse(const int argc, const char** argv)
 {
@@ -82,6 +83,10 @@ void Args::Parse(const int argc, const char** argv)
 		{
 			const auto input = stof(argv[++i]);
 			instance.modifier = input;
+		}
+		else if(IsCandidateArgument(arg, id_args))
+		{
+			instance.invocation_id = std::string{argv[++i]};
 		}
 		else if(fs::exists(arg))
 		{

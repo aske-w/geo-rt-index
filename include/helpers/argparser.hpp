@@ -10,11 +10,13 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <uuid/uuid.h>
 #include <vector>
 
 /**
 
-/home/aske/dev/geo-rt-index/data/duniform_p22_s1337.parquet /home/aske/dev/geo-rt-index/data/duniform_p26_s10422.parquet
+/home/aske/dev/geo-rt-index/data/duniform_p22_s1337.parquet
+/home/aske/dev/geo-rt-index/data/duniform_p26_s10422.parquet
 
  */
 namespace geo_rt_index
@@ -41,6 +43,7 @@ private:
 	uint32_t rays_per_thread = 1;
 	uint8_t repetitions;
 	float modifier = 1;
+	std::string invocation_id;
 	inline static Args& GetMutableInstance()
 	{
 		static Args instance{};
@@ -79,6 +82,10 @@ public:
 	inline auto GetModifier() const
 	{
 		return this->modifier;
+	}
+	inline const std::string& GetID() const
+	{
+		return this->invocation_id;
 	}
 };
 
