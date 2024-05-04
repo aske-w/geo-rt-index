@@ -55,6 +55,7 @@ args = parser.parse_args()
 
 SEED = np.random.randint(1_000_000) if args.s is None else args.s
 print("Using seed ", SEED)
+np.random.seed(SEED)
 BENCHMARK = Benchmark(args.b)
 DIST = Distribution(args.d)
 PROG = Program(args.p)
@@ -90,11 +91,13 @@ def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1):
     return GEO_RT_CMD
 
 def get_session_str():
-    return f"s{SEED}_b{BENCHMARK.value}_d{DIST.value}_p{PROG.value}_n{N}"
+    return f"b{BENCHMARK.value}_d{DIST.value}_p{PROG.value}_n{N}_s{SEED}"
 
-np.random.seed(SEED)
-TIME = datetime.now(timezone.utc).isoformat()
-SESSION_OUTPUT_DIR = os.path.join(OUTPUT_DATA_DIR, get_session_str(), TIME)
+SESSION_OUTPUT_DIR = os.path.join(OUTPUT_DATA_DIR, get_session_str())
+while os.path.exists(SESSION_OUTPUT_DIR):
+    TIME = datetime.now(timezone.utc).isoformat()
+    SESSION_OUTPUT_DIR = os.path.join(OUTPUT_DATA_DIR, get_session_str(), TIME)
+
 if not DRY_RUN: 
     os.makedirs(SESSION_OUTPUT_DIR, exist_ok=True)
 
