@@ -35,40 +35,49 @@ def mk_query(selectivity: float, lo = 0, hi = 1):
         return (x1, y1), (x2, y2) # minx, miny, maxx maxy semantics
 
 def mk_nq(selectivity, _loc = 0.5, _scale = 0.15):
+    VERBOSE = False
     cdf = lambda x: norm.cdf(x, loc=_loc, scale=_scale)
+
+    # select an X and Y value and check it is possible to use them for a query of given selectivity
     x,y = np.random.uniform(LO,HI,2)
     coverage = (1 - cdf(x))*(1 - cdf(y))
-    print("coverage1", coverage)
+    if VERBOSE: 
+        print("coverage1", coverage)
     while(coverage <= selectivity):
         x,y = np.random.uniform(LO,HI,2)
         coverage = (1 - cdf(x))*(1 - cdf(y))
-        print("coverage1", coverage)
-    print("minx:", x, "miny",y)
+        if VERBOSE: 
+            print("coverage1", coverage)
+    if VERBOSE: 
+        print("minx:", x, "miny",y)
+
+    # select a random width and also check it can be used given the selectivity
     width = np.random.uniform(LO,HI-x)
     coverage = (cdf(x+width) - cdf(x)) * (1 - cdf(y))
-    print("x width", width)
-    print("coverage2", coverage)
+    if VERBOSE: 
+        print("x width", width)
+    if VERBOSE: 
+        print("coverage2", coverage)
     while(coverage <= selectivity):
         (cdf(x+width) - cdf(x)) * (1 - cdf(y))
         width = np.random.uniform(LO, HI-x)
-        print("coverage2", coverage)
+        if VERBOSE: 
+            print("coverage2", coverage)
     
+    # figure out what y+height(=y_max) should by isolating it and using inverse CDF
     x_prop = cdf(x+width) - cdf(x)
     y_max = norm.ppf((selectivity+x_prop*cdf(y))/x_prop, loc=_loc, scale=_scale)
-    # y_prop = (selectivity / (cdf(x+width) - cdf(x))) + cdf(y)
-    # x_prop * y_prop = s
-    # (cdf(x+width) - cdf(x)) * (cdf(y+height)-cdf(y)) = s
-    # (cdf(y+height)-cdf(y)) = s / (cdf(x+width) - cdf(x))
-    # cdf(y+height) = (s / (cdf(x+width) - cdf(x))) + cdf(y)
-    print("cdf(x+width)", cdf(x+width))
-    print("cdf(x)", cdf(x))
-    print("cdf(y)", cdf(y))
-    print("x_prop", x_prop)
-    print("y_max", y_max)
-    # print("y_prop", y_prop)
-    # print("selectivity / x_prop", selectivity / x_prop)
-    # height = norm.ppf(selectivity / x_prop, loc=_loc, scale=_scale)
-    # print("height", height)
+
+    if VERBOSE: 
+        print("cdf(x+width)", cdf(x+width))
+    if VERBOSE: 
+        print("cdf(x)", cdf(x))
+    if VERBOSE: 
+        print("cdf(y)", cdf(y))
+    if VERBOSE: 
+        print("x_prop", x_prop)
+    if VERBOSE: 
+        print("y_max", y_max)
     return (x, y), (x + width, y_max)
 
 os.makedirs("./data/queries/uniform", exist_ok=True)
