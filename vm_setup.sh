@@ -1,7 +1,7 @@
 #! /bin/bash
 
 sudo apt update
-sudo apt install -y -V ca-certificates lsb-release wget libc6 libproj-dev swig python3-pip pbzip2 g++-10 libnvidia-extra-525 libnvidia-cfg1-525 libnvidia-common-525 libnvidia-compute-525 libnvidia-extra-525 libnvidia-fbc1-525 libnvidia-gl-525
+sudo apt install -y -V ca-certificates lsb-release wget libc6 libproj-dev swig python3-pip pbzip2 g++-10 
 # shellcheck disable=SC2019,SC2018
 wget "https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb"
 sudo apt install -y -V "./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb"
@@ -41,6 +41,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_CXX_FLAGS="-march=native"
 make -j40 install
 
+sudo apt install -y libnvidia-extra-525 libnvidia-cfg1-525 libnvidia-common-525 libnvidia-compute-525 libnvidia-extra-525 libnvidia-fbc1-525 libnvidia-gl-525 nvidia-utils-525
 cd ~ || exit 1
 git clone https://github.com/aske-w/geo-rt-index.git
 cd geo-rt-index || exit 1
