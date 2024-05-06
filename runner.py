@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from enum import Enum
 import glob
+import json
 import os
 import argparse
 import sys
@@ -102,62 +103,77 @@ while os.path.exists(SESSION_OUTPUT_DIR):
 if not DRY_RUN: 
     os.makedirs(SESSION_OUTPUT_DIR, exist_ok=True)
 
-def mk_query(selectivity: float, lo = 0, hi = 1):
-    # raise NotImplementedError()
-    assert(0 < selectivity and selectivity <= 1)
-    match DIST:
-        case Distribution.UNIFORM:
-            LIMIT = 1000
-            # used ChatGPT for this loop
-            for _ in range(LIMIT):
-                area = selectivity
-                # Generate random dimensions
-                width = np.random.uniform(1, area)  # Limit the width to be less than or equal to the area
-                height = area / width
+# def mk_query(selectivity: float, lo = 0, hi = 1):
+#     # raise NotImplementedError()
+#     assert(0 < selectivity and selectivity <= 1)
+#     match DIST:
+#         case Distribution.UNIFORM:
+#             LIMIT = 1000
+#             # used ChatGPT for this loop
+#             for _ in range(LIMIT):
+#                 area = selectivity
+#                 # Generate random dimensions
+#                 width = np.random.uniform(1, area)  # Limit the width to be less than or equal to the area
+#                 height = area / width
                 
-                # Check if the dimensions produce the desired area
-                if abs(width * height - area) < 1e-9:
-                    # return width, height
-                    x1 = np.random.uniform(lo, hi - width)
-                    y1 = np.random.uniform(lo, hi - height)
-                    x2 = x1 + width
-                    y2 = y1 + height
-                    return x1, y1, x2, y2 # minx, miny, maxx maxy semantics
-            raise Exception("Limit reached generating query for uniform distribution")
-        case _: raise NotImplementedError(DIST.value)
+#                 # Check if the dimensions produce the desired area
+#                 if abs(width * height - area) < 1e-9:
+#                     # return width, height
+#                     x1 = np.random.uniform(lo, hi - width)
+#                     y1 = np.random.uniform(lo, hi - height)
+#                     x2 = x1 + width
+#                     y2 = y1 + height
+#                     return x1, y1, x2, y2 # minx, miny, maxx maxy semantics
+#             raise Exception("Limit reached generating query for uniform distribution")
+#         case _: raise NotImplementedError(DIST.value)
 
-def mk_queries(selectivity: float, n: int, lo = 0, hi = 1):
-    for _ in range(n):
-        yield mk_query(selectivity, lo, hi)
+# def mk_queries(selectivity: float, n: int, lo = 0, hi = 1):
+#     for _ in range(n):
+#         yield mk_query(selectivity, lo, hi)
 
 def mk_query_strings(queries: Iterable):
     return list(flatten(map(lambda t: [f"-q", f"{t[0]}", f"{t[1]}", f"{t[2]}", f"{t[3]}"], queries)))
 
-QUERIES = mk_query_strings([
-    *mk_queries(0.01, 5, LO, HI),
-    *mk_queries(0.02, 5, LO, HI),
-    *mk_queries(0.05, 5, LO, HI),
-    *mk_queries(0.10, 5, LO, HI),
-    *mk_queries(0.20, 5, LO, HI)
-])
+# QUERIES = mk_query_strings([
+#     *mk_queries(0.01, 5, LO, HI),
+#     *mk_queries(0.02, 5, LO, HI),
+#     *mk_queries(0.05, 5, LO, HI),
+#     *mk_queries(0.10, 5, LO, HI),
+#     *mk_queries(0.20, 5, LO, HI)
+# ])
+
+QUERIES = {
+    0.01: None,
+    0.02: None,
+    0.05: None,
+    0.10: None,
+    0.20: None,
+}
+
+for s in [1,2,5,10,20]:
+    with open(f"./data/queries/{DIST}/{s}.json") as fp:
+        deserialized: list[dict] = json.load(fp)
+        QUERIES[s/100] = [(bbox["minx"],bbox["miny"], bbox["maxx"], bbox["maxy"]) for bbox in deserialized]
 
 _files = PICKLE_FILES if PROG == Program.CUSPATIAL and PICKLE_FILES is not None else PARQUET_FILES
 
 match BENCHMARK:
     case Benchmark.DS_SCALING:
         counts = [1,2,4,6] if PROG == Program.CUSPATIAL else [1,2,4,6,8,16,32]
-        shuffle_mapping = [x for x in range(len(_files))]
-        np.random.shuffle(shuffle_mapping)
-        shuffled_files = []
-        for mapping in shuffle_mapping:
-            shuffled_files.append(_files[mapping])
+        # shuffle_mapping = [x for x in range(len(_files))]
+        # np.random.shuffle(shuffle_mapping)
+        # shuffled_files = []
+        # for mapping in shuffle_mapping:
+        #     shuffled_files.append(_files[mapping])
+
+        queries = mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4])
 
         for file_count in counts:
             try:
                 prog_out = None if DRY_RUN else open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_prog.txt"), "a")
                 cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
-                files = shuffled_files[:file_count]
-                local_cmd = cmd  + ["--id", uuid.uuid4().hex] + QUERIES + files
+                files = _files[:file_count]
+                local_cmd = cmd  + ["--id", uuid.uuid4().hex] + queries + files
                 local_cmd_str = " ".join(local_cmd)
                 print(local_cmd_str)
                 if DRY_RUN:
@@ -183,17 +199,16 @@ match BENCHMARK:
         #     raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
 
         FIXED_FILES = np.random.choice(_files, 1).tolist()[0]
-        SCALE_LOG = 10
+        SCALE_LOG = 8
         for selectivity in [0.01, 0.02, 0.05, 0.10, 0.20]:
-            queries = []
             prog_out = None
             try:
                 if not DRY_RUN:
                     prog_out = open(os.path.join(SESSION_OUTPUT_DIR, f"query_scaling_selectivity{selectivity}_prog.txt"), "x")
 
                 for limit in map(lambda power: 2**power, range(SCALE_LOG)):
-                    while len(queries) < limit:
-                        queries.append(mk_query(selectivity, LO, HI))
+                    # while len(queries) < limit:
+                    queries = mk_query_strings(QUERIES[0.01][:limit] + QUERIES[0.02][:limit] + QUERIES[0.05][:limit] + QUERIES[0.10][:limit] + QUERIES[0.20][:limit])
 
                     query_scaling_cmd = get_geo_rt_cmd()  + ["--id", uuid.uuid4().hex] + mk_query_strings(queries) + [FIXED_FILES]
                     local_cmd_str = " ".join(query_scaling_cmd)
@@ -222,7 +237,7 @@ match BENCHMARK:
             # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
             cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
             for file in _files:
-                local_cmd = cmd  + ["--id", uuid.uuid4().hex] + QUERIES + [file]
+                local_cmd = cmd  + ["--id", uuid.uuid4().hex] + mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4]) + [file]
                 local_cmd_str = " ".join(local_cmd)
                 if DRY_RUN:
                     print(local_cmd_str)
@@ -252,9 +267,8 @@ match BENCHMARK:
         SELECTIVITY = 0.20
 
         SCALE_LOG = 10 # 512
-        fixed_queries = []
-        while len(fixed_queries) < 2**SCALE_LOG:
-            fixed_queries.append(mk_query(SELECTIVITY, LO, HI))
+        fixed_queries = mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4])
+        
         CMD_SUFFIX = mk_query_strings(fixed_queries) + [FIXED_FILES]
         for layer_type in LAYERING_TYPES:
             prog_out = None
@@ -291,7 +305,7 @@ match BENCHMARK:
         SELECTIVITY = 0.20
 
         NUM_QUERIES = 64 # 512
-        fixed_queries = [mk_query(SELECTIVITY, LO, HI) for _ in range(NUM_QUERIES)]
+        fixed_queries = queries = mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4])
 
         for count in fc:
             files = FIXED_FILES[:count].tolist()
