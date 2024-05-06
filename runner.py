@@ -179,8 +179,8 @@ match BENCHMARK:
                     prog_out.close()
                     # smi_out.close()
     case Benchmark.QUERY_SCALING:
-        if PROG != Program.GEO_RT_INDEX:
-            raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
+        # if PROG != Program.GEO_RT_INDEX:
+        #     raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
 
         FIXED_FILES = np.random.choice(_files, 1).tolist()[0]
         SCALE_LOG = 10
