@@ -1,6 +1,3 @@
-import cuspatial
-import cuspatial.utils
-import cuspatial.utils.column_utils
 import time
 import pyarrow.parquet as pq
 import multiprocessing as mp
@@ -17,6 +14,7 @@ BATCH_SIZE = 1 << 21
 # arg parsing from ChatGPT
 parser = argparse.ArgumentParser(description='Cuspatial runner')
 parser.add_argument('--pickle', action='store_true')
+parser.add_argument('--id', required=False)
 parser.add_argument('-n', type=int, help='Number of repetitions', required=True)
 parser.add_argument('-q', nargs=4, type=float, action='append', help='Bounding box (minx, miny, maxx, maxy)', required=True)
 parser.add_argument('file', nargs='+', help='File paths')
@@ -68,6 +66,9 @@ pool.shutdown()
 if args.pickle:
   exit(0)
 
+import cuspatial
+import cuspatial.utils
+import cuspatial.utils.column_utils
 for i in range(n + 1):
   WARMUP = i == 0
   from_xy_time = 0.0
