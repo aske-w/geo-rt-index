@@ -63,6 +63,11 @@ for file in files:
 print(f"load + convert: {time.perf_counter() - t:.3f}s.")
 pool.shutdown()
 
+def do_gc():
+  gc_time = time.perf_counter()
+  gc.collect()
+  print(f"gc took {time.perf_counter() - gc_time:.3f}")
+
 if args.pickle:
   exit(0)
 
@@ -81,7 +86,7 @@ for i in range(n + 1):
     print(f"from_points_xy: {from_xy_time:.3f}s.")
     
   for query in queries:
-    gc.collect()
+    do_gc()
     minx = query[0]
     miny = query[1]
     maxx = query[2]
@@ -96,7 +101,7 @@ for i in range(n + 1):
 
 
   points = None
-  gc.collect()
+  do_gc()
   if not WARMUP:
     print(f"queries took: {query_time:.3f}s.")
 
