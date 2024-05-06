@@ -1,6 +1,7 @@
 import json
 import numpy as np
 import os
+import tqdm
 from pytypes import BBox
 from scipy.stats import norm
 
@@ -38,35 +39,42 @@ def mk_nq(selectivity, _loc = 0.5, _scale = 0.15):
     VERBOSE = True
     cdf = lambda x: norm.cdf(x, loc=_loc, scale=_scale)
 
-    # select an X and Y value and check it is possible to use them for a query of given selectivity
-    x,y = np.random.uniform(LO,HI,2)
-    coverage = (1 - cdf(x))*(1 - cdf(y))
-    if VERBOSE: 
-        print("coverage1", coverage)
-    while(coverage <= selectivity):
+    while True:
+        # select an X and Y value and check it is possible to use them for a query of given selectivity
         x,y = np.random.uniform(LO,HI,2)
         coverage = (1 - cdf(x))*(1 - cdf(y))
         if VERBOSE: 
             print("coverage1", coverage)
-    if VERBOSE: 
-        print("minx:", x, "miny",y)
+        while(coverage <= selectivity):
+            x,y = np.random.uniform(LO,min(HI,max(x,y)),2)
+            coverage = (1 - cdf(x))*(1 - cdf(y))
+            if VERBOSE: 
+                print("coverage1", coverage)
+        if VERBOSE: 
+            print("minx:", x, "miny",y)
 
-    # select a random width and also check it can be used given the selectivity
-    width = np.random.uniform(LO,HI-x)
-    coverage = (cdf(x+width) - cdf(x)) * (1 - cdf(y))
-    if VERBOSE: 
-        print("x width", width)
-    if VERBOSE: 
-        print("coverage2", coverage)
-    while(coverage <= selectivity):
-        width = np.random.uniform(LO, HI-x)
+        # select a random width and also check it can be used given the selectivity
+        LIMIT = 20
+        count = 0
+        width = np.random.uniform(LO,HI-x)
         coverage = (cdf(x+width) - cdf(x)) * (1 - cdf(y))
         if VERBOSE: 
+            print("x width", width)
+        if VERBOSE: 
             print("coverage2", coverage)
+        while(coverage <= selectivity) and count < LIMIT:
+            width = np.random.uniform(LO, HI-x)
+            coverage = (cdf(x+width) - cdf(x)) * (1 - cdf(y))
+            count += 1
+            if VERBOSE: 
+                print("coverage2", coverage)
+        if count < LIMIT:
+            break
     
     # figure out what y+height(=y_max) should by isolating it and using inverse CDF
     x_prop = cdf(x+width) - cdf(x)
-    y_max = norm.ppf((selectivity+x_prop*cdf(y))/x_prop, loc=_loc, scale=_scale)
+    y_max_prop = (selectivity+x_prop*cdf(y))/x_prop
+    y_max = norm.ppf(y_max_prop, loc=_loc, scale=_scale)
 
     if VERBOSE: 
         print("cdf(x+width)", cdf(x+width))
@@ -86,10 +94,11 @@ os.makedirs("./data/queries/normal", exist_ok=True)
 for s in SELECTIVITIES:
     np.random.seed(BASE_SEED * s)
     selectivity_normalized = s / 100
+    print("selectivity", selectivity_normalized)
     boxes = []
-    for _ in range(NUM_QUERIES):
+    for x in tqdm.tqdm(range(NUM_QUERIES)):
         # Generate random coordinates
-        corner1, corner2 = mk_nq(selectivity_normalized, LO, HI)
+        corner1, corner2 = mk_nq(selectivity_normalized)
         boxes.append(BBox(corner1, corner2))
         width = corner2[0] - corner1[0]
         length = corner2[1] - corner1[1]
