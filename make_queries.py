@@ -35,7 +35,7 @@ def mk_query(selectivity: float, lo = 0, hi = 1):
         return (x1, y1), (x2, y2) # minx, miny, maxx maxy semantics
 
 def mk_nq(selectivity, _loc = 0.5, _scale = 0.15):
-    VERBOSE = False
+    VERBOSE = True
     cdf = lambda x: norm.cdf(x, loc=_loc, scale=_scale)
 
     # select an X and Y value and check it is possible to use them for a query of given selectivity
@@ -59,8 +59,8 @@ def mk_nq(selectivity, _loc = 0.5, _scale = 0.15):
     if VERBOSE: 
         print("coverage2", coverage)
     while(coverage <= selectivity):
-        (cdf(x+width) - cdf(x)) * (1 - cdf(y))
         width = np.random.uniform(LO, HI-x)
+        coverage = (cdf(x+width) - cdf(x)) * (1 - cdf(y))
         if VERBOSE: 
             print("coverage2", coverage)
     
@@ -81,6 +81,7 @@ def mk_nq(selectivity, _loc = 0.5, _scale = 0.15):
     return (x, y), (x + width, y_max)
 
 os.makedirs("./data/queries/uniform", exist_ok=True)
+os.makedirs("./data/queries/normal", exist_ok=True)
 
 for s in SELECTIVITIES:
     np.random.seed(BASE_SEED * s)
@@ -88,11 +89,11 @@ for s in SELECTIVITIES:
     boxes = []
     for _ in range(NUM_QUERIES):
         # Generate random coordinates
-        corner1, corner2 = mk_query(selectivity_normalized, LO, HI)
+        corner1, corner2 = mk_nq(selectivity_normalized, LO, HI)
         boxes.append(BBox(corner1, corner2))
         width = corner2[0] - corner1[0]
         length = corner2[1] - corner1[1]
 
-    with open(f"./data/queries/{s}.json", "w") as out_file:
+    with open(f"./data/queries/normal/{s}.json", "w") as out_file:
         json.dump(boxes, out_file, default=lambda x: x.__dict__)
 
