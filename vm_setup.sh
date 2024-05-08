@@ -63,4 +63,4 @@ cmake .. -DCMAKE_INSTALL_PREFIX:PATH="/home/ucloud/.local;/usr/local;/home/uclou
     -DVERIFICATION_MODE:BOOL=ON \
     -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-10 \
     -DBUILD_TESTS=OFF
-cmake --build . --target geo-rt-index
+cmake --build . --target geo-rt-index -- -j40
