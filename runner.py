@@ -44,7 +44,6 @@ class NotSupportedException(RuntimeError):
 
 
 parser = argparse.ArgumentParser(description='Cuspatial runner')
-parser.add_argument('-s', type=int, help='Seed for numpy.random',required=False, default=None)
 parser.add_argument("-d", type=str, help='Distribution', required=True,choices=[e.value for e in Distribution])
 parser.add_argument("-b", type=str, help="Benchmark to run", required=True,choices=[e.value for e in Benchmark])
 parser.add_argument("-p", type=str, help="Program to benchmark", required=True,choices=[e.value for e in Program])
@@ -55,9 +54,6 @@ parser.add_argument("--dry-run", help='Print commands that would be used to star
 
 args = parser.parse_args()
 
-SEED = np.random.randint(1_000_000) if args.s is None else args.s
-print("Using seed ", SEED)
-np.random.seed(SEED)
 BENCHMARK = Benchmark(args.b)
 DIST = Distribution(args.d)
 PROG = Program(args.p)
@@ -95,11 +91,11 @@ def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1):
     return GEO_RT_CMD
 
 def get_session_str():
-    return f"b{BENCHMARK.value}_d{DIST.value}_p{PROG.value}_n{N}_s{SEED}"
+    return f"b{BENCHMARK.value}_d{DIST.value}_p{PROG.value}_n{N}_r{LO}{HI}"
 
 SESSION_OUTPUT_DIR = os.path.join(OUTPUT_DATA_DIR, get_session_str())
 while os.path.exists(SESSION_OUTPUT_DIR):
-    TIME = datetime.now(timezone.utc).isoformat()
+    TIME = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     SESSION_OUTPUT_DIR = os.path.join(OUTPUT_DATA_DIR, get_session_str(), TIME)
 
 if not DRY_RUN: 
