@@ -162,7 +162,8 @@ void Run(const std::vector<Point>& points)
 	MEASURE_TIME("result_d.download", result_d.download(result, num_points * num_queries););
 
 #ifdef VERIFICATION_MODE
-	 MEASURE_TIME("Result check",
+	static std::counting_semaphore load_limiter{std::ptrdiff_t{std::thread::hardware_concurrency()}};
+	MEASURE_TIME("Result check",
 		auto query_checker = [&](int i) 
 		{
 			uint32_t hit_count = 0;
@@ -192,6 +193,7 @@ void Run(const std::vector<Point>& points)
 					throw std::runtime_error("Unknown error");
 				}
 			}
+			load_limiter.release();
 		    return hit_count;
 		};
 
@@ -201,6 +203,7 @@ void Run(const std::vector<Point>& points)
 	    D_PRINT("Checking device results\n");
 		for(uint32_t i = 0; i < num_queries; i++)
 		{
+			load_limiter.acquire();
 			auto query_check_handle = std::async(std::launch::async, query_checker, i);
 		    futures.push_back(std::move(query_check_handle));
 		}
@@ -210,7 +213,7 @@ void Run(const std::vector<Point>& points)
 		    hit_sum += future.get();
 	    }
 		D_PRINT("Hit count: %u\n", hit_sum);
-	 );
+	);
 
 #endif
 	delete[] result;
