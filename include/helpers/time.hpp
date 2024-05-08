@@ -44,7 +44,7 @@ inline static void PrintCSV(const char* msg, const duration& duration)
 	const auto layer_type = arg_instance.GetLayering();
 	const auto num_queries = arg_instance.GetQueries().size();
 	const auto metric = msg;
-	printf("\"%s\",%f,%u,%u,%hhu,%zu,\"%s\",%.3f\n",
+	printf("\"%s\",%f,%u,%u,%hhu,%zu,\"%s\",%.4f\n",
 	    id.c_str(),modifier,num_repetitions,rays_per_thread,static_cast<uint8_t>(layer_type),
 	    num_queries,metric,duration.count());
 }

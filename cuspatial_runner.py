@@ -60,13 +60,13 @@ for file in files:
       xy = []
 
 
-print(f"load + convert: {time.perf_counter() - t:.3f}s.")
+print(f"load + convert: {time.perf_counter() - t:.4f}s.")
 pool.shutdown()
 
 def do_gc():
   gc_time = time.perf_counter()
   gc.collect()
-  print(f"gc took {time.perf_counter() - gc_time:.3f}")
+  print(f"gc took {time.perf_counter() - gc_time:.4f}")
 
 if args.pickle:
   exit(0)
@@ -83,7 +83,7 @@ for i in range(n + 1):
   points = cuspatial.GeoSeries.from_points_xy(xy)
   from_xy_time += time.perf_counter() - t
   if not WARMUP:
-    print(f"from_points_xy: {from_xy_time:.3f}s.")
+    print(f"from_points_xy: {from_xy_time:.4f}s.")
     
   for query in queries:
     do_gc()
@@ -103,7 +103,7 @@ for i in range(n + 1):
   points = None
   do_gc()
   if not WARMUP:
-    print(f"queries took: {query_time:.3f}s.")
+    print(f"queries took: {query_time:.4f}s.")
 
 exit()
 
