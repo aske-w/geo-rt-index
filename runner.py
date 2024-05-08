@@ -125,8 +125,10 @@ for s in [1,2,5,10,20]:
 
 BASELINE_QUERIES = mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4])
 _files = PICKLE_FILES if PROG == Program.CUSPATIAL and PICKLE_FILES is not None else PARQUET_FILES
-BASELINE_FILE = _files[0]
-
+BASELINE_FILES = [_files[0], _files[1]]
+print(BASELINE_FILES)
+assert(len(BASELINE_FILES) == 2)
+assert(len(BASELINE_QUERIES) == 5 * 4 * 5)
 
 match BENCHMARK:
     case Benchmark.DS_SCALING:
@@ -137,6 +139,7 @@ match BENCHMARK:
                 prog_out = None if DRY_RUN else open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_prog.txt"), "a")
                 cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
                 files = _files[:file_count]
+                assert(len(files) == file_count)
                 local_cmd = cmd  + ["--id", uuid.uuid4().hex] + BASELINE_QUERIES + files
                 local_cmd_str = " ".join(local_cmd)
                 print(local_cmd_str)
@@ -171,8 +174,8 @@ match BENCHMARK:
             for limit in map(lambda power: 2**power, range(SCALE_LOG)):
                 # while len(queries) < limit:
                 queries = mk_query_strings(QUERIES[0.01][:limit] + QUERIES[0.02][:limit] + QUERIES[0.05][:limit] + QUERIES[0.10][:limit] + QUERIES[0.20][:limit])
-
-                query_scaling_cmd = get_geo_rt_cmd()  + ["--id", uuid.uuid4().hex] + queries + [BASELINE_FILE]
+                assert(len(queries) == limit * 5)
+                query_scaling_cmd = get_geo_rt_cmd()  + ["--id", uuid.uuid4().hex] + queries + BASELINE_FILES
                 local_cmd_str = " ".join(query_scaling_cmd)
                 print(local_cmd_str)
                 if DRY_RUN:
@@ -226,7 +229,7 @@ match BENCHMARK:
 
         LAYERING_TYPES = [0, 1, 2]
         
-        CMD_SUFFIX = BASELINE_QUERIES + [BASELINE_FILE]
+        CMD_SUFFIX = BASELINE_QUERIES + BASELINE_FILES
         for layer_type in LAYERING_TYPES:
             prog_out = None
             try:
@@ -260,6 +263,7 @@ match BENCHMARK:
 
         for count in fc:
             files = _files[:count].tolist()
+            assert(len(files) == 1) # TODO
             CMD_SUFFIX = BASELINE_QUERIES + files
             prog_out = None
             try:
