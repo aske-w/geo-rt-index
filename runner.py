@@ -262,7 +262,7 @@ match BENCHMARK:
         fc = [1]
 
         for count in fc:
-            files = _files[:count].tolist()
+            files = _files[:count]
             assert(len(files) == 1) # TODO
             CMD_SUFFIX = BASELINE_QUERIES + files
             prog_out = None
