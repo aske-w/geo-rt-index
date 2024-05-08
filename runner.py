@@ -103,44 +103,10 @@ while os.path.exists(SESSION_OUTPUT_DIR):
 if not DRY_RUN: 
     os.makedirs(SESSION_OUTPUT_DIR, exist_ok=True)
 
-# def mk_query(selectivity: float, lo = 0, hi = 1):
-#     # raise NotImplementedError()
-#     assert(0 < selectivity and selectivity <= 1)
-#     match DIST:
-#         case Distribution.UNIFORM:
-#             LIMIT = 1000
-#             # used ChatGPT for this loop
-#             for _ in range(LIMIT):
-#                 area = selectivity
-#                 # Generate random dimensions
-#                 width = np.random.uniform(1, area)  # Limit the width to be less than or equal to the area
-#                 height = area / width
-                
-#                 # Check if the dimensions produce the desired area
-#                 if abs(width * height - area) < 1e-9:
-#                     # return width, height
-#                     x1 = np.random.uniform(lo, hi - width)
-#                     y1 = np.random.uniform(lo, hi - height)
-#                     x2 = x1 + width
-#                     y2 = y1 + height
-#                     return x1, y1, x2, y2 # minx, miny, maxx maxy semantics
-#             raise Exception("Limit reached generating query for uniform distribution")
-#         case _: raise NotImplementedError(DIST.value)
-
-# def mk_queries(selectivity: float, n: int, lo = 0, hi = 1):
-#     for _ in range(n):
-#         yield mk_query(selectivity, lo, hi)
-
 def mk_query_strings(queries: Iterable):
-    return list(flatten(map(lambda t: [f"-q", f"{t[0]}", f"{t[1]}", f"{t[2]}", f"{t[3]}"], queries)))
-
-# QUERIES = mk_query_strings([
-#     *mk_queries(0.01, 5, LO, HI),
-#     *mk_queries(0.02, 5, LO, HI),
-#     *mk_queries(0.05, 5, LO, HI),
-#     *mk_queries(0.10, 5, LO, HI),
-#     *mk_queries(0.20, 5, LO, HI)
-# ])
+    def conv(t):
+        return [f"-q", f"{t[0]}", f"{t[1]}", f"{t[2]}", f"{t[3]}"]
+    return list(flatten(map(conv,queries)))
 
 QUERIES = {
     0.01: None,
@@ -151,7 +117,7 @@ QUERIES = {
 }
 
 for s in [1,2,5,10,20]:
-    with open(f"./data/queries/{DIST}/{s}.json") as fp:
+    with open(f"./data/queries/{DIST.value}/r{LO}{HI}/{s}.json") as fp:
         deserialized: list[dict] = json.load(fp)
         QUERIES[s/100] = [(bbox["minx"],bbox["miny"], bbox["maxx"], bbox["maxy"]) for bbox in deserialized]
 
@@ -210,7 +176,7 @@ match BENCHMARK:
                     # while len(queries) < limit:
                     queries = mk_query_strings(QUERIES[0.01][:limit] + QUERIES[0.02][:limit] + QUERIES[0.05][:limit] + QUERIES[0.10][:limit] + QUERIES[0.20][:limit])
 
-                    query_scaling_cmd = get_geo_rt_cmd()  + ["--id", uuid.uuid4().hex] + mk_query_strings(queries) + [FIXED_FILES]
+                    query_scaling_cmd = get_geo_rt_cmd()  + ["--id", uuid.uuid4().hex] + queries + [FIXED_FILES]
                     local_cmd_str = " ".join(query_scaling_cmd)
                     print(local_cmd_str)
                     if DRY_RUN:
@@ -269,7 +235,7 @@ match BENCHMARK:
         SCALE_LOG = 10 # 512
         fixed_queries = mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4])
         
-        CMD_SUFFIX = mk_query_strings(fixed_queries) + [FIXED_FILES]
+        CMD_SUFFIX = fixed_queries + [FIXED_FILES]
         for layer_type in LAYERING_TYPES:
             prog_out = None
             try:
@@ -309,7 +275,7 @@ match BENCHMARK:
 
         for count in fc:
             files = FIXED_FILES[:count].tolist()
-            CMD_SUFFIX = mk_query_strings(fixed_queries) + files
+            CMD_SUFFIX = fixed_queries + files
             prog_out = None
             try:
                 if not DRY_RUN:
