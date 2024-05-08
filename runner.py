@@ -174,7 +174,7 @@ match BENCHMARK:
             for limit in map(lambda power: 2**power, range(SCALE_LOG)):
                 # while len(queries) < limit:
                 queries = mk_query_strings(QUERIES[0.01][:limit] + QUERIES[0.02][:limit] + QUERIES[0.05][:limit] + QUERIES[0.10][:limit] + QUERIES[0.20][:limit])
-                assert(len(queries) == limit * 5)
+                assert(len(queries) == limit * 5 * 5)
                 query_scaling_cmd = get_geo_rt_cmd()  + ["--id", uuid.uuid4().hex] + queries + BASELINE_FILES
                 local_cmd_str = " ".join(query_scaling_cmd)
                 print(local_cmd_str)
