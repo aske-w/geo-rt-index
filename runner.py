@@ -161,7 +161,7 @@ match BENCHMARK:
         # if PROG != Program.GEO_RT_INDEX:
         #     raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
 
-        SCALE_LOG = 8
+        SCALE_LOG = 7
         prog_out = None
         try:
             if not DRY_RUN:
