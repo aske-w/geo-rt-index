@@ -50,7 +50,7 @@ parser.add_argument("-b", type=str, help="Benchmark to run", required=True,choic
 parser.add_argument("-p", type=str, help="Program to benchmark", required=True,choices=[e.value for e in Program])
 parser.add_argument("--lo", type=int, help="Low", required=True)
 parser.add_argument("--hi", type=int, help="High", required=True)
-parser.add_argument("--file-stem-suffix", type=str, required=False, default="*")
+# parser.add_argument("--file-stem-suffix", type=str, required=False, default="*")
 parser.add_argument("--dry-run", help='Print commands that would be used to start a program but do not run program', default=False, action='store_true')
 
 args = parser.parse_args()
@@ -62,17 +62,19 @@ BENCHMARK = Benchmark(args.b)
 DIST = Distribution(args.d)
 PROG = Program(args.p)
 DRY_RUN = args.dry_run
-SUFFIX = args.file_stem_suffix
 LO = args.lo
 HI = args.hi
+PREFIX = f"*_r{LO}{HI}"
 
 N = 5
 INPUT_DATA_DIR = os.path.join("/home/aske/dev/geo-rt-index/data" if get_system() == "ubuntu" else "/home/ucloud/geo-rt-index/data", DIST.value)
-PARQUET_FILES = glob.glob(os.path.join(INPUT_DATA_DIR, f"{SUFFIX}.parquet"))
-PICKLE_FILES = None if PROG is Program.GEO_RT_INDEX else glob.glob(os.path.join(INPUT_DATA_DIR, f"{SUFFIX}.xy.pickle"))
+PARQUET_FILES = glob.glob(os.path.join(INPUT_DATA_DIR, f"{PREFIX}.parquet"))
+assert(len(PARQUET_FILES) == 32)
+PICKLE_FILES = None if PROG is Program.GEO_RT_INDEX else glob.glob(os.path.join(INPUT_DATA_DIR, f"{PREFIX}.xy.pickle"))
 PARQUET_FILES.sort(key=lambda t: Path(t).stem) # file name without path or extensions
 if PICKLE_FILES is not None:
     PICKLE_FILES.sort(key=lambda t: Path(t).stem)
+    assert(len(PARQUET_FILES) == len(PICKLE_FILES))
 
 OUTPUT_DATA_DIR  = "/home/aske/dev/geo-rt-index/data/runs" if get_system() == "ubuntu" else "/home/ucloud/geo-rt-index/data/runs"
 SMI_CMD = [
@@ -121,25 +123,21 @@ for s in [1,2,5,10,20]:
         deserialized: list[dict] = json.load(fp)
         QUERIES[s/100] = [(bbox["minx"],bbox["miny"], bbox["maxx"], bbox["maxy"]) for bbox in deserialized]
 
+BASELINE_QUERIES = mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4])
 _files = PICKLE_FILES if PROG == Program.CUSPATIAL and PICKLE_FILES is not None else PARQUET_FILES
+BASELINE_FILE = _files[0]
+
 
 match BENCHMARK:
     case Benchmark.DS_SCALING:
         counts = [1,2,4,6] if PROG == Program.CUSPATIAL else [1,2,4,6,8,16,32]
-        # shuffle_mapping = [x for x in range(len(_files))]
-        # np.random.shuffle(shuffle_mapping)
-        # shuffled_files = []
-        # for mapping in shuffle_mapping:
-        #     shuffled_files.append(_files[mapping])
-
-        queries = mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4])
 
         for file_count in counts:
             try:
                 prog_out = None if DRY_RUN else open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_prog.txt"), "a")
                 cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
                 files = _files[:file_count]
-                local_cmd = cmd  + ["--id", uuid.uuid4().hex] + queries + files
+                local_cmd = cmd  + ["--id", uuid.uuid4().hex] + BASELINE_QUERIES + files
                 local_cmd_str = " ".join(local_cmd)
                 print(local_cmd_str)
                 if DRY_RUN:
@@ -164,33 +162,31 @@ match BENCHMARK:
         # if PROG != Program.GEO_RT_INDEX:
         #     raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
 
-        FIXED_FILES = np.random.choice(_files, 1).tolist()[0]
         SCALE_LOG = 8
-        for selectivity in [0.01, 0.02, 0.05, 0.10, 0.20]:
-            prog_out = None
-            try:
-                if not DRY_RUN:
-                    prog_out = open(os.path.join(SESSION_OUTPUT_DIR, f"query_scaling_selectivity{selectivity}_prog.txt"), "x")
+        prog_out = None
+        try:
+            if not DRY_RUN:
+                prog_out = open(os.path.join(SESSION_OUTPUT_DIR, f"query_scaling_prog.txt"), "x")
 
-                for limit in map(lambda power: 2**power, range(SCALE_LOG)):
-                    # while len(queries) < limit:
-                    queries = mk_query_strings(QUERIES[0.01][:limit] + QUERIES[0.02][:limit] + QUERIES[0.05][:limit] + QUERIES[0.10][:limit] + QUERIES[0.20][:limit])
+            for limit in map(lambda power: 2**power, range(SCALE_LOG)):
+                # while len(queries) < limit:
+                queries = mk_query_strings(QUERIES[0.01][:limit] + QUERIES[0.02][:limit] + QUERIES[0.05][:limit] + QUERIES[0.10][:limit] + QUERIES[0.20][:limit])
 
-                    query_scaling_cmd = get_geo_rt_cmd()  + ["--id", uuid.uuid4().hex] + queries + [FIXED_FILES]
-                    local_cmd_str = " ".join(query_scaling_cmd)
-                    print(local_cmd_str)
-                    if DRY_RUN:
-                        continue # skip to next log
-                    prog_out.write(f"Running with {limit} queries\n")
-                    prog_out.write(f"{local_cmd_str}\n")
-                    prog_out.flush()
-                    prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
-                    assert (prog_process.wait() == 0)
-                    prog_out.flush()
-            finally:
-                if not DRY_RUN:
-                    prog_out.flush()
-                    prog_out.close()
+                query_scaling_cmd = get_geo_rt_cmd()  + ["--id", uuid.uuid4().hex] + queries + [BASELINE_FILE]
+                local_cmd_str = " ".join(query_scaling_cmd)
+                print(local_cmd_str)
+                if DRY_RUN:
+                    continue # skip to next log
+                prog_out.write(f"Running with {limit} queries\n")
+                prog_out.write(f"{local_cmd_str}\n")
+                prog_out.flush()
+                prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
+                assert (prog_process.wait() == 0)
+                prog_out.flush()
+        finally:
+            if not DRY_RUN:
+                prog_out.flush()
+                prog_out.close()
 
 
 
@@ -203,7 +199,7 @@ match BENCHMARK:
             # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
             cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
             for file in _files:
-                local_cmd = cmd  + ["--id", uuid.uuid4().hex] + mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4]) + [file]
+                local_cmd = cmd  + ["--id", uuid.uuid4().hex] + BASELINE_QUERIES + [file]
                 local_cmd_str = " ".join(local_cmd)
                 if DRY_RUN:
                     print(local_cmd_str)
@@ -229,13 +225,8 @@ match BENCHMARK:
             raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
 
         LAYERING_TYPES = [0, 1, 2]
-        FIXED_FILES = np.random.choice(_files, 1).tolist()[0]
-        SELECTIVITY = 0.20
-
-        SCALE_LOG = 10 # 512
-        fixed_queries = mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4])
         
-        CMD_SUFFIX = fixed_queries + [FIXED_FILES]
+        CMD_SUFFIX = BASELINE_QUERIES + [BASELINE_FILE]
         for layer_type in LAYERING_TYPES:
             prog_out = None
             try:
@@ -265,17 +256,11 @@ match BENCHMARK:
             raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
         
         rays_per_threads = [2 ** x for x in range(10)]
-        fc = [1,2,4]
-        FIXED_FILES = np.random.choice(_files, fc[-1], False)
-        np.random.shuffle(FIXED_FILES)
-        SELECTIVITY = 0.20
-
-        NUM_QUERIES = 64 # 512
-        fixed_queries = queries = mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4])
+        fc = [1]
 
         for count in fc:
-            files = FIXED_FILES[:count].tolist()
-            CMD_SUFFIX = fixed_queries + files
+            files = _files[:count].tolist()
+            CMD_SUFFIX = BASELINE_QUERIES + files
             prog_out = None
             try:
                 if not DRY_RUN:
