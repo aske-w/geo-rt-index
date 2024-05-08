@@ -8,11 +8,11 @@ from pytypes import BBox
 LO = 0
 HI = 1
 FILES = [
-    "./data/queries/1.json",
-    "./data/queries/2.json",
-    "./data/queries/5.json",
-    "./data/queries/10.json",
-    "./data/queries/20.json",
+    f"./queries/normal/r{LO}{HI}/1.json",
+    # f"./queries/normal/r{LO}{HI}/2.json",
+    # f"./queries/normal/r{LO}{HI}/5.json",
+    # f"./queries/normal/r{LO}{HI}/10.json",
+    # f"./queries/normal/r{LO}{HI}/20.json",
 ]
 # Create a plot
 fig, ax = plt.subplots()
@@ -38,4 +38,5 @@ ax.set_title('Bounding Box Visualization')
 
 # Show the plot
 # plt.grid(True)
-plt.show()
+# plt.show()
+plt.savefig("visualizer.png")

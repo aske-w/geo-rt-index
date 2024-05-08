@@ -35,7 +35,7 @@ def mk_query(selectivity: float):
         y2 = y1 + height
         return (x1, y1), (x2, y2) # minx, miny, maxx maxy semantics
 
-def mk_nq(selectivity, _loc = 0.0, _scale = 0.3):
+def mk_nq(selectivity, _loc = 0.5, _scale = 0.15):
     VERBOSE = False
     cdf = lambda x: norm.cdf(x, loc=_loc, scale=_scale)
 
@@ -88,8 +88,8 @@ def mk_nq(selectivity, _loc = 0.0, _scale = 0.3):
         print("y_max", y_max)
     return (x, y), (x + width, y_max)
 
-os.makedirs(f"./data/queries/uniform/r{LO}{HI}", exist_ok=True)
-os.makedirs(f"./data/queries/normal/r{LO}{HI}", exist_ok=True)
+os.makedirs(f"./queries/uniform/r{LO}{HI}", exist_ok=True)
+os.makedirs(f"./queries/normal/r{LO}{HI}", exist_ok=True)
 
 for s in SELECTIVITIES:
     np.random.seed(BASE_SEED * s)
@@ -98,11 +98,11 @@ for s in SELECTIVITIES:
     boxes = []
     for x in tqdm.tqdm(range(NUM_QUERIES)):
         # Generate random coordinates
-        corner1, corner2 = mk_nq(selectivity_normalized)
+        corner1, corner2 = mk_query(selectivity_normalized)
         boxes.append(BBox(corner1, corner2))
         width = corner2[0] - corner1[0]
         length = corner2[1] - corner1[1]
 
-    with open(f"./data/queries/normal/r{LO}{HI}/{s}.json", "w") as out_file:
+    with open(f"./queries/uniform/r{LO}{HI}/{s}.json", "w") as out_file:
         json.dump(boxes, out_file, default=lambda x: x.__dict__)
 

@@ -117,7 +117,7 @@ QUERIES = {
 }
 
 for s in [1,2,5,10,20]:
-    with open(f"./data/queries/{DIST.value}/r{LO}{HI}/{s}.json") as fp:
+    with open(f"./queries/{DIST.value}/r{LO}{HI}/{s}.json") as fp:
         deserialized: list[dict] = json.load(fp)
         QUERIES[s/100] = [(bbox["minx"],bbox["miny"], bbox["maxx"], bbox["maxy"]) for bbox in deserialized]
 
