@@ -101,6 +101,14 @@ void Args::Parse(const int argc, const char** argv)
 			throw std::runtime_error("Unknown argument: " + arg);
 		}
 	}
+	const auto mod = instance.GetModifier();
+	for(auto& query : instance.queries)
+	{
+		query.minX *= mod;
+		query.minY *= mod;
+		query.maxX *= mod;
+		query.maxY *= mod;
+	}
 }
 
 }
