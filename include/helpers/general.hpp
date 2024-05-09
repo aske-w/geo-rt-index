@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <stdexcept>
+#include "helpers/exception.hpp"
 
 namespace geo_rt_index
 {
