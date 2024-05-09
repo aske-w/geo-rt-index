@@ -38,6 +38,7 @@ class Benchmark(Enum):
     QUERY_SCALING_SINGLE_QUERY = "query_scaling_single_query"
     AABB_LAYERING_SCALING = "aabb_layering"
     RAYS_PER_THREAD_SCALING = "rays_per_thread"
+    POINT_SORTING = "point_sorting"
 
 class NotSupportedException(RuntimeError):
     def __init__(self, *args: object) -> None:
@@ -87,8 +88,8 @@ def get_cuspatial_cmd(n = N):
     CUSPATIAL_CMD = ["python3", "cuspatial_runner.py", "-n", f"{n}"]
     return CUSPATIAL_CMD
 
-def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1):
-    GEO_RT_CMD = ["./build/release/geo-rt-index", "-n", f"{N}", "-r", f"{r}", "-l", f"{l}", "-m", f"{m}"]
+def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1, sort=0):
+    GEO_RT_CMD = ["./build/release/geo-rt-index", "-n", f"{N}", "-r", f"{r}", "-l", f"{l}", "-m", f"{m}", "--sort", f"{sort}"]
     return GEO_RT_CMD
 
 def get_session_str():
@@ -318,6 +319,41 @@ match BENCHMARK:
                     prog_out.flush()
                     prog_out.close()
 
+    case Benchmark.POINT_SORTING:
+        if PROG != Program.GEO_RT_INDEX:
+            raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
+
+        sorts = [
+            0,  # none
+            1,  # X
+            2,  # Y
+            3   # Z order
+        ]
+
+        CMD_SUFFIX = BASELINE_QUERIES + BASELINE_FILES
+        for sort_type in sorts:
+            prog_out = None
+            try:
+                if not DRY_RUN:
+                    PATH = os.path.join(SESSION_OUTPUT_DIR, f"sort_type_type{sort_type}_prog.txt")
+                    prog_out = open(PATH, "x")
+
+                query_scaling_cmd = get_geo_rt_cmd(sort=sort_type) + ["--id", uuid.uuid4().hex] + CMD_SUFFIX
+                local_cmd_str = " ".join(query_scaling_cmd)
+                print(local_cmd_str)
+                if DRY_RUN:
+                    continue  # skip to next log
+                prog_out.write(f"Running with layer type {sort_type} queries\n")
+                prog_out.write(f"{local_cmd_str}\n")
+                prog_out.flush()
+                prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
+                assert (prog_process.wait() == 0)
+                prog_out.flush()
+            finally:
+                if not DRY_RUN:
+                    assert prog_out is not None
+                    prog_out.flush()
+                    prog_out.close()
 
     case _: raise NotImplementedError(f"Unimplemented benchmark: {BENCHMARK.value}")
 
