@@ -5,6 +5,7 @@ project(${NAME} LANGUAGES C CXX CUDA) # C is needed for embedding the ptx file
 find_package(OptiX REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(GDAL REQUIRED)
+find_package(OpenMP REQUIRED)
 
 option(USE_MEASURE_TIME "Enable time measuring macro" OFF)
 if (USE_MEASURE_TIME)
@@ -64,11 +65,16 @@ cuda_compile_and_embed(embedded_ptx_code src/device_code.cu)
 
 add_executable(${NAME} ${embedded_ptx_code} ${SOURCES})
 add_library(${NAME}_lib STATIC ${SOURCES})
+target_compile_definitions(${NAME} PRIVATE "_GLIBCXX_PARALLEL")
+target_compile_options(${NAME} PRIVATE
+	$<$<COMPILE_LANGUAGE:CXX>:-fopenmp>
+)
 
 target_link_libraries(${NAME}
 	${CUDA_CUDA_LIBRARY}
 	${CUDA_LIBRARIES}
 	${GDAL_LIBRARY}
+	${OpenMP_CXX_LIBRARIES}
 )
 
 
