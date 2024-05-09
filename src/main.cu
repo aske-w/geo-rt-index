@@ -9,11 +9,13 @@
 #include <optix_function_table_definition.h>
 #include <optix_stubs.h>
 #include "helpers/spatial_helpers.cuh"
-#include "types/point.hpp"
-
+#include "types/point_sorting.hpp"
 #include <numeric>
 #include <vector>
 #include <future>
+#include "helpers/pretty_printers.hpp"
+
+#include "helpers/point_sort.hpp"
 
 using std::unique_ptr;
 using std::unique_ptr;
@@ -26,6 +28,7 @@ using factories::Factory;
 using factories::PointToAABBFactory;
 using helpers::AabbLayering;
 using geo_rt_index::helpers::Args;
+using geo_rt_index::types::PointSorting;
 
 OptixTraversableHandle BuildAccelerationStructure(const optix_wrapper& optix,
     Factory<OptixBuildInput>& input_factory)
@@ -220,9 +223,22 @@ int main(const int argc, const char** argv) {
 	geo_rt_index::helpers::PrintCSVHeader();
 	MEASURE_TIME("Parsing args", Args::Parse(argc, argv));
 
+	const auto& arg_instance = Args::GetInstance();
+
 	std::vector<Point> points;
 	MEASURE_TIME("Loading points",
-	 	points = DataLoader::Load(Args::GetInstance().GetFiles(), Args::GetInstance().GetModifier());
+	 	points = DataLoader::Load(arg_instance.GetFiles(), arg_instance.GetModifier());
+	);
+	MEASURE_TIME("Sort points",
+	if (arg_instance.GetPointSorting() != PointSorting::None)
+	{
+		geo_rt_index::helpers::PointSort::Sort(points, arg_instance.GetPointSorting());
+//		std::cout << points.at(0) << '\n';
+//		std::cout << points.at(1) << '\n';
+//		std::cout << points.at(2) << '\n';
+//		std::cout << points.at(3) << '\n';
+//		std::cout << points.at(4) << '\n';
+	}
 	);
 	MEASURE_TIME("Warmup", Run(points));
 	nvtxRangePushA("Benchmark loop");

@@ -12,6 +12,7 @@
 #include <vector>
 #include <functional>
 #include <numeric>
+#include <algorithm>
 
 namespace geo_rt_index
 {
@@ -36,6 +37,7 @@ static const vector<string_view> rays_per_thread_args{"-r", "--rays-per-thread"}
 static const vector<string_view> num_repetitions_args{"-n", "--number-of-repetitions"};
 static const vector<string_view> modifier_args{"-m", "--modifier"};
 static const vector<string_view> id_args{"--id"};
+static const vector<string_view> sort_args{"--sort"};
 
 void Args::Parse(const int argc, const char** argv)
 {
@@ -88,6 +90,16 @@ void Args::Parse(const int argc, const char** argv)
 		{
 			instance.invocation_id = std::string{argv[++i]};
 		}
+		else if(IsCandidateArgument(arg, sort_args))
+		{
+			const uint64_t input = stoull(argv[++i]);
+			if(input > static_cast<uint64_t>(types::PointSorting::Last))
+			{
+				throw std::runtime_error("types::PointSorting input out of range, max is "
+				                         + std::to_string(static_cast<uint8_t>(types::PointSorting::Last)));
+			}
+			instance.point_sort_type = static_cast<types::PointSorting>(input);
+		}
 		else if(fs::exists(arg))
 		{
 			instance.files.push_back(arg);
@@ -100,6 +112,14 @@ void Args::Parse(const int argc, const char** argv)
 			}
 			throw std::runtime_error("Unknown argument: " + arg);
 		}
+	}
+	const auto mod = instance.GetModifier();
+	for(auto& query : instance.queries)
+	{
+		query.minX *= mod;
+		query.minY *= mod;
+		query.maxX *= mod;
+		query.maxY *= mod;
 	}
 }
 
