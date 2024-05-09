@@ -6,6 +6,7 @@
 #define GEO_RT_INDEX_ARGPARSER_HPP
 
 #include "types/aabb.hpp"
+#include "types/point_sorting.hpp"
 
 #include <memory>
 #include <string>
@@ -43,6 +44,7 @@ private:
 	uint8_t repetitions;
 	float modifier = 1;
 	std::string invocation_id;
+	types::PointSorting point_sort_type = types::PointSorting::None;
 	inline static Args& GetMutableInstance()
 	{
 		static Args instance{};
@@ -85,6 +87,10 @@ public:
 	inline const std::string& GetID() const
 	{
 		return this->invocation_id;
+	}
+	inline types::PointSorting GetPointSorting() const
+	{
+		return this->point_sort_type;
 	}
 };
 
