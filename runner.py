@@ -35,6 +35,7 @@ class Benchmark(Enum):
     DS_SCALING = "dataset_scaling"
     DS_TIME_CHECK_EACH = "ds_check_each"
     QUERY_SCALING = "query_scaling"
+    QUERY_SCALING_SINGLE_QUERY = "query_scaling_single_query"
     AABB_LAYERING_SCALING = "aabb_layering"
     RAYS_PER_THREAD_SCALING = "rays_per_thread"
 
@@ -188,7 +189,39 @@ match BENCHMARK:
                 prog_out.flush()
                 prog_out.close()
 
+    case Benchmark.QUERY_SCALING_SINGLE_QUERY:
+        if PROG != Program.GEO_RT_INDEX:
+            raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
+        SCALE_LOG = 7
+        prog_out = None
+        for s in [0.01, 0.02, 0.05, 0.10, 0.20]:
+            try:
+                if not DRY_RUN:
+                    prog_out = open(os.path.join(SESSION_OUTPUT_DIR, f"query_scaling_single_s{s}_prog.txt"), "x")
 
+                for limit in map(lambda power: (2**power) * 5, range(SCALE_LOG)):
+                    # while len(queries) < limit:
+                    _queries = mk_query_strings(QUERIES[s][:1])
+                    queries = []
+                    for _ in range(limit):
+                        queries += _queries
+                    assert(len(queries) == limit * 5)
+                    query_scaling_cmd = get_geo_rt_cmd()
+                    query_scaling_cmd += ["--id", uuid.uuid4().hex] + queries + BASELINE_FILES
+                    local_cmd_str = " ".join(query_scaling_cmd)
+                    print(local_cmd_str)
+                    if DRY_RUN:
+                        continue # skip to next log
+                    prog_out.write(f"Running with {limit} queries\n")
+                    prog_out.write(f"{local_cmd_str}\n")
+                    prog_out.flush()
+                    prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
+                    assert (prog_process.wait() == 0)
+                    prog_out.flush()
+            finally:
+                if not DRY_RUN:
+                    prog_out.flush()
+                    prog_out.close()
 
     case Benchmark.DS_TIME_CHECK_EACH:
         # Check each data set has approximately the same run time
