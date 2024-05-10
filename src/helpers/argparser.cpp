@@ -38,6 +38,7 @@ static const vector<string_view> num_repetitions_args{"-n", "--number-of-repetit
 static const vector<string_view> modifier_args{"-m", "--modifier"};
 static const vector<string_view> id_args{"--id"};
 static const vector<string_view> sort_args{"--sort"};
+static const vector<string_view> benchmark_args{"--benchmark"};
 
 void Args::Parse(const int argc, const char** argv)
 {
@@ -100,6 +101,15 @@ void Args::Parse(const int argc, const char** argv)
 			}
 			instance.point_sort_type = static_cast<types::PointSorting>(input);
 		}
+		else if(IsCandidateArgument(arg, benchmark_args))
+		{
+			auto b = std::string{argv[++i]};
+			if(b.length() == 0)
+			{
+				throw std::runtime_error("benchmark arg may not be empty");
+			}
+			instance.benchmark = b;
+		}
 		else if(fs::exists(arg))
 		{
 			instance.files.push_back(arg);
@@ -120,6 +130,34 @@ void Args::Parse(const int argc, const char** argv)
 		query.minY *= mod;
 		query.maxX *= mod;
 		query.maxY *= mod;
+	}
+	const auto& first_file = instance.files.at(0);
+	if(first_file.find("_r01.parquet") != string::npos)
+	{
+		instance.lo = 0;
+		instance.hi = 1;
+	} 
+	else if(first_file.find("_r-11.parquet") != string::npos)
+	{
+		instance.lo = -1;
+		instance.hi = 1;
+	}
+	else
+	{
+		throw std::runtime_error("Could not determine dataset value range");
+	}
+
+	if(first_file.find("/uniform/") != string::npos)
+	{
+		instance.distribution = "uniform";
+	}
+	else if(first_file.find("/normal/") != string::npos)
+	{
+		instance.distribution = "normal";
+	}
+	else
+	{
+		throw std::runtime_error("Could not determine dataset distribution");
 	}
 }
 

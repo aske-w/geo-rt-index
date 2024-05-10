@@ -89,7 +89,15 @@ def get_cuspatial_cmd(n = N):
     return CUSPATIAL_CMD
 
 def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1, sort=0):
-    GEO_RT_CMD = ["./build/release/geo-rt-index", "-n", f"{N}", "-r", f"{r}", "-l", f"{l}", "-m", f"{m}", "--sort", f"{sort}"]
+    GEO_RT_CMD = [
+        "./build/release/geo-rt-index", 
+        "-n", f"{N}", 
+        "-r", f"{r}", 
+        "-l", f"{l}", 
+        "-m", f"{m}", 
+        "--sort", f"{sort}",
+        "--benchmark", f"{BENCHMARK.value}"
+    ]
     return GEO_RT_CMD
 
 def get_session_str():
@@ -123,18 +131,18 @@ for s in [1,2,5,10,20]:
 
 BASELINE_QUERIES = mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4])
 _files = PICKLE_FILES if PROG == Program.CUSPATIAL and PICKLE_FILES is not None else PARQUET_FILES
-BASELINE_FILES = [_files[0], _files[1]]
+BASELINE_FILES = _files[:4]
 print(BASELINE_FILES)
-assert(len(BASELINE_FILES) == 2)
+assert(len(BASELINE_FILES) == 4)
 assert(len(BASELINE_QUERIES) == 5 * 4 * 5)
 
 match BENCHMARK:
     case Benchmark.DS_SCALING:
         counts = [1,2,4,6] if PROG == Program.CUSPATIAL else [1,2,4,6,8,16,32]
 
-        for file_count in counts:
-            try:
-                prog_out = None if DRY_RUN else open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_prog.txt"), "a")
+        try:
+            prog_out = None if DRY_RUN else open(os.path.join(SESSION_OUTPUT_DIR, f"dataset_scaling_prog.txt"), "a")
+            for file_count in counts:
                 cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
                 files = _files[:file_count]
                 assert(len(files) == file_count)
@@ -153,11 +161,11 @@ match BENCHMARK:
                 assert (prog_process.wait() == 0)
                 prog_out.flush()
                 # smi_process.kill()
-            finally:
-                if not DRY_RUN:
-                    assert(prog_out is not None)
-                    prog_out.flush()
-                    prog_out.close()
+        finally:
+            if not DRY_RUN:
+                assert(prog_out is not None)
+                prog_out.flush()
+                prog_out.close()
                     # smi_out.close()
     case Benchmark.QUERY_SCALING:
         # if PROG != Program.GEO_RT_INDEX:
@@ -261,12 +269,12 @@ match BENCHMARK:
         LAYERING_TYPES = [0, 1, 2]
         
         CMD_SUFFIX = BASELINE_QUERIES + BASELINE_FILES
-        for layer_type in LAYERING_TYPES:
-            prog_out = None
-            try:
-                if not DRY_RUN:
-                    PATH = os.path.join(SESSION_OUTPUT_DIR, f"aabb_layering_type{layer_type}_prog.txt")
-                    prog_out = open(PATH, "x")
+        prog_out = None
+        try:
+            if not DRY_RUN:
+                PATH = os.path.join(SESSION_OUTPUT_DIR, f"aabb_layering_prog.txt")
+                prog_out = open(PATH, "x")
+            for layer_type in LAYERING_TYPES:
 
                 query_scaling_cmd = get_geo_rt_cmd(l=layer_type) + ["--id", uuid.uuid4().hex] + CMD_SUFFIX
                 local_cmd_str = " ".join(query_scaling_cmd)
@@ -279,28 +287,29 @@ match BENCHMARK:
                 prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
                 assert (prog_process.wait() == 0)
                 prog_out.flush()
-            finally:
-                if not DRY_RUN:
-                    assert prog_out is not None
-                    prog_out.flush()
-                    prog_out.close()
+        finally:
+            if not DRY_RUN:
+                assert prog_out is not None
+                prog_out.flush()
+                prog_out.close()
 
     case Benchmark.RAYS_PER_THREAD_SCALING:
         if PROG != Program.GEO_RT_INDEX:
             raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
         
         rays_per_threads = [2 ** x for x in range(10)]
-        fc = [1]
+        fc = [1,2,4]
 
-        for count in fc:
-            files = _files[:count]
-            assert(len(files) == 1) # TODO
-            CMD_SUFFIX = BASELINE_QUERIES + files
-            prog_out = None
-            try:
-                if not DRY_RUN:
-                    PATH = os.path.join(SESSION_OUTPUT_DIR, f"rays_per_thread_numfiles{count}_prog.txt")
-                    prog_out = open(PATH, "x")
+        prog_out = None
+        if not DRY_RUN:
+            PATH = os.path.join(SESSION_OUTPUT_DIR, f"rays_per_thread_prog.txt")
+            prog_out = open(PATH, "x")
+
+        try:
+            for count in fc:
+                files = _files[:count]
+                assert(len(files) == count) # TODO
+                CMD_SUFFIX = BASELINE_QUERIES + files
                 for rays_per_thread in rays_per_threads:
                     query_scaling_cmd = get_geo_rt_cmd(r=rays_per_thread) + ["--id", uuid.uuid4().hex] + CMD_SUFFIX
                     local_cmd_str = " ".join(query_scaling_cmd)
@@ -313,11 +322,11 @@ match BENCHMARK:
                     prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
                     assert (prog_process.wait() == 0)
                     prog_out.flush()
-            finally:
-                if not DRY_RUN:
-                    assert prog_out is not None
-                    prog_out.flush()
-                    prog_out.close()
+        finally:
+            if not DRY_RUN:
+                assert prog_out is not None
+                prog_out.flush()
+                prog_out.close()
 
     case Benchmark.POINT_SORTING:
         if PROG != Program.GEO_RT_INDEX:

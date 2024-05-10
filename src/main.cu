@@ -14,7 +14,7 @@
 #include <vector>
 #include <future>
 #include "helpers/pretty_printers.hpp"
-
+#include "helpers/global_state.hpp"
 #include "helpers/point_sort.hpp"
 
 using std::unique_ptr;
@@ -240,7 +240,9 @@ int main(const int argc, const char** argv) {
 //		std::cout << points.at(4) << '\n';
 	}
 	);
+	geo_rt_index::helpers::GlobalState::SetIsWarmup(true);
 	MEASURE_TIME("Warmup", Run(points));
+	geo_rt_index::helpers::GlobalState::SetIsWarmup(false);
 	nvtxRangePushA("Benchmark loop");
 	for(size_t i = 0; i < Args::GetInstance().GetRepetitions(); i++)
 	{

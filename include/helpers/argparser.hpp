@@ -45,6 +45,10 @@ private:
 	float modifier = 1;
 	std::string invocation_id;
 	types::PointSorting point_sort_type = types::PointSorting::None;
+	std::string benchmark;
+	int8_t lo;
+	int8_t hi;
+	std::string distribution;
 	inline static Args& GetMutableInstance()
 	{
 		static Args instance{};
@@ -92,6 +96,22 @@ public:
 	{
 		return this->point_sort_type;
 	}
+	inline const auto& GetLo() const
+	{
+		return this->lo;
+	} 
+	inline const auto& GetHi() const
+	{
+		return this->hi;
+	} 
+	inline const auto& GetBenchmark() const
+	{
+		return this->benchmark;
+	} 
+	inline const auto& GetDistribution() const
+	{
+		return this->distribution;
+	} 
 };
 
 
