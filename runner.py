@@ -131,9 +131,9 @@ for s in [1,2,5,10,20]:
 
 BASELINE_QUERIES = mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4])
 _files = PICKLE_FILES if PROG == Program.CUSPATIAL and PICKLE_FILES is not None else PARQUET_FILES
-BASELINE_FILES = _files[:4]
+BASELINE_FILES = _files[:2]
 print(BASELINE_FILES)
-assert(len(BASELINE_FILES) == 4)
+assert(len(BASELINE_FILES) == 2)
 assert(len(BASELINE_QUERIES) == 5 * 4 * 5)
 
 match BENCHMARK:
@@ -298,7 +298,7 @@ match BENCHMARK:
             raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
         
         rays_per_threads = [2 ** x for x in range(10)]
-        fc = [1,2,4]
+        fc = [1]
 
         prog_out = None
         if not DRY_RUN:
