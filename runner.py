@@ -298,7 +298,6 @@ match BENCHMARK:
             raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
         
         rays_per_threads = [2 ** x for x in range(10)]
-        fc = [1]
 
         prog_out = None
         if not DRY_RUN:
@@ -306,22 +305,20 @@ match BENCHMARK:
             prog_out = open(PATH, "x")
 
         try:
-            for count in fc:
-                files = _files[:count]
-                assert(len(files) == count) # TODO
-                CMD_SUFFIX = BASELINE_QUERIES + files
-                for rays_per_thread in rays_per_threads:
-                    query_scaling_cmd = get_geo_rt_cmd(r=rays_per_thread) + ["--id", uuid.uuid4().hex] + CMD_SUFFIX
-                    local_cmd_str = " ".join(query_scaling_cmd)
-                    print(local_cmd_str)
-                    if DRY_RUN:
-                        continue # skip to next log
-                    prog_out.write(f"Running with {rays_per_thread} rays per thread\n")
-                    prog_out.write(f"{local_cmd_str}\n")
-                    prog_out.flush()
-                    prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
-                    assert (prog_process.wait() == 0)
-                    prog_out.flush()
+            files = BASELINE_FILES
+            CMD_SUFFIX = BASELINE_QUERIES + files
+            for rays_per_thread in rays_per_threads:
+                query_scaling_cmd = get_geo_rt_cmd(r=rays_per_thread) + ["--id", uuid.uuid4().hex] + CMD_SUFFIX
+                local_cmd_str = " ".join(query_scaling_cmd)
+                print(local_cmd_str)
+                if DRY_RUN:
+                    continue # skip to next log
+                prog_out.write(f"Running with {rays_per_thread} rays per thread\n")
+                prog_out.write(f"{local_cmd_str}\n")
+                prog_out.flush()
+                prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
+                assert (prog_process.wait() == 0)
+                prog_out.flush()
         finally:
             if not DRY_RUN:
                 assert prog_out is not None
