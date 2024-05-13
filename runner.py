@@ -85,7 +85,12 @@ SMI_CMD = [
 ]
 
 def get_cuspatial_cmd(n = N):
-    CUSPATIAL_CMD = ["python3", "cuspatial_runner.py", "-n", f"{n}"]
+    CUSPATIAL_CMD = [
+        "python3", 
+        "cuspatial_runner.py", 
+        "-n", f"{n}",
+        "--benchmark", f"{BENCHMARK.value}"
+        ]
     return CUSPATIAL_CMD
 
 def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1, sort=0):
