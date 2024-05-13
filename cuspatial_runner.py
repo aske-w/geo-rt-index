@@ -14,16 +14,57 @@ BATCH_SIZE = 1 << 21
 # arg parsing from ChatGPT
 parser = argparse.ArgumentParser(description='Cuspatial runner')
 parser.add_argument('--pickle', action='store_true')
-parser.add_argument('--id', required=False)
+parser.add_argument('--id', required=True)
 parser.add_argument('-n', type=int, help='Number of repetitions', required=True)
 parser.add_argument('-q', nargs=4, type=float, action='append', help='Bounding box (minx, miny, maxx, maxy)', required=True)
+parser.add_argument("--benchmark", required=True, type=str)
 parser.add_argument('file', nargs='+', help='File paths')
 args = parser.parse_args()
 n = args.n
 queries = args.q
-files = args.file
-
+files: list[str] = args.file
+ID = args.id
+BENCHMARK = args.benchmark
 pool = ProcessPoolExecutor(mp.cpu_count())
+
+DIST = "uniform" if files[0].count("/uniform/") > 0 else "normal"
+LOHI = "01" if files[0].count("_r01.") > 0 else "-11"
+print("id",
+  "modifier",
+  "num_repetitions", 
+  "rays_per_thread", 
+  "aabb_layer_type", 
+  "num_queries", 
+  "num_files", 
+  "metric", 
+  "duration", 
+  "program", 
+  "distribution", 
+  "lohi", 
+  "benchmark",
+  "warmup", 
+  sep=","
+)
+
+def csv_print(metric: str, duration: float):
+  # id, modifier, num_repetitions, rays_per_thread, aabb_layer_type, num_queries, num_files, metric, duration, program,distribution,lohi,benchmark,warmup
+  print(f"\"{ID}\"",
+    f"\"N/A\"",
+    f"{n}",
+    f"\"N/A\"",
+    f"\"N/A\"",
+    f"{len(queries)}",
+    f"{len(files)}",
+    f"{metric}",
+    f"{duration:.4f}",
+    f"\"cuspatial\"",
+    f"\"{DIST}\"",
+    f"{LOHI}",
+    f"\"{BENCHMARK}\"",
+    "0",
+    sep=",",
+    flush=True
+  )
 
 def work(batch):
   geom_col = batch["geometry"]
@@ -60,13 +101,13 @@ for file in files:
       xy = []
 
 
-print(f"load + convert: {time.perf_counter() - t:.4f}s.")
+csv_print(f"load + convert",time.perf_counter() - t)
 pool.shutdown()
 
 def do_gc():
   gc_time = time.perf_counter()
   gc.collect()
-  print(f"gc took {time.perf_counter() - gc_time:.4f}")
+  csv_print(f"gc", time.perf_counter() - gc_time)
 
 if args.pickle:
   exit(0)
@@ -83,7 +124,7 @@ for i in range(n + 1):
   points = cuspatial.GeoSeries.from_points_xy(xy)
   from_xy_time += time.perf_counter() - t
   if not WARMUP:
-    print(f"from_points_xy: {from_xy_time:.4f}s.")
+    csv_print(f"from_points_xy", from_xy_time)
     
   for query in queries:
     do_gc()
@@ -103,7 +144,7 @@ for i in range(n + 1):
   points = None
   do_gc()
   if not WARMUP:
-    print(f"queries took: {query_time:.4f}s.")
+    csv_print(f"queries took", query_time)
 
 exit()
 
