@@ -62,9 +62,9 @@ extern "C" __global__ void __intersection__test() {
 
 // this function is called for every reported (i.e. confirmed) ray-primitive intersection
 extern "C" __global__ void __anyhit__test() {
-	const uint32_t primitive_id = optixGetPrimitiveIndex();
-//	D_PRINT("__anyhit_test %d\n", primitive_id);
-	optixIgnoreIntersection();
+//	const uint32_t primitive_id = optixGetPrimitiveIndex();
+////	D_PRINT("__anyhit_test %d\n", primitive_id);
+//	optixIgnoreIntersection();
 }
 
 // this is the entry point
