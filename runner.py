@@ -16,7 +16,7 @@ def get_system():
     import platform
     match platform.system():
         case "Linux":
-            if platform.platform() == 'Linux-5.15.0-105-generic-x86_64-with-glibc2.35':
+            if platform.platform() == 'Linux-5.15.0-106-generic-x86_64-with-glibc2.35':
                 return "ubuntu"
             else:
                 return "ucloud"
@@ -39,6 +39,8 @@ class Benchmark(Enum):
     AABB_LAYERING_SCALING = "aabb_layering"
     RAYS_PER_THREAD_SCALING = "rays_per_thread"
     POINT_SORTING = "point_sorting"
+    MODIFIER = "modifier"
+    COMPACTION = "compaction"
 
 class NotSupportedException(RuntimeError):
     def __init__(self, *args: object) -> None:
@@ -93,7 +95,7 @@ def get_cuspatial_cmd(n = N):
         ]
     return CUSPATIAL_CMD
 
-def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1, sort=0):
+def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1, sort=0, compaction=False):
     GEO_RT_CMD = [
         "./build/release/geo-rt-index", 
         "-n", f"{N}", 
@@ -101,7 +103,8 @@ def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1, sort=0):
         "-l", f"{l}", 
         "-m", f"{m}", 
         "--sort", f"{sort}",
-        "--benchmark", f"{BENCHMARK.value}"
+        "--benchmark", f"{BENCHMARK.value}",
+        "--compaction" if compaction else ""
     ]
     return GEO_RT_CMD
 
@@ -143,7 +146,7 @@ assert(len(BASELINE_QUERIES) == 5 * 4 * 5)
 
 match BENCHMARK:
     case Benchmark.DS_SCALING:
-        counts = [1,2,4,6] if PROG == Program.CUSPATIAL else [1,2,4,6,8,16,32]
+        counts = [1,2,4,6] if PROG == Program.CUSPATIAL else [1,2,4,8,16,32]
 
         try:
             prog_out = None if DRY_RUN else open(os.path.join(SESSION_OUTPUT_DIR, f"dataset_scaling_prog.txt"), "a")
@@ -365,6 +368,49 @@ match BENCHMARK:
                     assert prog_out is not None
                     prog_out.flush()
                     prog_out.close()
+
+
+    case Benchmark.MODIFIER:
+        if PROG != Program.GEO_RT_INDEX:
+            raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
+
+        modifiers = [
+            0.000001,
+            0.00001,
+            0.0001,
+            0.001,
+            0.01,
+            0.1,
+            1.,
+        ]
+
+        CMD_SUFFIX = BASELINE_QUERIES + BASELINE_FILES
+        prog_out = None
+        try:
+            if not DRY_RUN:
+                PATH = os.path.join(SESSION_OUTPUT_DIR, f"modifier_prog.txt")
+                prog_out = open(PATH, "x")
+            for modifier in modifiers:
+
+                query_scaling_cmd = get_geo_rt_cmd(m=modifier) + ["--id", uuid.uuid4().hex] + CMD_SUFFIX
+                local_cmd_str = " ".join(query_scaling_cmd)
+                print(local_cmd_str)
+                if DRY_RUN:
+                    continue  # skip to next log
+                prog_out.write(f"Running with modifier value {modifier}\n")
+                prog_out.write(f"{local_cmd_str}\n")
+                prog_out.flush()
+                prog_process = sp.Popen(query_scaling_cmd, stdout=prog_out, stderr=prog_out)
+                assert (prog_process.wait() == 0)
+                prog_out.flush()
+        finally:
+            if not DRY_RUN:
+                assert prog_out is not None
+                prog_out.flush()
+                prog_out.close()
+
+    case Benchmark.COMPACTION:
+        pass
 
     case _: raise NotImplementedError(f"Unimplemented benchmark: {BENCHMARK.value}")
 
