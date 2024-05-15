@@ -37,16 +37,16 @@ extern "C" __global__ void __intersection__test() {
 	const uint32_t point_id = optixGetPayload_0();
 //	D_PRINT("__intersection__test prim: %u point: %u\n", primitive_id, point_id);
 	auto contained = helpers::SpatialHelpers::Contains(params.queries[primitive_id], params.points[point_id]);
-	auto aabb = params.queries[primitive_id];
-	auto p =params.points[point_id];
+//	auto aabb = params.queries[primitive_id];
+//	auto p =params.points[point_id];
 //	D_PRINT("%f, %f, %f, %f contains (%f, %f)? %d\n", aabb.minX, aabb.minY, aabb.maxX, aabb.maxY, p.x, p.y, contained);
 //	D_PRINT("Point: %f, %f\n", p.x, p.y);
 	if(!contained)
 	{
+		atomicAdd(params.false_positive_count, 1);
 //		D_PRINT("False positive hit for %u %u\n", primitive_id, point_id);
 		return;
 	}
-//	atomicAdd(params.hit_count[primitive_id], 1);
 //	D_PRINT("True positive hit for %d\n", point_id);
 //	D_PRINT("Is frontface hit: %x ", optixIsFrontFaceHit());
 //	D_PRINT("Is backface hit: %x ", optixIsBackFaceHit());
@@ -56,7 +56,6 @@ extern "C" __global__ void __intersection__test() {
 	params.result_d[(primitive_id * params.num_points) + point_id] = true;
 //	D_PRINT("Hit %u\n", optixGetPayload_0());
 //	D_PRINT("write");
-	optixSetPayload_1(optixGetPayload_1() + 1);
 //	set_payload_32(primitive_id);
 }
 
@@ -75,7 +74,6 @@ extern "C" __global__ void __raygen__test() {
 	constexpr const float float_max = 1e16f;
 	const auto points = params.points;
 	const auto t_max = 1e16f;
-	uint32_t count = 0;
 	const uint32_t t_idx = threadIdx.x * params.rays_per_thread; // 0 | 4 etc
 	const auto limit = t_idx + params.rays_per_thread;
 	for (uint32_t i = t_idx; i < limit; i++) // 0,1,2,3 | 4,5,6,7 etc
@@ -86,7 +84,7 @@ extern "C" __global__ void __raygen__test() {
 		const float3 direction {point.x, point.y, float_max};
 //		D_PRINT("Direction: (%f,%f,5)\n", point.x, point.y);
 		optixTrace(params.traversable, origin, direction, 0, t_max, 0, OptixVisibilityMask(255), ray_flags, 0, 0,
-		           0, i, count);
+		           0, i);
 //		D_PRINT("__raygen_test hit %d\n", i, i0);
 	}
 //	D_PRINT("count: %d\n", count);

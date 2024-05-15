@@ -17,7 +17,7 @@ struct LaunchParameters
 	const size_t max_z = 0;
 	bool* result_d;
 	const uint32_t rays_per_thread = 1;
-//	uint32_t** hit_count;
+	uint32_t* false_positive_count;
 	OptixAabb* queries;
 };
 

@@ -18,12 +18,13 @@ PointToAABBFactory::PointToAABBFactory(const vector<types::Point>& _points,
 {
 	MEASURE_TIME("Uploading points to GPU",
 		 points_d->alloc_and_upload(_points);
+		 cudaDeviceSynchronize(); CUERR
 	);
 
 	MEASURE_TIME("Uploading queries to GPU",
-		 queries_d->alloc_and_upload(_queries);
+		queries_d->alloc_and_upload(_queries);
+		cudaDeviceSynchronize(); CUERR
 	);
-	cudaDeviceSynchronize(); CUERR
 }
 
 std::unique_ptr<OptixBuildInput> PointToAABBFactory::Build()

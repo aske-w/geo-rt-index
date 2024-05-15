@@ -105,7 +105,7 @@ void optix_wrapper::create_module() {
     pipeline_compile_options = {};
     pipeline_compile_options.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_GAS;
     pipeline_compile_options.usesMotionBlur        = false;
-    pipeline_compile_options.numPayloadValues      = 2;
+    pipeline_compile_options.numPayloadValues      = 1;
     pipeline_compile_options.numAttributeValues    = 0;
     pipeline_compile_options.exceptionFlags        = debug ? (OPTIX_EXCEPTION_FLAG_USER | OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW | OPTIX_EXCEPTION_FLAG_TRACE_DEPTH) : OPTIX_EXCEPTION_FLAG_NONE;
     pipeline_compile_options.pipelineLaunchParamsVariableName = "params";

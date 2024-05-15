@@ -115,15 +115,24 @@ void Run(const std::vector<Point>& points)
 
 	cuda_buffer result_d;
 	bool* result;
-	MEASURE_TIME("Alloc+upload result buffer",
-	             const auto result_size =num_queries * num_points;
+				const auto result_size = num_queries * num_points;
+	MEASURE_TIME("Alloc result buffer",
 	             result = new bool[result_size];
+	);
+	MEASURE_TIME("Memset result buffer",
 	             memset(result, 0, result_size);
+	);
+	MEASURE_TIME("upload result buffer",
 	             result_d.alloc(sizeof(bool) * result_size);
 	             result_d.upload(result, result_size);
 	             cudaDeviceSynchronize(); CUERR
 	);
 
+	uint32_t false_positive_count = 0;
+	cudaDeviceSynchronize();
+	cuda_buffer false_positive_count_d;
+	false_positive_count_d.alloc(sizeof(uint32_t));
+	false_positive_count_d.upload(&false_positive_count, 1);
 	OptixTraversableHandle handle;
 	MEASURE_TIME("Building AS", handle = BuildAccelerationStructure(optix, f));
 	LaunchParameters launch_params
@@ -134,6 +143,7 @@ void Run(const std::vector<Point>& points)
 		.max_z = num_queries * offset + 4,
 		.result_d = result_d.ptr<bool>(),
 		.rays_per_thread = args.GetRaysPerThread(),
+		.false_positive_count = false_positive_count_d.ptr<uint32_t>(),
 		.queries = f.GetQueriesDevicePointer()
 	};
 
@@ -149,7 +159,7 @@ void Run(const std::vector<Point>& points)
 	const auto num_threads = num_points / args.GetRaysPerThread();
 	D_PRINT("num_threads: %zu\n", num_threads);
 	MEASURE_TIME("Query execution",
-	             OPTIX_CHECK(optixLaunch(
+	             const auto x =optixLaunch(
 	                 pipeline.pipeline,
 	                 optix.stream,
 	                 launch_params_d.cu_ptr(),
@@ -158,9 +168,13 @@ void Run(const std::vector<Point>& points)
 	                 num_threads,
 	                 1,
 	                 1
-	                 ))
+	                 );
+//	             OPTIX_CHECK(x)
 	                 cudaDeviceSynchronize(); CUERR
 	);
+
+	false_positive_count_d.download(&false_positive_count, 1);
+	geo_rt_index::helpers::PrintCSV("Errors", false_positive_count);
 
 	MEASURE_TIME("result_d.download", result_d.download(result, num_points * num_queries););
 

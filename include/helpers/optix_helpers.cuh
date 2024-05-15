@@ -28,6 +28,10 @@ namespace helpers
     if( res != OPTIX_SUCCESS )                                          \
       {                                                                 \
         fprintf( stderr, "Optix call (%s) failed with code %d (line %d)\n", #call, res, __LINE__ ); \
+        if(res == OPTIX_ERROR_CUDA_ERROR)                               \
+		{                                                                     \
+			CUERR\
+		}\
         exit( 2 );                                                      \
       }                                                                 \
   }
