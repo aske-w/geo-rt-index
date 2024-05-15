@@ -48,6 +48,7 @@ private:
 	std::string benchmark;
 	int8_t lo;
 	int8_t hi;
+	bool compaction = false;
 	std::string distribution;
 	inline static Args& GetMutableInstance()
 	{
@@ -111,7 +112,11 @@ public:
 	inline const auto& GetDistribution() const
 	{
 		return this->distribution;
-	} 
+	}
+	inline auto GetCompaction() const
+	{
+		return this->compaction;
+	}
 };
 
 

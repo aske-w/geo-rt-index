@@ -15,7 +15,7 @@
 #include <vector>
 #include <iostream>
 
-static const std::string csv_header{"id,program,benchmark,distribution,lohi,warmup,modifier,num_repetitions,rays_per_thread,aabb_layer_type,num_queries,num_files,metric,duration"};
+static const std::string csv_header{"id,program,benchmark,distribution,lohi,warmup,modifier,num_repetitions,rays_per_thread,aabb_layer_type,num_queries,num_files,compaction,metric,duration"};
 
 using duration = std::chrono::duration<double>;
 
@@ -45,8 +45,9 @@ inline static void PrintCSV(const char* msg, const uint32_t value)
 	const auto layer_type = arg_instance.GetLayering();
 	const auto num_queries = arg_instance.GetQueries().size();
 	const auto num_files = arg_instance.GetFiles().size();
+	const auto compaction_enabled = arg_instance.GetCompaction();
 	const auto metric = msg;
-	printf("\"%s\",\"%s\",\"%s\",\"%s\",%d%d,%hhu,%f,%hhu,%u,%hhu,%zu,%zu,\"%s\",%u\n",
+	printf("\"%s\",\"%s\",\"%s\",\"%s\",%d%d,%hhu,%f,%hhu,%u,%hhu,%zu,%zu,%hhu,\"%s\",%u\n",
 	    id.c_str(),
 	    program.c_str(),
 	    benchmark.c_str(),
@@ -60,6 +61,7 @@ inline static void PrintCSV(const char* msg, const uint32_t value)
 	    static_cast<uint8_t>(layer_type),
 	    num_queries,
 	    num_files,
+	    compaction_enabled,
 	    metric,
 	    value
 	);

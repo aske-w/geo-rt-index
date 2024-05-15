@@ -39,6 +39,7 @@ static const vector<string_view> modifier_args{"-m", "--modifier"};
 static const vector<string_view> id_args{"--id"};
 static const vector<string_view> sort_args{"--sort"};
 static const vector<string_view> benchmark_args{"--benchmark"};
+static const vector<string_view> compact_flag_arg{"--compaction"};
 
 void Args::Parse(const int argc, const char** argv)
 {
@@ -109,6 +110,10 @@ void Args::Parse(const int argc, const char** argv)
 				throw std::runtime_error("benchmark arg may not be empty");
 			}
 			instance.benchmark = b;
+		}
+		else if(IsCandidateArgument(arg, compact_flag_arg))
+		{
+			instance.compaction = true;
 		}
 		else if(fs::exists(arg))
 		{

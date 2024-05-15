@@ -31,7 +31,7 @@ using geo_rt_index::helpers::Args;
 using geo_rt_index::types::PointSorting;
 
 OptixTraversableHandle BuildAccelerationStructure(const optix_wrapper& optix,
-    Factory<OptixBuildInput>& input_factory)
+    Factory<OptixBuildInput>& input_factory, const bool compact)
 {
 	OptixTraversableHandle handle{0};
 	auto bi = input_factory.Build();
@@ -67,9 +67,23 @@ OptixTraversableHandle BuildAccelerationStructure(const optix_wrapper& optix,
 	OPTIX_CHECK(optixAccelBuild(optix.optix_context, optix.stream, &bo, &*bi, 1, temp_buffer.cu_ptr(),
 	                            temp_buffer.size_in_bytes, uncompacted_structure_buffer.cu_ptr(),
 	                            uncompacted_structure_buffer.size_in_bytes, &handle, &emit_desc, 1))
+
+	if(compact)
+	{
+		const uint64_t size = 0;
+		compacted_size_buffer.download(&size, 1);
+		cuda_buffer compacted_buffer;
+		compacted_buffer.alloc(size);
+		MEASURE_TIME("AS compaction",
+		    optixAccelCompact(optix.optix_context, optix.stream, handle, compacted_buffer.cu_ptr(),
+				size, &handle);
+		);
+		uncompacted_structure_buffer.free();
+	}
 	cudaDeviceSynchronize();
 	CUERR
 	temp_buffer.free();
+	compacted_size_buffer.free();
 	return handle;
 }
 
@@ -134,7 +148,7 @@ void Run(const std::vector<Point>& points)
 	false_positive_count_d.alloc(sizeof(uint32_t));
 	false_positive_count_d.upload(&false_positive_count, 1);
 	OptixTraversableHandle handle;
-	MEASURE_TIME("Building AS", handle = BuildAccelerationStructure(optix, f));
+	MEASURE_TIME("Building AS", handle = BuildAccelerationStructure(optix, f, args.GetCompaction()));
 	LaunchParameters launch_params
 	{
 		.traversable = handle,
