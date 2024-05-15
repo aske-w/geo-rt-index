@@ -67,14 +67,14 @@ OptixTraversableHandle BuildAccelerationStructure(const optix_wrapper& optix,
 	OPTIX_CHECK(optixAccelBuild(optix.optix_context, optix.stream, &bo, &*bi, 1, temp_buffer.cu_ptr(),
 	                            temp_buffer.size_in_bytes, uncompacted_structure_buffer.cu_ptr(),
 	                            uncompacted_structure_buffer.size_in_bytes, &handle, &emit_desc, 1))
-
+	
 	if(compact)
 	{
+		MEASURE_TIME("AS compaction",
 		const uint64_t size = 0;
 		compacted_size_buffer.download(&size, 1);
 		cuda_buffer compacted_buffer;
 		compacted_buffer.alloc(size);
-		MEASURE_TIME("AS compaction",
 		    optixAccelCompact(optix.optix_context, optix.stream, handle, compacted_buffer.cu_ptr(),
 				size, &handle);
 		);
@@ -173,7 +173,7 @@ void Run(const std::vector<Point>& points)
 	const auto num_threads = num_points / args.GetRaysPerThread();
 	D_PRINT("num_threads: %zu\n", num_threads);
 	MEASURE_TIME("Query execution",
-	             const auto x =optixLaunch(
+	             OPTIX_CHECK(optixLaunch(
 	                 pipeline.pipeline,
 	                 optix.stream,
 	                 launch_params_d.cu_ptr(),
@@ -182,8 +182,7 @@ void Run(const std::vector<Point>& points)
 	                 num_threads,
 	                 1,
 	                 1
-	                 );
-//	             OPTIX_CHECK(x)
+	                 ));
 	                 cudaDeviceSynchronize(); CUERR
 	);
 
