@@ -83,8 +83,9 @@ inline static void PrintCSV(const char* msg, const duration& duration)
 	const auto layer_type = arg_instance.GetLayering();
 	const auto num_queries = arg_instance.GetQueries().size();
 	const auto num_files = arg_instance.GetFiles().size();
+	const auto compaction_enabled = arg_instance.GetCompaction();
 	const auto metric = msg;
-	printf("\"%s\",\"%s\",\"%s\",\"%s\",%d%d,%hhu,%f,%hhu,%u,%hhu,%zu,%zu,\"%s\",%.4f\n",
+	printf("\"%s\",\"%s\",\"%s\",\"%s\",%d%d,%hhu,%f,%hhu,%u,%hhu,%zu,%zu,%hhu,\"%s\",%.4f\n",
 	    id.c_str(),
 	    program.c_str(),
 	    benchmark.c_str(),
@@ -98,6 +99,7 @@ inline static void PrintCSV(const char* msg, const duration& duration)
 	    static_cast<uint8_t>(layer_type),
 	    num_queries,
 	    num_files,
+		compaction_enabled,
 	    metric,
 	    duration.count()
 	);
