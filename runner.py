@@ -66,7 +66,7 @@ LO = args.lo
 HI = args.hi
 PREFIX = f"*_r{LO}{HI}"
 
-N = 5
+N = 20
 INPUT_DATA_DIR = os.path.join("/home/aske/dev/geo-rt-index/data" if get_system() == "ubuntu" else "/home/ucloud/geo-rt-index/data", DIST.value)
 PARQUET_FILES = glob.glob(os.path.join(INPUT_DATA_DIR, f"{PREFIX}.parquet"))
 assert(len(PARQUET_FILES) == 32)
