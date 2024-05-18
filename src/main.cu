@@ -16,6 +16,7 @@
 #include "helpers/pretty_printers.hpp"
 #include "helpers/global_state.hpp"
 #include "helpers/point_sort.hpp"
+#include "kernel.cuh"
 
 using std::unique_ptr;
 using std::unique_ptr;
@@ -193,17 +194,30 @@ void Run(const std::vector<Point>& points)
 	const auto num_threads = num_points / args.GetRaysPerThread();
 	D_PRINT("num_threads: %zu\n", num_threads);
 	MEASURE_TIME("Query execution",
-	             OPTIX_CHECK(optixLaunch(
-	                 pipeline.pipeline,
-	                 optix.stream,
-	                 launch_params_d.cu_ptr(),
-	                 launch_params_d.size_in_bytes,
-	                 &pipeline.sbt,
-	                 num_threads,
-	                 1,
-	                 1
-	                 ));
-	                 cudaDeviceSynchronize(); CUERR
+	             if(args.IsKernelOnly())
+	             {
+
+		             constexpr const uint32_t threads_per_block{1024};
+		             constexpr const uint32_t block_x = 65536;
+		             const auto block_y = static_cast<uint32_t>(num_points) / ((block_x) * threads_per_block);
+		             dim3 grid{block_x, block_y, static_cast<uint32_t>(num_queries)}; // x * y * z blocks
+		             KernelFilter<<<grid, threads_per_block>>>(
+		                 launch_params_d.ptr<LaunchParameters>());
+	             }
+	             else
+	             {
+					 OPTIX_CHECK(optixLaunch(
+						 pipeline.pipeline,
+						 optix.stream,
+						 launch_params_d.cu_ptr(),
+						 launch_params_d.size_in_bytes,
+						 &pipeline.sbt,
+						 num_threads,
+						 1,
+						 1
+						 ));
+	             }
+				 cudaDeviceSynchronize(); CUERR
 	);
 
 	false_positive_count_d.download(&false_positive_count, 1);

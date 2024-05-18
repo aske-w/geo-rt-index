@@ -42,6 +42,7 @@ static const vector<string_view> benchmark_args{"--benchmark"};
 static const vector<string_view> compact_flag_arg{"--compaction"};
 static const vector<string_view> aabb_z_value_arg{"--aabb-z-value"};
 static const vector<string_view> ray_length_arg{"--ray-length"};
+static const vector<string_view> kernel_only_arg{"--kernel-only"};
 
 void Args::Parse(const int argc, const char** argv)
 {
@@ -120,6 +121,10 @@ void Args::Parse(const int argc, const char** argv)
 		else if(IsCandidateArgument(arg, compact_flag_arg))
 		{
 			instance.compaction = true;
+		}
+		else if(IsCandidateArgument(arg, kernel_only_arg))
+		{
+			instance.kernel_only = true;
 		}
 		else if(IsCandidateArgument(arg, aabb_z_value_arg))
 		{

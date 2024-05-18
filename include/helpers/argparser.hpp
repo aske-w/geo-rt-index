@@ -52,6 +52,7 @@ private:
 	std::string distribution;
 	float aabb_z_value = 0;
 	float ray_length = 1e9;
+	bool kernel_only = false;
 	inline static Args& GetMutableInstance()
 	{
 		static Args instance{};
@@ -126,6 +127,10 @@ public:
 	inline auto GetRayLength() const
 	{
 		return this->ray_length;
+	}
+	inline auto IsKernelOnly() const
+	{
+		return this->kernel_only;
 	}
 };
 

@@ -43,7 +43,6 @@ class Benchmark(Enum):
     COMPACTION = "compaction"
     RAY_LENGTH = "ray_length"
     AABB_Z_VALUE = "aabb_z_value"
-    # KERNEL_ONLY = "kernel_only"
 
 class NotSupportedException(RuntimeError):
     def __init__(self, *args: object) -> None:
@@ -56,6 +55,7 @@ parser.add_argument("-b", type=str, help="Benchmark to run", required=True,choic
 parser.add_argument("-p", type=str, help="Program to benchmark", required=True,choices=[e.value for e in Program])
 parser.add_argument("--lo", type=int, help="Low", required=True)
 parser.add_argument("--hi", type=int, help="High", required=True)
+parser.add_argument("--kernel-only", action='store_true', default=False)
 # parser.add_argument("--file-stem-suffix", type=str, required=False, default="*")
 parser.add_argument("--dry-run", help='Print commands that would be used to start a program but do not run program', default=False, action='store_true')
 
@@ -68,6 +68,7 @@ DRY_RUN = args.dry_run
 LO = args.lo
 HI = args.hi
 PREFIX = f"*_r{LO}{HI}"
+KERNEL_ONLY= args.kernel_only
 
 N = 10
 INPUT_DATA_DIR = os.path.join("/home/aske/dev/geo-rt-index/data" if get_system() == "ubuntu" else "/home/ucloud/geo-rt-index/data", DIST.value)
@@ -117,6 +118,9 @@ def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1, sort=0, compaction=False, aabb_z_
     if ray_length is not None:
         geo_rt_cmd += ["--ray-length", f"{ray_length}"]
 
+    if KERNEL_ONLY:
+        geo_rt_cmd += ["--kernel-only"]
+
     return geo_rt_cmd
 
 def get_session_str():
@@ -162,7 +166,7 @@ match BENCHMARK:
         counts = [1,2,4,6] if PROG == Program.CUSPATIAL else [1,2,4,8,16,32]
 
         try:
-            prog_out = None if DRY_RUN else open(os.path.join(SESSION_OUTPUT_DIR, f"dataset_scaling_prog.txt"), "a")
+            prog_out = None if DRY_RUN else open(os.path.join(SESSION_OUTPUT_DIR, f"dataset_scaling_prog.txt" if not KERNEL_ONLY else "dataset_scaling_kernel.txt"), "a")
             for file_count in counts:
                 cmd = get_cuspatial_cmd() if PROG == Program.CUSPATIAL else get_geo_rt_cmd()
                 files = _files[:file_count]
@@ -197,7 +201,7 @@ match BENCHMARK:
         prog_out = None
         try:
             if not DRY_RUN:
-                prog_out = open(os.path.join(SESSION_OUTPUT_DIR, f"query_scaling_prog.txt"), "x")
+                prog_out = open(os.path.join(SESSION_OUTPUT_DIR, f"query_scaling_prog.txt" if not KERNEL_ONLY else "query_scaling_kernel.txt"), "x")
 
             for limit in map(lambda power: 2**power, range(SCALE_LOG)):
                 # while len(queries) < limit:
