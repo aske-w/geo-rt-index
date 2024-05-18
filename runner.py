@@ -122,9 +122,12 @@ def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1, sort=0, compaction=False, aabb_z_
 def get_session_str():
     return f"b{BENCHMARK.value}_d{DIST.value}_p{PROG.value}_n{N}_r{LO}{HI}"
 
+def get_time():
+    return datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+
 SESSION_OUTPUT_DIR = os.path.join(OUTPUT_DATA_DIR, get_session_str())
 while os.path.exists(SESSION_OUTPUT_DIR):
-    TIME = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    TIME = get_time()
     SESSION_OUTPUT_DIR = os.path.join(OUTPUT_DATA_DIR, get_session_str(), TIME)
 
 if not DRY_RUN: 
@@ -169,6 +172,7 @@ match BENCHMARK:
                 print(local_cmd_str)
                 if DRY_RUN:
                     continue
+                prog_out.write(f"{get_time()}\n")
                 # smi_out= open(os.path.join(SESSION_OUTPUT_DIR, f"fc{file_count}_smi.txt"), "x")
                 prog_out.write(local_cmd_str)
                 prog_out.write('\n')
@@ -205,6 +209,7 @@ match BENCHMARK:
                 print(local_cmd_str)
                 if DRY_RUN:
                     continue # skip to next log
+                prog_out.write(f"{get_time()}\n")
                 prog_out.write(f"Running with {limit} queries\n")
                 prog_out.write(f"{local_cmd_str}\n")
                 prog_out.flush()
@@ -239,6 +244,7 @@ match BENCHMARK:
                     print(local_cmd_str)
                     if DRY_RUN:
                         continue # skip to next log
+                    prog_out.write(f"{get_time()}\n")
                     prog_out.write(f"Running with {limit} queries\n")
                     prog_out.write(f"{local_cmd_str}\n")
                     prog_out.flush()
@@ -264,6 +270,7 @@ match BENCHMARK:
                 if DRY_RUN:
                     print(local_cmd_str)
                     continue
+                prog_out.write(f"{get_time()}\n")
                 prog_out.write(local_cmd_str)
                 prog_out.write('\n')
                 prog_out.flush()
@@ -299,6 +306,7 @@ match BENCHMARK:
                 print(local_cmd_str)
                 if DRY_RUN:
                     continue # skip to next log
+                prog_out.write(f"{get_time()}\n")
                 prog_out.write(f"Running with layer type {layer_type} queries\n")
                 prog_out.write(f"{local_cmd_str}\n")
                 prog_out.flush()
@@ -331,6 +339,7 @@ match BENCHMARK:
                 print(local_cmd_str)
                 if DRY_RUN:
                     continue # skip to next log
+                prog_out.write(f"{get_time()}\n")
                 prog_out.write(f"Running with {rays_per_thread} rays per thread\n")
                 prog_out.write(f"{local_cmd_str}\n")
                 prog_out.flush()
@@ -367,6 +376,7 @@ match BENCHMARK:
                 print(local_cmd_str)
                 if DRY_RUN:
                     continue  # skip to next log
+                prog_out.write(f"{get_time()}\n")
                 prog_out.write(f"Running with layer type {sort_type} queries\n")
                 prog_out.write(f"{local_cmd_str}\n")
                 prog_out.flush()
@@ -420,6 +430,7 @@ match BENCHMARK:
                 print(local_cmd_str)
                 if DRY_RUN:
                     continue  # skip to next log
+                prog_out.write(f"{get_time()}\n")
                 prog_out.write(f"Running with modifier value {modifier}\n")
                 prog_out.write(f"{local_cmd_str}\n")
                 prog_out.flush()
@@ -477,6 +488,7 @@ match BENCHMARK:
                 print(local_cmd_str)
                 if DRY_RUN:
                     continue  # skip to next log
+                prog_out.write(f"{get_time()}\n")
                 prog_out.write(f"Running with ray_length {ray_length}\n")
                 prog_out.write(f"{local_cmd_str}\n")
                 prog_out.flush()
@@ -530,6 +542,7 @@ match BENCHMARK:
                 print(local_cmd_str)
                 if DRY_RUN:
                     continue  # skip to next log
+                prog_out.write(f"{get_time()}\n")
                 prog_out.write(f"Running with aabb z value {z}\n")
                 prog_out.write(f"{local_cmd_str}\n")
                 prog_out.flush()
