@@ -48,6 +48,7 @@ OptixTraversableHandle BuildAccelerationStructure(const optix_wrapper& optix,
 	                                         1, // num_build_inputs
 	                                         &structure_buffer_sizes))
 	auto uncompacted_size = structure_buffer_sizes.outputSizeInBytes;
+	cudaDeviceSynchronize(); CUERR;
 
 	cuda_buffer compacted_size_buffer;
 	compacted_size_buffer.alloc(sizeof(uint64_t));
@@ -55,6 +56,8 @@ OptixTraversableHandle BuildAccelerationStructure(const optix_wrapper& optix,
 	OptixAccelEmitDesc emit_desc;
 	emit_desc.type   = OPTIX_PROPERTY_TYPE_COMPACTED_SIZE;
 	emit_desc.result = compacted_size_buffer.cu_ptr();
+	D_PRINT("compacted_size_buffer.cu_ptr() %lld\n", compacted_size_buffer.cu_ptr());
+
 
 	// ==================================================================
 	// execute build (main stage)
@@ -67,20 +70,25 @@ OptixTraversableHandle BuildAccelerationStructure(const optix_wrapper& optix,
 	OPTIX_CHECK(optixAccelBuild(optix.optix_context, optix.stream, &bo, &*bi, 1, temp_buffer.cu_ptr(),
 	                            temp_buffer.size_in_bytes, uncompacted_structure_buffer.cu_ptr(),
 	                            uncompacted_structure_buffer.size_in_bytes, &handle, &emit_desc, 1))
+	cudaDeviceSynchronize(); CUERR;
 	
-	if(compact)
+	if(false)
 	{
-		MEASURE_TIME("AS compaction",
 		const uint64_t size = 0;
+		MEASURE_TIME("AS compaction",
 		compacted_size_buffer.download(&size, 1);
 		cuda_buffer compacted_buffer;
 		compacted_buffer.alloc(size);
-		    optixAccelCompact(optix.optix_context, optix.stream, handle, compacted_buffer.cu_ptr(),
-				size, &handle);
+		D_PRINT("handle %lld\n", handle);
+		OPTIX_CHECK(optixAccelCompact(optix.optix_context, optix.stream, handle, compacted_buffer.cu_ptr(),
+			size, &handle));
 		);
+		D_PRINT("handle %lld\n", handle);
+		geo_rt_index::helpers::PrintCSV("Uncompacted size", static_cast<uint32_t>(uncompacted_size));
+		geo_rt_index::helpers::PrintCSV("Compacted size", static_cast<uint32_t>(size));
 		uncompacted_structure_buffer.free();
 	}
-	cudaDeviceSynchronize();
+	cudaDeviceSynchronize(); CUERR;
 	CUERR
 	temp_buffer.free();
 	compacted_size_buffer.free();
@@ -118,10 +126,21 @@ void Run(const std::vector<Point>& points)
 	}
 	MEASURE_TIME("Converting to OptixAabb",
 		z_adjusted.reserve(queries.size());
-		for(size_t i = 0; i < num_queries; i++)
+		if (args.GetLayering() == AabbLayering::None)
 		{
-		 	auto current_offset = i * offset;
-		 	z_adjusted.push_back(queries.at(i).ToOptixAabb(current_offset, 1 + current_offset));
+			const float const_offset = args.GetAabbZValue();
+		    for(size_t i = 0; i < num_queries; i++)
+		    {
+			    z_adjusted.push_back(queries.at(i).ToOptixAabb(const_offset, 1 + const_offset));
+		    }
+		}
+	    else
+		{
+			for(size_t i = 0; i < num_queries; i++)
+			{
+		 		const float current_offset = i * offset;
+		 		z_adjusted.push_back(queries.at(i).ToOptixAabb(current_offset, 1 + current_offset));
+		    }
 		}
 	);
 
@@ -129,7 +148,7 @@ void Run(const std::vector<Point>& points)
 
 	cuda_buffer result_d;
 	bool* result;
-				const auto result_size = num_queries * num_points;
+	const auto result_size = num_queries * num_points;
 	MEASURE_TIME("Alloc result buffer",
 	             result = new bool[result_size];
 	);
@@ -158,7 +177,8 @@ void Run(const std::vector<Point>& points)
 		.result_d = result_d.ptr<bool>(),
 		.rays_per_thread = args.GetRaysPerThread(),
 		.false_positive_count = false_positive_count_d.ptr<uint32_t>(),
-		.queries = f.GetQueriesDevicePointer()
+		.queries = f.GetQueriesDevicePointer(),
+		.ray_length = args.GetRayLength()
 	};
 
 	cuda_buffer launch_params_d;

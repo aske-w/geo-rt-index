@@ -50,6 +50,8 @@ private:
 	int8_t hi;
 	bool compaction = false;
 	std::string distribution;
+	float aabb_z_value = 0;
+	float ray_length = 1e9;
 	inline static Args& GetMutableInstance()
 	{
 		static Args instance{};
@@ -116,6 +118,14 @@ public:
 	inline auto GetCompaction() const
 	{
 		return this->compaction;
+	}
+	inline auto GetAabbZValue() const
+	{
+		return this->aabb_z_value;
+	}
+	inline auto GetRayLength() const
+	{
+		return this->ray_length;
 	}
 };
 

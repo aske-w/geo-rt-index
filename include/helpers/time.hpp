@@ -15,7 +15,7 @@
 #include <vector>
 #include <iostream>
 
-static const std::string csv_header{"id,program,benchmark,distribution,lohi,warmup,modifier,num_repetitions,rays_per_thread,aabb_layer_type,num_queries,num_files,compaction,metric,duration"};
+static const std::string csv_header{"id,program,benchmark,distribution,lohi,warmup,modifier,num_repetitions,rays_per_thread,ray_length,aabb_layer_type,aabb_z_value,num_queries,num_files,compaction,metric,duration"};
 
 using duration = std::chrono::duration<double>;
 
@@ -42,12 +42,14 @@ inline static void PrintCSV(const char* msg, const uint32_t value)
 	const auto modifier = arg_instance.GetModifier();
 	const auto num_repetitions = arg_instance.GetRepetitions();
 	const auto rays_per_thread =arg_instance.GetRaysPerThread();
+	const auto ray_length = arg_instance.GetRayLength();
 	const auto layer_type = arg_instance.GetLayering();
+	const auto z_value = arg_instance.GetAabbZValue();
 	const auto num_queries = arg_instance.GetQueries().size();
 	const auto num_files = arg_instance.GetFiles().size();
 	const auto compaction_enabled = arg_instance.GetCompaction();
 	const auto metric = msg;
-	printf("\"%s\",\"%s\",\"%s\",\"%s\",%d%d,%hhu,%f,%hhu,%u,%hhu,%zu,%zu,%hhu,\"%s\",%u\n",
+	printf("\"%s\",\"%s\",\"%s\",\"%s\",%d%d,%hhu,%.9f,%hhu,%u,%.10f,%hhu,%.9f,%zu,%zu,%hhu,\"%s\",%u\n",
 	    id.c_str(),
 	    program.c_str(),
 	    benchmark.c_str(),
@@ -58,7 +60,9 @@ inline static void PrintCSV(const char* msg, const uint32_t value)
 	    modifier,
 	    num_repetitions,
 	    rays_per_thread,
+		ray_length,
 	    static_cast<uint8_t>(layer_type),
+		z_value,
 	    num_queries,
 	    num_files,
 	    compaction_enabled,
@@ -80,12 +84,14 @@ inline static void PrintCSV(const char* msg, const duration& duration)
 	const auto modifier = arg_instance.GetModifier();
 	const auto num_repetitions = arg_instance.GetRepetitions();
 	const auto rays_per_thread =arg_instance.GetRaysPerThread();
+	const auto ray_length = arg_instance.GetRayLength();
 	const auto layer_type = arg_instance.GetLayering();
+	const auto z_value = arg_instance.GetAabbZValue();
 	const auto num_queries = arg_instance.GetQueries().size();
 	const auto num_files = arg_instance.GetFiles().size();
 	const auto compaction_enabled = arg_instance.GetCompaction();
 	const auto metric = msg;
-	printf("\"%s\",\"%s\",\"%s\",\"%s\",%d%d,%hhu,%f,%hhu,%u,%hhu,%zu,%zu,%hhu,\"%s\",%.4f\n",
+	printf("\"%s\",\"%s\",\"%s\",\"%s\",%d%d,%hhu,%.9f,%hhu,%u,%.10f,%hhu,%.9f,%zu,%zu,%hhu,\"%s\",%.4f\n",
 	    id.c_str(),
 	    program.c_str(),
 	    benchmark.c_str(),
@@ -96,7 +102,9 @@ inline static void PrintCSV(const char* msg, const duration& duration)
 	    modifier,
 	    num_repetitions,
 	    rays_per_thread,
+		ray_length,
 	    static_cast<uint8_t>(layer_type),
+		z_value,
 	    num_queries,
 	    num_files,
 		compaction_enabled,

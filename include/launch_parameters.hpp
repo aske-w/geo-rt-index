@@ -19,6 +19,7 @@ struct LaunchParameters
 	const uint32_t rays_per_thread = 1;
 	uint32_t* false_positive_count;
 	OptixAabb* queries;
+	const float ray_length;
 };
 
 #endif //LAUNCH_PARAMETERS_HPP

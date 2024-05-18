@@ -16,7 +16,7 @@ def get_system():
     import platform
     match platform.system():
         case "Linux":
-            if platform.platform() == 'Linux-5.15.0-106-generic-x86_64-with-glibc2.35':
+            if platform.platform() == 'Linux-5.15.0-107-generic-x86_64-with-glibc2.35':
                 return "ubuntu"
             else:
                 return "ucloud"
@@ -41,6 +41,9 @@ class Benchmark(Enum):
     POINT_SORTING = "point_sorting"
     MODIFIER = "modifier"
     COMPACTION = "compaction"
+    RAY_LENGTH = "ray_length"
+    AABB_Z_VALUE = "aabb_z_value"
+    # KERNEL_ONLY = "kernel_only"
 
 class NotSupportedException(RuntimeError):
     def __init__(self, *args: object) -> None:
@@ -66,7 +69,7 @@ LO = args.lo
 HI = args.hi
 PREFIX = f"*_r{LO}{HI}"
 
-N = 20
+N = 10
 INPUT_DATA_DIR = os.path.join("/home/aske/dev/geo-rt-index/data" if get_system() == "ubuntu" else "/home/ucloud/geo-rt-index/data", DIST.value)
 PARQUET_FILES = glob.glob(os.path.join(INPUT_DATA_DIR, f"{PREFIX}.parquet"))
 assert(len(PARQUET_FILES) == 32)
@@ -95,18 +98,26 @@ def get_cuspatial_cmd(n = N):
         ]
     return CUSPATIAL_CMD
 
-def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1, sort=0, compaction=False):
-    GEO_RT_CMD = [
+def get_geo_rt_cmd(n = N, r = 1, l = 0, m = 1, sort=0, compaction=False, aabb_z_value=None, ray_length=None):
+    geo_rt_cmd = [
         "./build/release/geo-rt-index", 
         "-n", f"{N}", 
         "-r", f"{r}", 
         "-l", f"{l}", 
         "-m", f"{m}", 
         "--sort", f"{sort}",
-        "--benchmark", f"{BENCHMARK.value}",
-        "--compaction" if compaction else ""
+        "--benchmark", f"{BENCHMARK.value}"
     ]
-    return GEO_RT_CMD
+    if compaction:
+        geo_rt_cmd.append("--compaction")
+
+    if aabb_z_value is not None:
+        geo_rt_cmd += ["--aabb-z-value", f"{aabb_z_value}"]
+
+    if ray_length is not None:
+        geo_rt_cmd += ["--ray-length", f"{ray_length}"]
+
+    return geo_rt_cmd
 
 def get_session_str():
     return f"b{BENCHMARK.value}_d{DIST.value}_p{PROG.value}_n{N}_r{LO}{HI}"
@@ -140,7 +151,6 @@ for s in [1,2,5,10,20]:
 BASELINE_QUERIES = mk_query_strings(QUERIES[0.01][:4] + QUERIES[0.02][:4] + QUERIES[0.05][:4] + QUERIES[0.10][:4] + QUERIES[0.20][:4])
 _files = PICKLE_FILES if PROG == Program.CUSPATIAL and PICKLE_FILES is not None else PARQUET_FILES
 BASELINE_FILES = _files[:2]
-print(BASELINE_FILES)
 assert(len(BASELINE_FILES) == 2)
 assert(len(BASELINE_QUERIES) == 5 * 4 * 5)
 
@@ -375,13 +385,26 @@ match BENCHMARK:
             raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
 
         modifiers = [
-            0.000001,
-            0.00001,
-            0.0001,
-            0.001,
-            0.01,
-            0.1,
-            1.,
+            1e-10,
+            1e-9,
+            1e-8,
+            1e-7,
+            1e-6,
+            1e-5,
+            1e-4,
+            1e-3,
+            1e-2,
+            1e-1,
+            1,
+            1e1,
+            1e2,
+            1e3,
+            1e4,
+            1e5,
+            1e6,
+            1e7,
+            1e8,
+            1e9,
         ]
 
         CMD_SUFFIX = BASELINE_QUERIES + BASELINE_FILES
@@ -411,6 +434,113 @@ match BENCHMARK:
 
     case Benchmark.COMPACTION:
         pass
+
+
+    case Benchmark.RAY_LENGTH:
+        
+        if PROG != Program.GEO_RT_INDEX:
+            raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
+
+        lengths = [
+            1e-10,
+            1e-9,
+            1e-8,
+            1e-7,
+            1e-6,
+            1e-5,
+            1e-4,
+            1e-3,
+            1e-2,
+            1e-1,
+            1,
+            1e1,
+            1e2,
+            1e3,
+            1e4,
+            1e5,
+            1e6,
+            1e7,
+            1e8,
+            1e9,
+        ]
+
+        CMD_SUFFIX = BASELINE_QUERIES + BASELINE_FILES
+        prog_out = None
+        try:
+            if not DRY_RUN:
+                PATH = os.path.join(SESSION_OUTPUT_DIR, f"aabb_z_value_prog.txt")
+                prog_out = open(PATH, "x")
+            for ray_length in lengths:
+
+                ray_length_cmd = get_geo_rt_cmd(ray_length=ray_length) + ["--id", uuid.uuid4().hex] + CMD_SUFFIX
+                local_cmd_str = " ".join(ray_length_cmd)
+                print(local_cmd_str)
+                if DRY_RUN:
+                    continue  # skip to next log
+                prog_out.write(f"Running with ray_length {ray_length}\n")
+                prog_out.write(f"{local_cmd_str}\n")
+                prog_out.flush()
+                prog_process = sp.Popen(ray_length_cmd, stdout=prog_out, stderr=prog_out)
+                assert (prog_process.wait() == 0)
+                prog_out.flush()
+        finally:
+            if not DRY_RUN:
+                assert prog_out is not None
+                prog_out.flush()
+                prog_out.close()
+
+
+    case Benchmark.AABB_Z_VALUE:
+        if PROG != Program.GEO_RT_INDEX:
+            raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
+
+        zs = [
+            1e-10,
+            1e-9,
+            1e-8,
+            1e-7,
+            1e-6,
+            1e-5,
+            1e-4,
+            1e-3,
+            1e-2,
+            1e-1,
+            1,
+            1e1,
+            1e2,
+            1e3,
+            1e4,
+            1e5,
+            1e6,
+            1e7,
+            1e8,
+            1e9,
+        ]
+
+        CMD_SUFFIX = BASELINE_QUERIES + BASELINE_FILES
+        prog_out = None
+        try:
+            if not DRY_RUN:
+                PATH = os.path.join(SESSION_OUTPUT_DIR, f"aabb_z_value_prog.txt")
+                prog_out = open(PATH, "x")
+            for z in zs:
+
+                ray_length_cmd = get_geo_rt_cmd(aabb_z_value=z) + ["--id", uuid.uuid4().hex] + CMD_SUFFIX
+                local_cmd_str = " ".join(ray_length_cmd)
+                print(local_cmd_str)
+                if DRY_RUN:
+                    continue  # skip to next log
+                prog_out.write(f"Running with aabb z value {z}\n")
+                prog_out.write(f"{local_cmd_str}\n")
+                prog_out.flush()
+                prog_process = sp.Popen(ray_length_cmd, stdout=prog_out, stderr=prog_out)
+                assert (prog_process.wait() == 0)
+                prog_out.flush()
+        finally:
+            if not DRY_RUN:
+                assert prog_out is not None
+                prog_out.flush()
+                prog_out.close()
 
     case _: raise NotImplementedError(f"Unimplemented benchmark: {BENCHMARK.value}")
 

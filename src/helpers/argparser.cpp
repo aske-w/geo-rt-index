@@ -40,6 +40,8 @@ static const vector<string_view> id_args{"--id"};
 static const vector<string_view> sort_args{"--sort"};
 static const vector<string_view> benchmark_args{"--benchmark"};
 static const vector<string_view> compact_flag_arg{"--compaction"};
+static const vector<string_view> aabb_z_value_arg{"--aabb-z-value"};
+static const vector<string_view> ray_length_arg{"--ray-length"};
 
 void Args::Parse(const int argc, const char** argv)
 {
@@ -62,6 +64,10 @@ void Args::Parse(const int argc, const char** argv)
 			{
 				throw std::runtime_error("AabbLayering input out of range, max is "
 					+ std::to_string(static_cast<uint8_t>(AabbLayering::Last)));
+			}
+			if(instance.GetAabbZValue() != 0 && input != 0)
+			{
+				throw std::runtime_error("if --aabb-z-value <...> is supplied --aabb-layering must be 0 (AabbLayering::None)");
 			}
 			instance.layering = static_cast<AabbLayering>(input);
 		}
@@ -114,6 +120,28 @@ void Args::Parse(const int argc, const char** argv)
 		else if(IsCandidateArgument(arg, compact_flag_arg))
 		{
 			instance.compaction = true;
+		}
+		else if(IsCandidateArgument(arg, aabb_z_value_arg))
+		{
+			const float z = stof(argv[++i]);
+			if(z <= 0)
+			{
+				throw std::runtime_error("aabb_z_value_arg must be greater than 0");
+			}
+			if(instance.GetLayering() != AabbLayering::None)
+			{
+				throw std::runtime_error("if --aabb-z-value <...> is supplied, --aabb-layering must be 0 (AabbLayering::None)");
+			}
+			instance.aabb_z_value = z;
+		}
+		else if(IsCandidateArgument(arg, ray_length_arg))
+		{
+			const float length = stof(argv[++i]);
+			if(length <= 0)
+			{
+				throw std::runtime_error("ray length must be greater than 0 (default 1e16)");
+			}
+			instance.ray_length = length;
 		}
 		else if(fs::exists(arg))
 		{
