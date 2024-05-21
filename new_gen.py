@@ -53,11 +53,13 @@ print("DIR:", DIR)
 os.makedirs(DIR, exist_ok=True)
 driver: ogr.Driver = GetDriverByName(DRIVER)
 
-file = os.path.join(DIR, f"p{P}_s{seed}_r-11.parquet")
+r = "r-11" if range == "-1" else "r01"
+
+file = os.path.join(DIR, f"p{P}_s{seed}_{r}.parquet")
 while os.path.exists(file):
     seed = (seed + int(seed / 2)) % (1 << 15 )
     print("dub", seed)
-    file = os.path.join(DIR, f"p{P}_s{seed}_r-11.parquet")
+    file = os.path.join(DIR, f"p{P}_s{seed}_{r}.parquet")
     # os.remove(FILE)
 
 ds: ogr.DataSource = driver.CreateDataSource(file)

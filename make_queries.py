@@ -92,7 +92,7 @@ os.makedirs(f"./queries/uniform/r{LO}{HI}", exist_ok=True)
 os.makedirs(f"./queries/normal/r{LO}{HI}", exist_ok=True)
 
 for s in SELECTIVITIES:
-    np.random.seed(BASE_SEED * s)
+    np.random.seed(BASE_SEED * s + LO)
     selectivity_normalized = s / 100
     print("selectivity", selectivity_normalized)
     boxes = []
