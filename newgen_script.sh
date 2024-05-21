@@ -127,24 +127,24 @@ uniform_m11="10083
 8148
 8885"
 
-for seed in normal_01;
+for seed in $normal_01;
 do
-    screen -Dm python3 new_gen.py "$seed" normal "0" &
+    python3 new_gen.py "$seed" normal "0" > /dev/null 2>&1 &
 done
 wait
-for seed in uniform_01;
+for seed in $uniform_01;
 do
-    screen -Dm python3 new_gen.py "$seed" uniform "0" &
+    python3 new_gen.py "$seed" uniform "0" > /dev/null 2>&1 &
 done
 wait
 
 
-for seed in normal_m11;
+for seed in $normal_m11;
 do
-    screen -Dm python3 new_gen.py "$seed" normal "-1" &
+    python3 new_gen.py "$seed" normal "-1" > /dev/null 2>&1 &
 done
 wait
-for seed in uniform_m11;
+for seed in $uniform_m11;
 do
-    screen -Dm python3 new_gen.py "$seed" uniform "-1" &
+    python3 new_gen.py "$seed" uniform "-1" > /dev/null 2>&1 &
 done
