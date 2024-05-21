@@ -1,7 +1,7 @@
 #! /bin/bash
 
 sudo apt update
-sudo apt install -y -V ca-certificates lsb-release wget libc6 libproj-dev swig python3-pip pbzip2 g++-10 
+sudo apt install -y -V ca-certificates lsb-release wget libc6 libproj-dev swig python3-pip pbzip2 g++-10 libtbb-dev
 # shellcheck disable=SC2019,SC2018
 wget "https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb"
 sudo apt install -y -V "./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb"
@@ -48,7 +48,7 @@ cd geo-rt-index || exit 1
 mkdir -p build/release
 mkdir -p data
 cd build/release || exit 1
-cmake .. -DCMAKE_INSTALL_PREFIX:PATH="/home/ucloud/.local;/usr/local;/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64/SDK/CMake" \
+cmake ../.. -DCMAKE_INSTALL_PREFIX:PATH="/home/ucloud/.local;/usr/local;/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64/SDK/CMake" \
     -DCMAKE_MODULE_PATH=/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64/SDK/CMake \
     -DOptiX_INSTALL_DIR:PATH=/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64 \
     -DOptiX_INCLUDE:PATH=/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64/include \

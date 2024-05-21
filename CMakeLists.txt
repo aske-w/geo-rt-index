@@ -6,6 +6,7 @@ find_package(OptiX REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(GDAL REQUIRED)
 find_package(OpenMP REQUIRED)
+find_package(TBB REQUIRED)
 
 option(USE_MEASURE_TIME "Enable time measuring macro" OFF)
 if (USE_MEASURE_TIME)
@@ -75,6 +76,7 @@ target_link_libraries(${NAME}
 	${CUDA_LIBRARIES}
 	${GDAL_LIBRARY}
 	${OpenMP_CXX_LIBRARIES}
+	TBB::tbb
 )
 
 
