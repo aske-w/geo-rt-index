@@ -129,12 +129,10 @@ uniform_m11="10083
 
 for seed in $normal_01;
 do
-    python3 new_gen.py "$seed" normal "0" > /dev/null 2>&1 &
 done
 wait
 for seed in $uniform_01;
 do
-    python3 new_gen.py "$seed" uniform "0" > /dev/null 2>&1 &
 done
 wait
 
@@ -148,3 +146,4 @@ for seed in $uniform_m11;
 do
     python3 new_gen.py "$seed" uniform "-1" > /dev/null 2>&1 &
 done
+wait
