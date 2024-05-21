@@ -29,10 +29,10 @@ def mk_query(selectivity: float):
             width = height
             height = temp
         # return width, height
-        x1 = np.random.uniform(LO, HI - width)
-        y1 = np.random.uniform(LO, HI - height)
-        x2 = x1 + width
-        y2 = y1 + height
+        x1 = np.random.uniform(LO, HI - width*2)
+        y1 = np.random.uniform(LO, HI - height*2)
+        x2 = x1 + width*2
+        y2 = y1 + height*2
         return (x1, y1), (x2, y2) # minx, miny, maxx maxy semantics
 
 def mk_nq(selectivity, _loc = 0.5, _scale = 0.15):
