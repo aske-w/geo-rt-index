@@ -11,19 +11,27 @@ seed = int(sys.argv[1])
 rng = None
 rng_single = None
 dist = sys.argv[2].strip()
+range = sys.argv[3].strip()
+
 match dist:
     case "uniform":
-        rng = lambda: np.random.uniform(-1,1,(N,2))
-        rng_single = lambda: np.random.uniform(-1,1,2)
+        if range == "-1":
+            rng = lambda: np.random.uniform(-1,1,(N,2))
+            rng_single = lambda: np.random.uniform(-1,1,2)
+        else:
+            rng = lambda: np.random.uniform(0,1,(N,2))
+            rng_single = lambda: np.random.uniform(0,1,2)
     case "normal":
-        # rng = lambda: np.random.normal(0.5,0.15,(N,2))
-        # rng_single = lambda: np.random.normal(0.5, 0.15, 2)
-        rng = lambda: np.random.normal(0.0,0.3,(N,2))
-        rng_single = lambda: np.random.normal(0.0, 0.3, 2)
+        if range == "-1":
+            rng = lambda: np.random.normal(0.0,0.3,(N,2))
+            rng_single = lambda: np.random.normal(0.0, 0.3, 2)
+        else:
+            rng = lambda: np.random.normal(0.5,0.15,(N,2))
+            rng_single = lambda: np.random.normal(0.5, 0.15, 2)
 
 np.random.seed(seed)
-P = 22 # 4m
-# P = 26 # 67m
+# P = 22 # 4m
+P = 26 # 67m
 N = 1 << P
 
 def get_dir() -> str:
@@ -33,7 +41,7 @@ def get_dir() -> str:
             if platform.platform() == 'Linux-5.15.0-105-generic-x86_64-with-glibc2.35':
                 return os.path.join("/home/aske/dev/geo-rt-index/data", dist)
             else:
-                raise Exception("Implement on VM")
+                return os.path.join("/home/ucloud/geo-rt-index/data", dist)
         case "Darwin": # MacOS
             return os.path.join("/Volumes/untitled/data", dist)
         case _:
