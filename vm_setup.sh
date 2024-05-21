@@ -45,8 +45,9 @@ sudo apt install -y libnvidia-extra-525 libnvidia-cfg1-525 libnvidia-common-525 
 cd ~ || exit 1
 git clone https://github.com/aske-w/geo-rt-index.git
 cd geo-rt-index || exit 1
-mkdir -p build
-cd build || exit 1
+mkdir -p build/release
+mkdir -p data
+cd build/release || exit 1
 cmake .. -DCMAKE_INSTALL_PREFIX:PATH="/home/ucloud/.local;/usr/local;/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64/SDK/CMake" \
     -DCMAKE_MODULE_PATH=/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64/SDK/CMake \
     -DOptiX_INSTALL_DIR:PATH=/home/ucloud/NVIDIA-OptiX-SDK-7.6.0-linux64-x86_64 \
