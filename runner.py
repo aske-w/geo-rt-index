@@ -571,10 +571,13 @@ match BENCHMARK:
             raise Exception("Distribution must be uniform")
 
         overlaps = [
+            0.50,
+            0.25,
             0.10,
             0.05,
             0.025,
             0.0125,
+            0.00625,
             0.0
         ]
 
