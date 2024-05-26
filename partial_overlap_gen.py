@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 def get(overlap: float, num_queries = 20):
     base = BBox((0.0, 0.0), (1/num_queries, 1/num_queries))
-    cover = sqrt(square)
+    cover = sqrt(overlap)
     data: list[BBox] = [base]
     last = base
     SIDE_LENGTH = (1.0 / num_queries)
