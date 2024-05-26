@@ -1,5 +1,6 @@
 #! /bin/bash
 
+# git clone https://github.com/aske-w/geo-rt-index.git
 sudo apt update
 sudo apt install -y -V ca-certificates lsb-release wget libc6 libproj-dev swig python3-pip pbzip2 g++-10 libtbb-dev
 # shellcheck disable=SC2019,SC2018
@@ -19,7 +20,7 @@ sudo apt install -y libarrow-dev libparquet-dev
 # shellcheck disable=SC1090
 source ~/.profile
 
-pip3.10 install "numpy==1.24"
+pip3.10 install "numpy==1.24" tqdm
 pip3.10 install cmake
 sudo apt install -y cmake-curses-gui
 pip3.10 install \
@@ -43,7 +44,6 @@ make -j40 install
 
 sudo apt install -y libnvidia-extra-525 libnvidia-cfg1-525 libnvidia-common-525 libnvidia-compute-525 libnvidia-extra-525 libnvidia-fbc1-525 libnvidia-gl-525 nvidia-utils-525
 cd ~ || exit 1
-git clone https://github.com/aske-w/geo-rt-index.git
 cd geo-rt-index || exit 1
 mkdir -p build/release
 mkdir -p data
