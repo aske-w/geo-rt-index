@@ -1,6 +1,8 @@
 import time
 import pyarrow.parquet as pq
 import multiprocessing as mp
+
+import tqdm
 from osgeo import ogr
 from concurrent.futures import ProcessPoolExecutor # ThreadPoolExecutor locks GIL
 import argparse
@@ -81,7 +83,7 @@ def work(batch):
 
 t = time.perf_counter()
 xy = []
-for file in files:
+for file in files if not args.pickle else tqdm.tqdm(files):
   # print("file:", file)
   pp = pathlib.Path(file)
   if pp.suffixes == ['.xy', '.pickle']:

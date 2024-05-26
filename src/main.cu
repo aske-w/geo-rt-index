@@ -161,6 +161,14 @@ void Run(const std::vector<Point>& points)
 	             result_d.upload(result, result_size);
 	             cudaDeviceSynchronize(); CUERR
 	);
+	cudaDeviceSynchronize();
+
+	uint32_t intersect_count = 0;
+	cudaDeviceSynchronize();
+	cuda_buffer intersect_count_d;
+	intersect_count_d.alloc(sizeof(uint32_t));
+	intersect_count_d.upload(&intersect_count, 1);
+	cudaDeviceSynchronize();
 
 	uint32_t false_positive_count = 0;
 	cudaDeviceSynchronize();
@@ -179,7 +187,8 @@ void Run(const std::vector<Point>& points)
 		.rays_per_thread = args.GetRaysPerThread(),
 		.false_positive_count = false_positive_count_d.ptr<uint32_t>(),
 		.queries = f.GetQueriesDevicePointer(),
-		.ray_length = args.GetRayLength()
+		.ray_length = args.GetRayLength(),
+		.intersect_count = intersect_count_d.ptr<uint32_t>()
 	};
 
 	cuda_buffer launch_params_d;
@@ -222,6 +231,8 @@ void Run(const std::vector<Point>& points)
 
 	false_positive_count_d.download(&false_positive_count, 1);
 	geo_rt_index::helpers::PrintCSV("Errors", false_positive_count);
+	intersect_count_d.download(&intersect_count, 1);
+	geo_rt_index::helpers::PrintCSV("Total intersections", intersect_count);
 
 	MEASURE_TIME("result_d.download", result_d.download(result, num_points * num_queries););
 

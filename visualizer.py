@@ -1,6 +1,11 @@
+import glob
+from random import shuffle
 import numpy as np
 import matplotlib.pyplot as plt
 import json
+import pickle
+
+import tqdm
 
 from pytypes import BBox
 # this is mostly the work of ChatGPT
@@ -15,14 +20,14 @@ FILES = [
     ("tab:orange",f"./queries/{DIST}/r{LO}{HI}/2.json"),
     ("tab:gray",f"./queries/{DIST}/r{LO}{HI}/1.json"),
 ]
+
+DATAS = glob.glob(f"data/{DIST}/*_r{LO}{HI}.xy.pickle")
 # Create a plot
 fig, ax = plt.subplots()
-for color, file in FILES:
+for file in tqdm.tqdm(FILES, "Loading query files"):
     with open (file, "r") as fp:
         data: list[BBox] = json.load(fp)
-        # data: list[BBox] = json.loads('[{"minx": 0.2541947203804815, "miny": 0.8318307966853772, "maxx": 0.6739473347137762, "maxy": 0.8556543528909372}]')
-        # data: list[BBox] = json.loads('[{"minx": -0.49161055923903696, "miny": 0.6636615933707544, "maxx": 0.3478946694275524, "maxy": 0.7113087057818743}]')
-        for bbox in data[:4]:
+        for bbox in data[:64]:
             minx = bbox["minx"]
             miny = bbox["miny"]
             maxx = bbox["maxx"]
@@ -31,6 +36,16 @@ for color, file in FILES:
             height = maxy - miny
             ax.add_patch(plt.Rectangle((minx, miny), width, height, fill=True, color=color))
 
+xs = []
+ys = []
+for data_file in tqdm.tqdm(DATAS[:1], "Loading point data"):
+    with open(data_file, "rb") as fp:
+        xy = pickle.load(fp)
+        shuffle(xy)
+        xs += xy[::50]
+        ys += xy[1::50]
+
+ax.plot(xs, ys,'ro')
 # Set limits and labels
 ax.set_xlim(LO, HI)
 ax.set_ylim(LO, HI)
@@ -41,5 +56,6 @@ ax.set_title(f'{DIST} [{LO},{HI}) Query Visualization')
 
 # Show the plot
 # plt.grid(True)
-plt.show()
-# plt.savefig("visualizer.png")
+# plt.show()
+plt.savefig(f"visualizer_{DIST}_r{LO}{HI}.png")
+

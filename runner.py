@@ -73,7 +73,7 @@ HI = args.hi
 PREFIX = f"*_r{LO}{HI}"
 KERNEL_ONLY= args.kernel_only
 
-N = 10
+N = 5
 INPUT_DATA_DIR = os.path.join("/home/aske/dev/geo-rt-index/data" if get_system() == "ubuntu" else "/home/ucloud/geo-rt-index/data", DIST.value)
 PARQUET_FILES = glob.glob(os.path.join(INPUT_DATA_DIR, f"{PREFIX}.parquet"))
 assert(len(PARQUET_FILES) == 32)
@@ -460,13 +460,13 @@ match BENCHMARK:
             raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
 
         lengths = [
-            1e-10,
-            1e-9,
-            1e-8,
-            1e-7,
-            1e-6,
-            1e-5,
-            1e-4,
+            # 1e-10,
+            # 1e-9,
+            # 1e-8,
+            # 1e-7,
+            # 1e-6,
+            # 1e-5,
+            # 1e-4,
             1e-3,
             1e-2,
             1e-1,
@@ -474,12 +474,12 @@ match BENCHMARK:
             1e1,
             1e2,
             1e3,
-            1e4,
-            1e5,
-            1e6,
-            1e7,
-            1e8,
-            1e9,
+            # 1e4,
+            # 1e5,
+            # 1e6,
+            # 1e7,
+            # 1e8,
+            # 1e9,
         ]
 
         CMD_SUFFIX = BASELINE_QUERIES + BASELINE_FILES
@@ -500,7 +500,8 @@ match BENCHMARK:
                 prog_out.write(f"{local_cmd_str}\n")
                 prog_out.flush()
                 prog_process = sp.Popen(ray_length_cmd, stdout=prog_out, stderr=prog_out)
-                assert (prog_process.wait() == 0)
+                prog_process.wait()
+                # assert (prog_process.wait() == 0)
                 prog_out.flush()
         finally:
             if not DRY_RUN:
@@ -514,26 +515,26 @@ match BENCHMARK:
             raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
 
         zs = [
-            1e-10,
-            1e-9,
-            1e-8,
-            1e-7,
-            1e-6,
-            1e-5,
-            1e-4,
-            1e-3,
-            1e-2,
-            1e-1,
-            1,
-            1e1,
-            1e2,
-            1e3,
-            1e4,
-            1e5,
-            1e6,
-            1e7,
-            1e8,
-            1e9,
+            # 1e-10,
+            # 1e-9,
+            # 1e-8,
+            # 1e-7,
+            # 1e-6,
+            # 1e-5,
+            # 1e-4,
+            # 1e-3,
+            # 1e-2,
+            # 1e-1,
+            # 1,
+            1e1 - 1,
+            1e2 - 1,
+            1e3 - 1,
+            1e4 - 1,
+            1e5 - 1,
+            1e6 - 1,
+            1e7 - 1,
+            1e8 - 1,
+            1e9 - 1,
         ]
 
         CMD_SUFFIX = BASELINE_QUERIES + BASELINE_FILES

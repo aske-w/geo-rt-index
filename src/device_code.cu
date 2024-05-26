@@ -33,6 +33,7 @@ extern "C" __global__ void __miss__test() {
 
 // this function is called for every potential ray-aabb intersection
 extern "C" __global__ void __intersection__test() {
+	atomicAdd(params.intersect_count, 1);
 	const uint32_t primitive_id = optixGetPrimitiveIndex();
 	const uint32_t point_id = optixGetPayload_0();
 //	D_PRINT("__intersection__test prim: %u point: %u\n", primitive_id, point_id);
@@ -73,6 +74,7 @@ extern "C" __global__ void __raygen__test() {
 	constexpr const uint32_t ray_flags = 0;
 	const auto points = params.points;
 	const auto t_max = params.ray_length;
+//	D_PRINT("ray length %f\n",t_max);
 	const uint32_t t_idx = threadIdx.x * params.rays_per_thread; // 0 | 4 etc
 	const auto limit = t_idx + params.rays_per_thread;
 	for (uint32_t i = t_idx; i < limit; i++) // 0,1,2,3 | 4,5,6,7 etc

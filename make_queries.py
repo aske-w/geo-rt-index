@@ -18,7 +18,7 @@ def mk_query(selectivity: float):
     assert(0 < selectivity and selectivity <= 1)
     area = selectivity
     # Generate random dimensions
-    width = np.random.uniform(1, area)  # Limit the width to be less than or equal to the area
+    width = np.random.uniform(area, 1) 
     height = area / width
     
     # Check if the dimensions produce the desired area

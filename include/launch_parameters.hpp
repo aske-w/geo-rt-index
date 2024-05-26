@@ -20,6 +20,7 @@ struct LaunchParameters
 	uint32_t* false_positive_count;
 	OptixAabb* queries;
 	const float ray_length;
+	uint32_t* intersect_count;
 };
 
 #endif //LAUNCH_PARAMETERS_HPP
