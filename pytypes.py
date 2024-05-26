@@ -13,4 +13,4 @@ class BBox:
         return shapely.geometry.box(self.minx, self.miny, self.maxx, self.maxy)
 
     def to_query(self):
-        return f"-q {self.minx} {self.miny} {self.maxx} {self.maxy}"
+        return ["-q", f"{self.minx}", f"{self.miny}", f"{self.maxx}", f"{self.maxy}"]
