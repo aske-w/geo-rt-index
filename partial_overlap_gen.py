@@ -4,12 +4,13 @@ import matplotlib.pyplot as plt
 
 def get(overlap: float, num_queries = 20):
     base = BBox((0.0, 0.0), (1/num_queries, 1/num_queries))
+    cover = sqrt(square)
     data: list[BBox] = [base]
     last = base
     SIDE_LENGTH = (1.0 / num_queries)
     for _ in range(num_queries - 1):
-        minx = last.maxx - SIDE_LENGTH * (overlap)
-        miny = last.maxy - SIDE_LENGTH * (overlap)
+        minx = last.maxx - SIDE_LENGTH * (cover)
+        miny = last.maxy - SIDE_LENGTH * (cover)
         maxx = minx + SIDE_LENGTH
         maxy = miny + SIDE_LENGTH
         this = BBox((minx, miny), (maxx, maxy))
@@ -19,9 +20,10 @@ def get(overlap: float, num_queries = 20):
 
 
 
-if __name__ == "main":
+if __name__ == "__main__":
     # (0,1^2)/(0,1 - 0,078)^2
     neighbor_coverages = [
+        0.20,
         0.10,
         0.05,
         0.025,
@@ -32,8 +34,7 @@ if __name__ == "main":
     HI = 1
     for square in neighbor_coverages:
         print(f"--- {square} ---")
-        cover = sqrt(square)
-        data = get(cover)
+        data = get(square)
         # print("-q", *d, sep=" ")
         # continue
         # this is mostly the work of ChatGPT
@@ -54,7 +55,7 @@ if __name__ == "main":
         ax.set_aspect('equal', adjustable='box')
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
-        ax.set_title(f'Query Visualization {cover ** 2:.4f}')
+        ax.set_title(f'Query Visualization {square}')
 
         # Show the plot
         # plt.grid(True)
