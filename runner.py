@@ -12,6 +12,8 @@ import subprocess as sp
 from pathlib import Path
 import uuid
 
+import partial_overlap_gen 
+
 def get_system():
     import platform
     match platform.system():
@@ -43,6 +45,7 @@ class Benchmark(Enum):
     COMPACTION = "compaction"
     RAY_LENGTH = "ray_length"
     AABB_Z_VALUE = "aabb_z_value"
+    OVERLAP = "overlap"
 
 class NotSupportedException(RuntimeError):
     def __init__(self, *args: object) -> None:
@@ -548,6 +551,48 @@ match BENCHMARK:
                     continue  # skip to next log
                 prog_out.write(f"{get_time()}\n")
                 prog_out.write(f"Running with aabb z value {z}\n")
+                prog_out.write(f"{local_cmd_str}\n")
+                prog_out.flush()
+                prog_process = sp.Popen(ray_length_cmd, stdout=prog_out, stderr=prog_out)
+                assert (prog_process.wait() == 0)
+                prog_out.flush()
+        finally:
+            if not DRY_RUN:
+                assert prog_out is not None
+                prog_out.flush()
+                prog_out.close()
+        
+    case Benchmark.OVERLAP:
+        if PROG != Program.GEO_RT_INDEX:
+            raise NotSupportedException(f"{Benchmark.QUERY_SCALING} not supported with program {PROG}")
+        if LO != 0 and HI != 1:
+            raise Exception(f"LO must be 0 and HI must be 1, but were {LO} and {HI}")
+        if DIST != Distribution.UNIFORM:
+            raise Exception("Distribution must be uniform")
+
+        overlaps = [
+            0.10,
+            0.05,
+            0.025,
+            0.0125,
+            0.0
+        ]
+
+        prog_out = None
+        try:
+            if not DRY_RUN:
+                PATH = os.path.join(SESSION_OUTPUT_DIR, f"overlap.txt")
+                prog_out = open(PATH, "x")
+
+            for overlap in overlaps:
+                queries = list(map(lambda bbox: bbox.to_query(), partial_overlap_gen.get(overlap, 20)))
+                ray_length_cmd = get_geo_rt_cmd() + ["--id", uuid.uuid4().hex] + queries
+                local_cmd_str = " ".join(ray_length_cmd)
+                print(local_cmd_str)
+                if DRY_RUN:
+                    continue  # skip to next log
+                prog_out.write(f"{get_time()}\n")
+                prog_out.write(f"Running with overlap {overlap}\n")
                 prog_out.write(f"{local_cmd_str}\n")
                 prog_out.flush()
                 prog_process = sp.Popen(ray_length_cmd, stdout=prog_out, stderr=prog_out)

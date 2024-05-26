@@ -11,3 +11,6 @@ class BBox:
     def to_shapely_polygon(self):
         import shapely.geometry
         return shapely.geometry.box(self.minx, self.miny, self.maxx, self.maxy)
+
+    def to_query(self):
+        return f"-q {self.minx} {self.miny} {self.maxx} {self.maxy}"
