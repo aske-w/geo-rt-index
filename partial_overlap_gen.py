@@ -23,11 +23,13 @@ def get(overlap: float, num_queries = 20):
 if __name__ == "__main__":
     # (0,1^2)/(0,1 - 0,078)^2
     neighbor_coverages = [
-        0.20,
+        0.50,
+        0.25,
         0.10,
         0.05,
         0.025,
         0.0125,
+        0.00625,
         0.0
     ]
     LO = 0
