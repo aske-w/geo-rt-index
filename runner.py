@@ -585,7 +585,7 @@ match BENCHMARK:
                 prog_out = open(PATH, "x")
 
             for overlap in overlaps:
-                queries = list(map(lambda bbox: bbox.to_query(), partial_overlap_gen.get(overlap, 20)))
+                queries = list(flatten(map(lambda bbox: bbox.to_query(), partial_overlap_gen.get(overlap, 20))))
                 ray_length_cmd = get_geo_rt_cmd() + ["--id", uuid.uuid4().hex] + queries + BASELINE_FILES
                 local_cmd_str = " ".join(ray_length_cmd)
                 print(local_cmd_str)
