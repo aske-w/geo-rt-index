@@ -23,9 +23,6 @@ source ~/.profile
 pip3.10 install "numpy==1.24" tqdm
 pip3.10 install cmake
 sudo apt install -y cmake-curses-gui
-pip3.10 install \
-    --extra-index-url=https://pypi.nvidia.com \
-    cudf-cu11==24.4.* cuspatial-cu11==24.4.* cuproj-cu11==24.4.*
 
 cd ~ || exit 1
 git clone https://github.com/OSGeo/gdal.git
@@ -41,6 +38,10 @@ cmake .. -DCMAKE_BUILD_TYPE=Release \
     -DENABLE_IPO=ON \
     -DCMAKE_CXX_FLAGS="-march=native"
 make -j40 install
+
+pip3.10 install \
+    --extra-index-url=https://pypi.nvidia.com \
+    cudf-cu11==24.4.* cuspatial-cu11==24.4.* cuproj-cu11==24.4.*
 
 sudo apt install -y libnvidia-extra-550-server libnvidia-cfg1-550-server libnvidia-common-550-server libnvidia-compute-550-server libnvidia-extra-550-server libnvidia-fbc1-550-server libnvidia-gl-550-server nvidia-utils-550-server
 cd ~ || exit 1
