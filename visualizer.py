@@ -13,7 +13,7 @@ FILES = [
     ("tab:green",f"./queries/{DIST}/r{LO}{HI}/10.json"),
     ("tab:blue",f"./queries/{DIST}/r{LO}{HI}/5.json"),
     ("tab:orange",f"./queries/{DIST}/r{LO}{HI}/2.json"),
-    ("tab:gray",f"./queries/{DIST}/r{LO}{HI}/1.json"),
+    ("tab:cyan",f"./queries/{DIST}/r{LO}{HI}/1.json"),
 ]
 # Create a plot
 fig, ax = plt.subplots()
@@ -29,7 +29,7 @@ for color, file in FILES:
             maxy = bbox["maxy"]
             width = maxx - minx
             height = maxy - miny
-            ax.add_patch(plt.Rectangle((minx, miny), width, height, fill=True, color=color))
+            ax.add_patch(plt.Rectangle((minx, miny), width, height, fill=True, facecolor=color, edgecolor=(0,0,0)))
 
 # Set limits and labels
 ax.set_xlim(LO, HI)
@@ -37,9 +37,9 @@ ax.set_ylim(LO, HI)
 ax.set_aspect('equal', adjustable='box')
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
-ax.set_title(f'{DIST} [{LO},{HI}) Query Visualization')
+# ax.set_title(f'{DIST} [{LO},{HI}) Query Visualization')
 
 # Show the plot
 # plt.grid(True)
-plt.show()
-# plt.savefig("visualizer.png")
+# plt.show()
+plt.savefig(f"{DIST} r{LO}{HI} Query Visualization.png",dpi=400,bbox_inches="tight")
